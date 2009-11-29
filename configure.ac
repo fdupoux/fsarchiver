@@ -99,13 +99,6 @@ AC_CHECK_HEADERS(ext2fs/ext2fs.h blkid/blkid.h e2p/e2p.h)
 
 dnl PKG_CHECK_MODULES([e2fsprogs], [ext2fs >= 1.39])
 
-if mke2fs -V >/dev/null 2>&1
-then
-	AC_MSG_RESULT([checking for mke2fs... yes])
-else
-	AC_MSG_ERROR([mke2fs not found, please install e2fsprogs-1.39 or newer])
-fi
-
 dnl Check for header files installed with a library
 AC_CHECK_HEADER([attr/xattr.h],, [AC_MSG_ERROR([attr/xattr.h not found. you may have to install a package called attr, libattr, libattr-devel])])
 
