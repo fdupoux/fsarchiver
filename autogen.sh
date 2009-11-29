@@ -1,8 +1,3 @@
 #!/bin/sh
-echo "Running aclocal..."
-aclocal
-echo "Running autoconf..."
-autoconf
-echo "Running automake..."
-automake --add-missing --copy --force-missing
+autoreconf -vfi
 echo "Done."
