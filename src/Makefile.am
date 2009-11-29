@@ -10,7 +10,8 @@ noinst_HEADERS		= queue.h common.h comp_gzip.h dico.h fsarchiver.h \
 	fs_ext2.h fs_reiser4.h fs_xfs.h filesys.h thread_archio.h uuid.h archive.h \
 	comp_bzip2.h create.h extract.h  fs_btrfs.h fs_jfs.h fs_reiserfs.h md5.h \
 	thread_comp.h types.h archinfo.h writebuf.h error.h syncthread.h \
-	crypto.h  dichl.h  fs_ntfs.h showpart.h strlist.h regmulti.h
+	crypto.h  dichl.h  fs_ntfs.h showpart.h strlist.h regmulti.h comp_lzma.h \
+	comp_lzo.h
 
 fsarchiver_LDADD	= -lpthread -lrt
 fsarchiver_CFLAGS	= @CFLAGS@ -Wall -std=gnu99 -rdynamic -ggdb
