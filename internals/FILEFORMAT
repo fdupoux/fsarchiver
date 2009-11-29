@@ -1,0 +1,179 @@
+=====================================================================
+fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
+=====================================================================
+
+About the file format
+---------------------
+The file format is made of two sort of structures: headers and 
+data-blocks. The headers are all a dictionnary where the key is an
+integer. That way we can add new things in headers in next versions
+without having to break the file format.
+
+Global archive layout
+---------------------
+1) All fsarchiver archives are made of one or multiple volumes. Each
+   volume starts with an FSA_MAGIC_VOLH header and terminates with a
+   FSA_MAGIC_VOLF header. These headers are used to determine that the
+   archive is the fsarchiver format, and which volume it is. 
+2) The beginning of the archive (which is always at the beginning of
+   the first volume) contains an archive header (FSA_MAGIC_MAIN)
+   where se store information such as the archive creation date. Then
+   we write all the filesystem information header (FSA_MAGIC_FSIN).
+   It stores things such as the filesystem type (ext3, reiserfs, ...),
+   and all its attributes (label, uuid, space used, ...). Some of these
+   attributes are specific to a particular filesystem. For instance, it
+   saves the compatibility flags of ext2/ext3/ext4 filesystem so that 
+   fsarchiver can recreates a filesystem with the same properties.
+3) Then the archive contains all the filesystems contents: 
+   there is an header that marks the beginning of a filesystem data
+   (FSA_MAGIC_FSYB) and another header is used to mark its end 
+   (FSA_MAGIC_DATF). The filesystem contents is a list of object
+   headers (FSA_MAGIC_OBJT) and data-blocks.
+4) The archive splitting mechanism will never split the archive in the
+   middle of an archive or datablock. An in-memory structure called
+   s_writebuf has been created to store all the data which are written
+   to the archive. All the bytes that are part of an header / block
+   are first accumulated in a s_writebuf. When it's ready, it's passed
+   to the write-to-archive function in charge of the file splitting.
+   That way an s_writebuf is like an atomic item that cannot be splitted.
+   The consequence it that it's not possible to respect exactly the
+   volume size specified by the user, it will always be a bit smaller.
+
+About regular files management
+------------------------------
+Creating a normal tar.gz file is like compressing a tar file. It 
+means if there is a corruption in the tar.gz file, we can't ungzip
+it and then we can untar it. Just a single corruption in one byte
+at the beginning of the file make it unreadable.
+
+For this reason fsarchiver is working the other way. It's like
+a gz.tar: we archive files that have already been compressed before.
+It provides a better safety for your data: if one byte if corrupt, 
+we just ignore the current file and we can extract the next one.
+
+There is a problem with that: in case there are a lot of small files,
+like in the linux-sources-2.6, we compress each small files in a
+single data block of only few KB, which produces a bad compression
+ratio compared to compression of a big tar archive of all the small
+files.
+
+For that reason, all the small files are processed in a different
+way in fsarchiver-0.4.4 and later: it creates a set of small files
+that can fit in a single data block (256KB by default) and then
+it compresses a block which is quite big compared to the size of 
+a single file.
+
+There is a threshold which is used to know whether a regular file
+will be considered as a small file (sharing a data block with other
+small files) or if it will be considered as a normal/big one having
+its own data blocks. This threshold depends of the size of a data
+block, which depends itself on the algirithm choosen to compress
+the data. In general, a data block is 256KB (it can be bigger)
+and the threshold will be 256KB/4 = 64KB. Empty files (size=0) are
+saved in a single regular file (as large files) and they have no 
+footer (there is no need to have an md5 checksum for empty files)
+
+How files are stored in the archive
+-----------------------------------
+There are many sort of objects in a filesystem:
+1) special files (symbolic links, hard links, directories, ...)
+   all these files just have one header in the archive. It contains
+   all their attributes (name, permissions, xattr, time stats, ...)
+2) normal/big regular files (bigger than the threshold) [REGFILE ]
+   these files have their header first (FSA_MAGIC_OBJT) with the
+   file attributes, and then one or several data blocks (depending
+   on how big the file is), and then a file footer (FSA_MAGIC_FILF)
+   with the md5sum of the contents for files which are not empty. 
+   The md5sum can't be written in the object header (before the 
+   data blocks) because it would require to read the file twice: 
+   first pass to compute the checksum, and a second pass to copy 
+   the contents the data blocks. (think about a very large file, 
+   say 5GB, which is written to an fsa archive which is split into 
+   small volumes, say 100MB)
+3) small regular files (smaller than the threshold)  [REGFILEM]
+   small files are written to the archive when we have a full set of
+   small files, or at the end of the savefs/savedir operation. 
+   during the savefs, all the small files are stored in a structure
+   called s_regmulti. When this structure is full, it's copied to
+   the archive and a new one is created. So we end up with the
+   following data in the archive: we first write one object header 
+   (FSA_MAGIC_OBJT) for each small file in the s_regmulti. This 
+   headers contains extra keys (not found in object-header for normal
+   files): DISKITEMKEY_MD5SUM, DISKITEMKEY_MULTIFILESCOUNT, 
+   DISKITEMKEY_MULTIFILESOFFSET. It's the md5sum for the file (we
+   can compute it before it's written to disk because the files are
+   quite small, and it saves an extra FSA_MAGIC_FILF footer), the 
+   number of small-files to expect in the current set (used at the
+   extraction to know what read), and the offset of the data
+   for the current file in the shrared data block. After the individual
+   small-files headers, we write a single shared data-block (which is
+   compressed and may be encrypted as any other data block). There
+   is no header/footer after the shared data lock in the archive.
+
+About datablocks
+----------------
+Each data block which is written to the archive has its own header
+(FSA_MAGIC_BLKH). This header stores block attributes: original
+block size, compressed size, compression algorithm used, 
+encryption algorithm used, offset of the first byte in the file, ...
+When both compression and encryption are used, the compression is
+done first. It's more efficient to process that way because the
+encryption algorithm will have less things to do because the 
+compressed block is smaller. When the compression makes a block
+bigger than the original one, fsarchiver automatically ignores
+the compressed version and keeps the uncompressed block.
+
+About endianess
+---------------
+fsarchiver should be endianess safe. All the integers are converted
+to little-endian before they are written to the disk. So it's
+neutral on intel platforms, and it requires a conversion on all the
+big-endian platforms. The only things that have to be converted are
+the integers which are part of the headers. These conversions don't
+pollute the source code since they are all converted in the functions
+that manage the headers: write-header-to-disk and read-header-from-disk
+functions. All the higer level functions in the code just have to
+add a number to the header, they don't have to worry about endianess.
+
+About headers
+-------------
+All the information which is not the files contents itself (meta-data)
+are stored in a generic management system called headers. It's not just
+a normal C structure which is written to disk. A specific object 
+oriented mechanism has been written for that. The headers are quite
+high-level data structures that are reused a lot in the sources. They
+provide endianess management, checksumming, and extensibility. Since 
+the data are stored as a dictinnary, where the keys are 16bit integers,
+it will be possible to extend the headers in the future by adding new
+keys to add new information in the next versions. These headers are 
+just implemented as s_dico in the program, and the magic and checksum
+are added when we write it to the archive file.
+Here is how an header is stored in an archive:
+- 32bit magic string used to identify the type of header it is
+- 32bit archive id (random number generated suring the savefs / savedir)
+- 16bit filesystem id (which filesystem of the archive it belongs to)
+- dictionary with its own internal data (length, 32bit checksum, ...)
+The random 32bit archive id is used to make sure the program won't
+be disturbed by nested archive in case the archive is corrupt. When an
+archive is corrupt, we can skip data and search for the next header
+using the known magic strings. In case we have nested archives, we 
+could find the magic string that belongs to a nested archive. It won't
+be used since we also compare the random 32bit archive id, and the id
+of the nested archive header will be different so the program will know
+that it has to ignore that header and continue to search.
+
+About checksumming
+------------------
+Almost everything in the archive is checksummed to make sure the program
+will never silently restore corrupt data. The headers that contains all 
+the meta-data (file names, permissions, attributes, ...) are checksummed
+using a 32bit fletcher32 checksum. The files contents are written in 
+the archive as blocks of few hundreds kilo-bytes. Each block is compressed
+(except if the compression makes the block bigger) and it may also be
+encrypted (if the user provided a password). Each block also has its own 
+32bit fletcher32 checksum. All the files where size>0 also have an 
+individual md5 checksum that makes sure the whole file is exactly the 
+same as the original one (the blocks are checksummed but it allows to 
+make sure we did not drop one of the block of a file for instance). 
+Because of the md5 checksum, we can be sure that the program is aware 
+of the corruption if it happens.

@@ -1,0 +1,124 @@
+.TH FSARCHIVER 8 "25 September 2009"
+.SH NAME
+fsarchiver \- filesystem archiver
+.SH SYNOPSIS
+.B fsarchiver [
+.I options
+.B ] savefs
+.I archive
+.I filesystem
+.B ...
+.PP
+.B fsarchiver [
+.I options
+.B ] restfs
+.I archive
+.BI id= n ,dest= filesystem [,mkfs= fstype ]
+.B ...
+.PP
+.B fsarchiver [
+.I options
+.B ] savedir
+.I archive
+.I directory
+.B ...
+.PP
+.B fsarchiver [
+.I options
+.B ] restdir
+.I archive destination
+.PP
+.B fsarchiver [
+.I options
+.B ] archinfo
+.I archive
+.PP
+.B fsarchiver [
+.I options
+.B ] probe simple | detailed
+.SH COMMANDS
+.TP
+.B savefs
+Save
+.I filesystems
+to
+.IR archive .
+.TP
+.B restfs
+Restore filesystems from
+.IR archive .
+This overwrites the existing data on
+.IR filesystems .
+Zero-based index
+.I n
+indicates the part of the archive to restore.
+Optionally, a filesystem may be converted to
+.IR fstype .
+.TP
+.B savedir
+Save
+.I directories
+to
+.I archive
+(similar to a compressed tarball).
+.TP
+.B restdir
+Restore data from 
+.I archive
+which is not based on a filesystem to
+.IR destination .
+.TP
+.B archinfo
+Show information about an existing
+.I archive
+file and its contents.
+.TP
+.B probe
+Show list of filesystems detected on the disks.
+.SH OPTIONS
+.TP
+.B -o
+Overwrite the archive if it already exists
+.TP
+.B -v
+Verbose mode (can be used several times to increase the level of details).
+.TP
+.B -d
+Debug mode (can be used several times to increase the level of details).
+.TP
+.B -A
+Allow to save a filesystem which is mounted in read-write (live backup).
+.TP
+.B -a
+Allow to run savefs when partition is mounted without the acl/xattr options.
+.TP
+.BI "-z " level
+Valid compression levels are between 1 (very fast) and 9 (very good).
+.TP
+.BI "-s " mbsize
+Split the archive into several files of
+.I mbsize
+megabytes each.
+.TP
+.BI "-j " count
+Create more than one compression thread. Useful on multi-core CPUs.
+.\" Uncomment the following if you enable SSL support
+.\".TP
+.\".BI "-c " password
+.\"Encrypt/decrypt data in archive. Password length: 6 to 64 chars.
+.TP
+.B -h
+Show help and information about how to use fsarchiver with examples.
+.TP
+.B -V
+Show program version and exit.
+.SH WARNING
+.B fsarchiver
+is still in development, don't use it for critical data yet.
+.SH AUTHOR
+.B fsarchiver
+was written by Francois Dupoux.
+.PP
+The project webpage is at http://www.fsarchiver.org/
+.PP
+This manpage was written by Ilya Barygin.

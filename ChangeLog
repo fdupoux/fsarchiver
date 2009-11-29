@@ -1,0 +1,180 @@
+fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
+=====================================================================
+* 0.6.1 (2009-10-04):
+	- New encryption implementation was not thread-safe (broken when option -j was used)
+	- Dropped openssl support (this code was disabled in fsarchiver-0.6.0 anyway)
+* 0.6.0 (2009-09-27):
+	- Debianized fsarchiver (added the debian directory necessary to build the debian package)
+	- Rewrote the encryption support using libgcrypt instead of openssl (fix licensing issues)
+	- Added the manpage written by Ilya Barygin (it will be installed by "make install")
+* 0.5.9 (2009-08-29):
+	- Fixed 'fsarchiver probe' which ignored /dev/dm-0 (first device mapper disk)
+	- It now displays NTFS uuids in the archive information ("fsarchive archinfo archive.fsa")
+	- Support for "system.ntfs_times" attribute supported by ntfs-3g >= 2009.4.4AR.17
+	- Support for "system.ntfs_dos_name" attribute supported by ntfs-3g >= 2009.4.4AR.17
+	- Support for "user.ntfs.efsinfo" attribute which allows to copy and restore encrypted files
+	- Improved detection for ntfs-3g-AR and print a more explicit message if inappropriate version found
+	- Added info about the minimum fsarchiver version required in the archive to allow doing checks at restfs
+	- Added FSYSHEADKEY_MOUNTINFO in the fsheader to allow changing the ntfs-3g streams_interface in the future
+* 0.5.8 (2009-07-12):
+	- Preserve UUID with ntfs filesystems (64bit number written in boot sector at offset 0x48)
+	- Fixed "fsarchiver probe": partitions having a 0 at the end of their number were ignored
+	- Added distributions support files in the sources (ebuild script for gentoo, spec for rpm)
+	- Using md5.c from coreutils-6.9 to avoid a licensing issue (this one is under GPL-v2)
+* 0.5.7 (2009-06-01):
+	- Added detection of partitions with no known filesystem in "fsarchive probe"
+* 0.5.6 (2009-05-19):
+	- Fixed execution of command having an argument with spaces (restfs was broken when the fs label had spaces)
+	- Better error message when attempting to save an ntfs filesystem which is already mounted with ntfs-3g
+* 0.5.5 (2009-05-15):
+	- Fixed segfault when the decompression function fail
+	- Fixed decompression problems with lzma due to memory limit to low
+* 0.5.4 (2009-05-07):
+	- Fixed problems in the management of SIGINT when the Ctrl+C is pressed to abort
+	- Fixed warning about xattr attributes being too large when the size returned is -1
+	- Bug fix: fuse filesystem were not unmounted correctly after a fatal error
+* 0.5.3 (2009-05-04):
+	- Support for extended attributes up to 64k (the size was limited to 1024 bytes)
+	- The file header is only copied if open64() is successful (prevents header with no data)
+	- Management of files which are truncated during a live-backup (padding with zeros)
+	- Test to make sure it cannot archive the archive itself during a live-backup
+	- Improved error management when there are problems on files or attributes in create.c
+* 0.5.2 (2009-04-27):
+	- Copy the contents of /dev/ during a live-backup (option -A used) else /dev/console missing at reboot
+	- Bug fix: archive corruption when a file attribute was empty (eg: "user.encryptable" on ntfs may be empty)
+* 0.5.1 (2009-04-19):
+	- Option -o (overwrite) was broken when the archive already exists (introduced in 0.5.0)
+	- Better management of errors (no space left on device) when an archive is extracted
+	- Fixed errors in fsaprintf arguments thanks to __attribute__ ((format (printf, x, y)));
+	- Print statistics about success and errors at the end of an operation
+* 0.5.0 (2009-04-18):
+	- Final archive file format is now used (it's compatible with fsarchiver >= 0.4.4)
+	- Bug fix: archive extraction was hanging when there was an early error (incorrect command line)
+* 0.4.8 (2009-04-14):
+	- Fixed compilation errors when fsarchiver is configured with --disable-crypto
+	- Fixed problems when attributes stored in dico are empty
+* 0.4.7 (2009-03-29):
+	- The mount-points directories are now archived during a live-backup (important for /dev, /proc, /sys)
+	- Better management of corrupt archive files: allow to continue the restoration on the next valid file found
+	- Bug fix: Ignore devices that are cached by blkid in "fsarchive probe" (cdrom devices that do not exist were shown)
+	- Bug fix: "fsarchiver probe" detected ext4 filesystem as ext3 when libblkid < 1.41 (it's part of e2fsprogs)
+	- Bug fix: Fixed minor memory leak in "fsarchiver probe" by calling blkid_put_cache() to free the dynamic memory
+	- Bug fix: Fixed memory error (invalid free) when a corrupt data block is found in the archive (bad checksum)
+	- Bug fix: Show and error message and exit instead of waiting when the required fstools are not installed
+	- Bug fix: fixed potential crash in thread_comp when aborting a restoration process because of an error
+* 0.4.6 (2009-03-24):
+	- Bug fix: fixed various memory leaks reported by valgrind (dictionaries structures were sometimes not freed)
+	- Internal changes: replaced most "struct" with "typedef struct", refactoring code in create.c
+* 0.4.5 (2009-03-15):
+	- Bug fix: empty files must not be copied with small files, and there is no need to write the checksum
+	- Bug fix: commands with big output were blocking until the pipe was read which was never done (thanks to Setsuna)
+	- Bug fix: show all the restored files at restfs including the small files which are compressed in a single block
+* 0.4.4 (2009-03-01):
+	- Added optimized management of small files (several small files data in a single compressed block)
+	- Bug fix: only umount the partitions that have been mounted by fsarchiver at the end of an operation
+	- Option '-a' allows users to run savefs on a mounted partition when the mount options for acl/xattr are not used
+	- Improved the documentation about fsarchiver internals in the sources (about multithreading and the fileformat)
+* 0.4.3 (2009-02-22):
+	- Check the mount options are ok for xattr and acl if the partition is already mounted
+	- Mount original filesystems with options noatime,nodiratime to optimize the speed
+	- Fixed detection of xfs filesystem (broken by a change in 0.4.1)
+* 0.4.2 (2009-02-15):
+	- Rewrote the management of ext{2,3,4} filesystem features
+	- Fixed compilation errors on rhel-5.x and fedora-11-alpha
+	- Improved filesystems detection
+* 0.4.1 (2009-02-01):
+	- Added a new command: "probe" that shows the list of filesystems found on the disks
+* 0.4.0 (2009-01-31):
+	- Added support for ntfs filesystems (ability to clone Windows partitions)
+	- Changed the internal format used in the headers (added u8 type to items)
+* 0.3.7 (2009-01-25):
+	- Fixed broken "restdir" (bug introduced in fsarchiver-0.3.6)
+	- Changed types of the integers used in the archive to optimize the space used by headers
+* 0.3.6 (2009-01-25):
+	- Introduced more flexibility in the compression levels (there are now 9 compression levels)
+	- Optimized the way and archive is read when we don't want to restore all of its filesystems
+	- The help screen now shows which optional features have been enabled at compilation time
+	- Added support for encryption using openssl and blowfish. it can be disabled at compilation
+	- Added an objectid to each filesystem object (file, link, directory, ...) and write it in archive
+* 0.3.5 (2009-01-21):
+	- Fixed buffer overflow due to bad usage of strnlen (n is not the size of the destination buffer)
+	- Removed unnecessary header file inclusion (uuid/uuid.h)
+	- Added checks in ./configure to make sure attr/xattr.h is installed
+	- Thanks to Clive for all these bug reports and investigations about it
+* 0.3.4 (2009-01-20):
+	- Grew a string buffer that was too short for long commands (thanks to Clive)
+	- Workaround for an e2fsprogs bug in version up to 1.41.3 (tune2fs does not update the checksum on ext4)
+	- Added support for lzo compression (very fast but not very efficient algorithm)
+* 0.3.3 (2009-01-18):
+	- Improved management of messages printed in the console or in the logfile
+	- Fixed a critical bug in the archive creation that corrupts header-checksum in the archive
+* 0.3.2 (2009-01-18):
+	- Made the queue management and the thread synchronization simpler to remove complex cases
+	- Preservation of the btrfs filesystem attributes (label, sector-size) based on btrfs-0.18
+	- Documented fsarchiver multi-threading internals in the text files that comes with sources
+* 0.3.1 (2009-01-16):
+	- Fixed deadlocks in the queue management and improved synchronization using "end of queue" marker
+* 0.3.0 (2009-01-11):
+	- Support for archive splitting into several files of a fixed size (option -s)
+* 0.2.11 (2009-01-10):
+	- Internal: improved the organization of the modules (invisible change)
+	- Improved threads synchronization
+* 0.2.10 (2009-01-10):
+	- Removed several memory leaks in the queue management and in the dico management
+	- Fixed possible crash at the end of "savedir"
+* 0.2.9 (2009-01-08):
+	- Ability to add/extract normal directories as we do with tar instead of the entire filesystem
+	- Removed warning that may be printed when the lzma compression is used even when it works
+* 0.2.8 (2009-01-06):
+	- Ability to disable support for LZMA compression in ./configure (useful if you don't have liblzma)
+	- Simplified the code related to the management of the queue, and big code cleanup
+	- Optimized the memory management to require less memory
+* 0.2.7 (2009-01-04):
+	- Support for LZMA compression (slow but very good) using xz-4.999.7beta.tar.gz
+* 0.2.6 (2009-01-04):
+	- Optimized multi-threading using pthread_cond_timedwait() instead of usleep()
+* 0.2.5 (2009-01-03):
+	- Support multiple filesystems per archive (changed the syntax of 'restfs')
+	- Added command 'archinfo' to display information about an archive
+	- Replace option -F (to restore as a different filesystem) with option "mkfs=xxx"
+	- New syntax for restfs (see example in "fsarchive -h" for more details)
+* 0.2.4 (2009-01-01):
+	- Ported the sources to autoconf/automake
+	- Internal: replaced OBJTYPE_END with a specific end of filesystem header
+* 0.2.3 (2008-12-30):
+	- Ability to restore archives with corrupt files or blocks headers
+	- Internal: merged std-attr+ext-attr into a single dico (using sections) 
+* 0.2.2 (2008-12-29):
+	- Support for large files (files bigger than 2GB)
+	- Thanks to Setsuna for having reported problems with large files 
+* 0.2.1 (2008-12-27):
+	- Ability to restore archives with corrupt file contents 
+* 0.2.0 (2008-12-25):
+	- Support for multi-threaded compression (option -j) 
+* 0.1.9 (2008-12-23):
+	- Bug fix: it was not possible to restore an ext{2,3,4} partition if it was mounted read/write during the savefs
+	- Bug fix: opening an archive may fail in restfs for no reason
+	- Thanks to Setsuna for these bug reports 
+* 0.1.8 (2008-12-07):
+	- Preservation of the reiser4 filesystem attributes (label, uuid, block-size)
+	- Preservation of the jfs filesystem attributes (label, uuid) 
+* 0.1.7 (2008-12-07):
+	- Preservation of the xfs filesystem attributes (label, uuid, block-size) 
+* 0.1.6 (2008-12-02):
+	- Preservation of the ext2/ext3/ext4 filesystem-features and default mount-options 
+* 0.1.5 (2008-11-30):
+	- Fixed bugs related to the standard and extended attributes 
+* 0.1.4 (2008-11-28):
+	- Preservation of the reiserfs-3.x attributes (label, uuid, block-size)
+	- Fixed bugs about atime/mtime properties which could have be dropped for files 
+* 0.1.3 (2008-11-23):
+	- Preservation of the ext2/ext3 attributes (label, uuid, block-size)
+	- Added support for bzip2 compression 
+* 0.1.2 (2008-11-15):
+	- Improved checksumming (md5 per file and checksum per block)
+	- Added support for the extended attributes (aka EA, xattr) 
+* 0.1.1 (2008-11-12):
+	- Improved restoration of corrupt archives
+	- Signal handler to cleanly stop the current operation 
+* 0.1.0 (2008-11-10):
+	- First public release
