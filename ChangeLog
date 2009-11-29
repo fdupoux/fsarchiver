@@ -1,5 +1,11 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.2 (not yet released):
+	- Dynamic memory allocation for ntfs specific extended-attributes in create.c
+	- Fix related the the ntfs attributes when lgetxattr returns a negative size
+	- Saves the name of the original device where the filesystem is stored (FSYSHEADKEY_ORIGDEV)
+	- Fixed enable options in configure: "--enable-xxx" had the opposite effect (Thanks to horhe)
+	- Exit with an error if the user wants to use a compression level which is not supported (Thanks to mbiebl)
 * 0.6.1 (2009-10-04):
 	- New encryption implementation was not thread-safe (broken when option -j was used)
 	- Dropped openssl support (this code was disabled in fsarchiver-0.6.0 anyway)

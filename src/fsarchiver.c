@@ -135,6 +135,10 @@ int select_compress_options(int opt)
 			g_options.compressalgo=COMPRESS_LZO;
 			g_options.compresslevel=3;
 			break;
+#else
+		case 1: // lzo
+			errprintf("compression level %d is not available: lzo has been disabled at compilation time\n", opt);
+			return -1;
 #endif // OPTION_LZO_SUPPORT
 		case 2: // gzip fast
 			g_options.compressalgo=COMPRESS_GZIP;
@@ -174,10 +178,16 @@ int select_compress_options(int opt)
 			g_options.datablocksize=FSA_MAX_BLKSIZE;
 			g_options.compresslevel=9;
 			break;
+#else
+		case 7: // lzma
+		case 8: // lzma
+		case 9: // lzma
+			errprintf("compression level %d is not available: lzma has been disabled at compilation time\n", opt);
+			return -1;
 #endif
 		default:
 			errprintf("invalid compression level: %d\n", opt);
-			return 1;
+			return -1;
 	}
 	
 	return 0;
@@ -269,7 +279,8 @@ int main(int argc, char **argv)
 					usage(progname, false);
 					return 1;
 				}
-				select_compress_options(g_options.fsacomplevel);
+				if (select_compress_options(g_options.fsacomplevel)<0)
+					return 1;
 				break;
 			case 'c': // encryption
 #ifdef OPTION_CRYPTO_SUPPORT

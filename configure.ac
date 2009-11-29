@@ -3,12 +3,12 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([fsarchiver], 0.6.1)
-AC_DEFINE([PACKAGE_RELDATE], "2009-10-04", [Define the date of the release])
+AC_INIT([fsarchiver], 0.6.2-beta5)
+AC_DEFINE([PACKAGE_RELDATE], "2009-11-29", [Define the date of the release])
 AC_DEFINE([PACKAGE_FILEFMT], "FsArCh_001", [Define the version of the file format])
 AC_DEFINE([PACKAGE_VERSION_A], 0, [Major version number])
 AC_DEFINE([PACKAGE_VERSION_B], 6, [Medium version number])
-AC_DEFINE([PACKAGE_VERSION_C], 1, [Minor version number])
+AC_DEFINE([PACKAGE_VERSION_C], 2, [Minor version number])
 AC_DEFINE([PACKAGE_VERSION_D], 0, [Patch version number])
 
 AC_CANONICAL_HOST([])
@@ -39,49 +39,55 @@ esac
 dnl =======================================================================================
 AC_CHECKING([for libz (library and header files)])
 AC_CHECK_LIB([z], [compress], [LIBS="$LIBS -lz"],
-   AC_MSG_ERROR([*** gzip library (libz) not found (you may also have to install zlib-devel)]))
+    AC_MSG_ERROR([*** gzip library (libz) not found (you may also have to install zlib-devel)]))
 AC_CHECK_HEADERS(zlib.h)
 
 AC_CHECKING([for libbz2 (library and header files) ... ])
 AC_CHECK_LIB([bz2], [BZ2_bzBuffToBuffCompress], [LIBS="$LIBS -lbz2"],
-   AC_MSG_ERROR([*** bzip2 library (libbz2) not found or too old (you may also have to install bzip2-devel)]))
+    AC_MSG_ERROR([*** bzip2 library (libbz2) not found or too old (you may also have to install bzip2-devel)]))
 AC_CHECK_HEADERS(bzlib.h)
 
 dnl option to disable lzma support (for people who don't have xz installed)
-AC_ARG_ENABLE(lzma,
-    [  --disable-lzma          don't compile the support for lzma compression (which requires liblzma)],
-  ,
-  [AC_DEFINE([OPTION_LZMA_SUPPORT], 1, [Define to 1 to enable the support for lzma compression])
-  AC_CHECKING([for liblzma (library and header files)])
-  AC_CHECK_LIB([lzma], [lzma_easy_encoder], [LIBS="$LIBS -llzma"],
-     AC_MSG_ERROR([*** lzma library (liblzma) not found: you can either install xz-4.999.9beta.tar.gz (or newer) or disable lzma support using --disable-lzma]))
-  AC_CHECK_HEADERS(lzma.h)
-  ]
-)
+AC_ARG_ENABLE([lzma],
+    [AS_HELP_STRING([--disable-lzma], [don't compile the support for lzma compression (which requires liblzma)])],
+    [enable_lzma=$enableval],
+    [enable_lzma=yes])
+if test "x$enable_lzma" = "xyes"
+then
+    AC_DEFINE([OPTION_LZMA_SUPPORT], 1, [Define to 1 to enable the support for lzma compression])
+    AC_CHECKING([for liblzma (library and header files)])
+    AC_CHECK_LIB([lzma], [lzma_easy_encoder], [LIBS="$LIBS -llzma"],
+        AC_MSG_ERROR([*** lzma library (liblzma) not found: you can either install xz-4.999.9beta.tar.gz (or newer) or disable lzma support using --disable-lzma]))
+    AC_CHECK_HEADERS(lzma.h)
+fi
 
 dnl option to disable lzo support (for people who don't have liblzo2 installed)
-AC_ARG_ENABLE(lzo,
-    [  --disable-lzo           don't compile the support for lzo compression (which requires liblzo2)],
-  ,
-  [AC_DEFINE([OPTION_LZO_SUPPORT], 1, [Define to 1 to enable the support for lzo compression])
-  AC_CHECKING([for liblzo2 (library and header files)])
-  AC_CHECK_LIB([lzo2], [lzo1x_1_compress], [LIBS="$LIBS -llzo2"],
-     AC_MSG_ERROR([*** lzo library (liblzo2) not found: please install liblzo (you may also have to install lzo-devel) or disable lzo support using --disable-lzo]))
-  AC_CHECK_HEADERS(lzo/lzo1x.h)
-  ]
-)
+AC_ARG_ENABLE([lzo],
+    [AS_HELP_STRING([--disable-lzo], [don't compile the support for lzo compression (which requires liblzo2)])],
+    [enable_lzo=$enableval],
+    [enable_lzo=yes])
+if test "x$enable_lzo" = "xyes"
+then
+    AC_DEFINE([OPTION_LZO_SUPPORT], 1, [Define to 1 to enable the support for lzo compression])
+    AC_CHECKING([for liblzo2 (library and header files)])
+    AC_CHECK_LIB([lzo2], [lzo1x_1_compress], [LIBS="$LIBS -llzo2"],
+        AC_MSG_ERROR([*** lzo library (liblzo2) not found: please install liblzo (you may also have to install lzo-devel) or disable lzo support using --disable-lzo]))
+    AC_CHECK_HEADERS(lzo/lzo1x.h)
+fi
 
 dnl option to disable crypto support (for people who don't have libgcrypt installed)
-AC_ARG_ENABLE(crypto,
-    [  --disable-crypto        don't compile the support for encryption (which requires libgcrypt)],
-  ,
-  [AC_DEFINE([OPTION_CRYPTO_SUPPORT], 1, [Define to 1 to enable the support for archive encryption using libgcrypt])
-  AC_CHECKING([for libgcrypt (library and header files)])
-  AC_CHECK_LIB([gcrypt], [gcry_cipher_encrypt], [LIBS="$LIBS -lgcrypt -lgpg-error"],
-     AC_MSG_ERROR([*** libgcrypt not found: you can either install libgcrypt (and the development libgcrypt package) or disable the support for encryption using --disable-crypto]))
-  AC_CHECK_HEADERS(gcrypt.h)
-  ]
-)
+AC_ARG_ENABLE([crypto],
+    [AS_HELP_STRING([--disable-crypto], [don't compile the support for encryption (which requires libgcrypt)])],
+    [enable_crypto=$enableval],
+    [enable_crypto=yes])
+if test "x$enable_crypto" = "xyes"
+then
+    AC_DEFINE([OPTION_CRYPTO_SUPPORT], 1, [Define to 1 to enable the support for archive encryption using libgcrypt])
+    AC_CHECKING([for libgcrypt (library and header files)])
+    AC_CHECK_LIB([gcrypt], [gcry_cipher_encrypt], [LIBS="$LIBS -lgcrypt -lgpg-error"],
+        AC_MSG_ERROR([*** libgcrypt not found: you can either install libgcrypt or disable the support for encryption using --disable-crypto]))
+    AC_CHECK_HEADERS(gcrypt.h)
+fi
 
 dnl check e2fsprogs and its libs
 AC_CHECKING([for e2fsprogs-1.39 or newer])

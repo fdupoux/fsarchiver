@@ -297,7 +297,7 @@ int createar_item_xattr(csavear *save, char *root, char *relpath, struct stat64 
 int createar_item_winattr(csavear *save, char *root, char *relpath, struct stat64 *statbuf, cdico *d)
 {
 	char fullpath[PATH_MAX];
-	char value[65535];
+	char *valbuf=NULL;
 	int valsize=0;
 	s64 attrsize;
 	u64 attrcnt;
@@ -315,34 +315,56 @@ int createar_item_winattr(csavear *save, char *root, char *relpath, struct stat6
 		if ((strcmp(relpath, "/")==0) && (strcmp(winattr[i], "system.ntfs_dos_name")==0)) // the root inode does not require a short name
 			continue;
 		
-		memset(value, 0, sizeof(value));
-		attrsize=lgetxattr(fullpath, winattr[i], NULL, 0);
+		errno=0;
+		if ((attrsize=lgetxattr(fullpath, winattr[i], NULL, 0)) < 0) // get the size of the attribute
+		{
+			if (errno!=ENOATTR)
+			{
+				sysprintf("           winattr:lgetxattr(%s,%s): returned negative attribute size\n", relpath, winattr[i]); // output if there are any other error
+				ret=-1;
+			}
+			continue; // ignore the current xattr
+		}
 		msgprintf(MSG_VERB2, "            winattr:file=[%s], attrcnt=%d, name=[%s], size=%ld\n", relpath, (int)attrcnt, winattr[i], (long)attrsize);
-		if (attrsize>0 && attrsize>(s64)sizeof(value))
-		{	errprintf("file [%s] has an xattr [%s] with data size=%ld too big (max xattr size is 65535)\n", relpath, winattr[i], (long)attrsize);
+		if ((attrsize>0) && (attrsize>65535LL))
+		{
+			errprintf("file [%s] has an xattr [%s] with data size=%ld too big (max xattr size is 65535)\n", relpath, winattr[i], (long)attrsize);
 			ret=-1;
-			continue; // copy the next xattr
+			continue; // ignore the current xattr
 		}
 		errno=0;
-		valsize=lgetxattr(fullpath, winattr[i], value, sizeof(value));
+		if ((valbuf=malloc(attrsize+1))==NULL)
+		{
+			sysprintf("malloc(%d) failed\n", (int)(attrsize+1));
+			ret=-1;
+			continue; // ignore the current xattr
+		}
+		valsize=lgetxattr(fullpath, winattr[i], valbuf, attrsize);
 		msgprintf(MSG_VERB2, "            winattr:lgetxattr-win(%s,%s)=%d\n", relpath, winattr[i], valsize);
 		if (valsize>=0)
 		{
 			msgprintf(MSG_VERB2, "            winattr:dico_add_string(%s, winattr): key=%d, name=[%s]\n", relpath, (int)(2*attrcnt)+0, winattr[i]);
 			dico_add_string(d, DICO_OBJ_SECTION_WINATTR, (2*attrcnt)+0, winattr[i]);
 			msgprintf(MSG_VERB2, "            winattr:dico_add_string(%s, winattr): key=%d, data (size=[%d])\n", relpath, (int)(2*attrcnt)+1, valsize);
-			dico_add_data(d, DICO_OBJ_SECTION_WINATTR, (2*attrcnt)+1, value, valsize);
+			dico_add_data(d, DICO_OBJ_SECTION_WINATTR, (2*attrcnt)+1, valbuf, valsize);
+			free(valbuf);
 			attrcnt++;
 		}
 		else if (errno!=ENOATTR) // if the attribute exists and we cannot read it
 		{
 			sysprintf("            winattr:lgetxattr(%s,%s)=%d\n", relpath, winattr[i], valsize);
 			ret=-1;
-			continue; // copy the next xattr
+			free(valbuf);
+			continue; // ignore the current xattr
 		}
 		else if (errno==ENOATTR) // if the attribute does not exist
 		{
 			msgprintf(MSG_VERB2, "            winattr:lgetxattr-win(%s,%s)=-1: errno==ENOATTR\n", relpath, winattr[i]);
+			free(valbuf);
+		}
+		else
+		{
+			free(valbuf);
 		}
 	}
 	
@@ -902,6 +924,7 @@ int filesystem_mount_partition(cdico *dicofs, char *partition, char *partmnt, in
 	
 	dico_add_string(dicofs, 0, FSYSHEADKEY_FILESYSTEM, filesys[*fstype].name);
 	dico_add_string(dicofs, 0, FSYSHEADKEY_MNTPATH, partmnt);
+	dico_add_string(dicofs, 0, FSYSHEADKEY_ORIGDEV, partition);
 	dico_add_u64(dicofs, 0, FSYSHEADKEY_BYTESTOTAL, fsbytestotal);
 	dico_add_u64(dicofs, 0, FSYSHEADKEY_BYTESUSED, fsbytesused);
 	

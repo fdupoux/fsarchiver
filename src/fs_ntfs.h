@@ -25,7 +25,7 @@
 #define NTFS3GAR_MINVER_Y						2009
 #define NTFS3GAR_MINVER_M						4
 #define NTFS3GAR_MINVER_D						4
-#define NTFS3GAR_MINVER_AR						17
+#define NTFS3GAR_MINVER_AR						21
 
 struct s_ntfsinfo
 {

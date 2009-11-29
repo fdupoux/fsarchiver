@@ -83,6 +83,7 @@ int archinfo_show_fshead(cdico *dicofshead, int fsid)
 	char buffer[256];
 	char fslabel[256];
 	char fsuuid[256];
+	char fsorigdev[256];
 	
 	// init
 	memset(magic, 0, sizeof(magic));
@@ -108,8 +109,10 @@ int archinfo_show_fshead(cdico *dicofshead, int fsid)
 	}
 	
 	if (dico_get_string(dicofshead, 0, FSYSHEADKEY_FSLABEL, fslabel, sizeof(fslabel))<0)
-	{	snprintf(fslabel, sizeof(fslabel), "<none>");
-	}
+		snprintf(fslabel, sizeof(fslabel), "<none>");
+	
+	if (dico_get_string(dicofshead, 0, FSYSHEADKEY_ORIGDEV, fsorigdev, sizeof(fsorigdev))<0)
+		snprintf(fsorigdev, sizeof(fsorigdev), "<unknown>");
 	
 	// filesystem uuid: maybe an ntfs uuid or an unix uuid
 	snprintf(fsuuid, sizeof(fsuuid), "<none>");
@@ -123,6 +126,7 @@ int archinfo_show_fshead(cdico *dicofshead, int fsid)
 	msgprintf(MSG_FORCE, "Filesystem format: \t\t%s\n", fsbuf);
 	msgprintf(MSG_FORCE, "Filesystem label: \t\t%s\n", fslabel);
 	msgprintf(MSG_FORCE, "Filesystem uuid: \t\t%s\n", fsuuid);
+	msgprintf(MSG_FORCE, "Original device: \t\t%s\n", fsorigdev);
 	msgprintf(MSG_FORCE, "Original filesystem size: \t%s (%lld bytes)\n", format_size(fsbytestotal, buffer, sizeof(buffer), 'h'), (long long)fsbytestotal);
 	msgprintf(MSG_FORCE, "Space used in filesystem: \t%s (%lld bytes)\n", format_size(fsbytesused, buffer, sizeof(buffer), 'h'), (long long)fsbytesused);
 	msgprintf(MSG_FORCE, "\n");
