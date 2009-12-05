@@ -898,7 +898,6 @@ int filesystem_mount_partition(cdico *dicofs, char *partition, char *partmnt, in
 	}
 	else // partition not yet mounted
 	{
-		*mntbyfsa=true;
 		mkdir_recursive(partmnt);
 		msgprintf(MSG_DEBUG1, "partition %s is not mounted\n", partition);
 		for (*fstype=-1, i=0; (filesys[i].name) && (*fstype==-1); i++)
@@ -912,6 +911,7 @@ int filesystem_mount_partition(cdico *dicofs, char *partition, char *partmnt, in
 		{	errprintf("can't detect and mount filesystem of partition [%s], cannot continue.\n", partition);
 			return -1;
 		}
+		*mntbyfsa=true;
 	}
 	
 	// get space statistics
