@@ -40,16 +40,16 @@
 
 cfilesys filesys[]=
 {
-	{"ext2",	extfs_mount,	extfs_umount,	extfs_getinfo,		ext2_mkfs,	ext2_test,	extfs_get_reqmntopt,	false},
-	{"ext3",	extfs_mount,	extfs_umount,	extfs_getinfo,		ext3_mkfs,	ext3_test,	extfs_get_reqmntopt,	false},
-	{"ext4",	extfs_mount,	extfs_umount,	extfs_getinfo,		ext4_mkfs,	ext4_test,	extfs_get_reqmntopt,	false},
-	{"reiserfs",	reiserfs_mount,	reiserfs_umount,reiserfs_getinfo,	reiserfs_mkfs,	reiserfs_test,	reiserfs_get_reqmntopt,	false},
-	{"reiser4",	reiser4_mount, 	reiser4_umount,	reiser4_getinfo,	reiser4_mkfs,	reiser4_test,	reiser4_get_reqmntopt,	false},
-	{"btrfs",	btrfs_mount, 	btrfs_umount,	btrfs_getinfo,		btrfs_mkfs,	btrfs_test,	btrfs_get_reqmntopt,	false},
-	{"xfs",		xfs_mount, 	xfs_umount,	xfs_getinfo,		xfs_mkfs,	xfs_test,	xfs_get_reqmntopt,	false},
-	{"jfs",		jfs_mount, 	jfs_umount,	jfs_getinfo,		jfs_mkfs,	jfs_test,	jfs_get_reqmntopt,	false},
-	{"ntfs",	ntfs_mount, 	ntfs_umount,	ntfs_getinfo,		ntfs_mkfs,	ntfs_test,	ntfs_get_reqmntopt,	true},
-	{NULL,		NULL,		NULL,		NULL,			NULL,		NULL,		NULL,			false},
+	{"ext2",	extfs_mount,	extfs_umount,	extfs_getinfo,		ext2_mkfs,	ext2_test,	extfs_get_reqmntopt,	false, false},
+	{"ext3",	extfs_mount,	extfs_umount,	extfs_getinfo,		ext3_mkfs,	ext3_test,	extfs_get_reqmntopt,	false, false},
+	{"ext4",	extfs_mount,	extfs_umount,	extfs_getinfo,		ext4_mkfs,	ext4_test,	extfs_get_reqmntopt,	false, false},
+	{"reiserfs",	reiserfs_mount,	reiserfs_umount,reiserfs_getinfo,	reiserfs_mkfs,	reiserfs_test,	reiserfs_get_reqmntopt,	false, false},
+	{"reiser4",	reiser4_mount, 	reiser4_umount,	reiser4_getinfo,	reiser4_mkfs,	reiser4_test,	reiser4_get_reqmntopt,	false, false},
+	{"btrfs",	btrfs_mount, 	btrfs_umount,	btrfs_getinfo,		btrfs_mkfs,	btrfs_test,	btrfs_get_reqmntopt,	false, false},
+	{"xfs",		xfs_mount, 	xfs_umount,	xfs_getinfo,		xfs_mkfs,	xfs_test,	xfs_get_reqmntopt,	false, false},
+	{"jfs",		jfs_mount, 	jfs_umount,	jfs_getinfo,		jfs_mkfs,	jfs_test,	jfs_get_reqmntopt,	false, false},
+	{"ntfs",	ntfs_mount, 	ntfs_umount,	ntfs_getinfo,		ntfs_mkfs,	ntfs_test,	ntfs_get_reqmntopt,	true, true},
+	{NULL,		NULL,		NULL,		NULL,			NULL,		NULL,		NULL,			false, false},
 };
 
 // return the index of a filesystem in the filesystem table

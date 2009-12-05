@@ -331,6 +331,8 @@ int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpat
 	char parentdir[PATH_MAX];
 	struct timeval tv[2];
 	char buffer[PATH_MAX];
+	u64 targettype;
+	int fdtemp;
 	
 	extractar_listing_print_file(exar, objtype, relpath);
 	
@@ -342,9 +344,40 @@ int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpat
 		goto extractar_restore_obj_symlink_err;
 	}
 	
-	if (symlink(buffer, fullpath)<0)
-	{	sysprintf("symlink(%s, %s) failed\n", buffer, fullpath);
-		goto extractar_restore_obj_symlink_err;
+	// in ntfs a symlink has to be recreated as a standard file or directory (depending on what the target is)
+	if (dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_LINKTARGETTYPE, &targettype)==0)
+	{
+		switch (targettype)
+		{
+			case OBJTYPE_DIR:
+				msgprintf(MSG_DEBUG1, "LINK: mklink=[%s], target=[%s], targettype=DIR\n", relpath, buffer);
+				if (mkdir_recursive(fullpath)!=0)
+				{	errprintf("Cannot create directory for ntfs symlink: path=[%s]\n", fullpath);
+					goto extractar_restore_obj_symlink_err;
+				}
+				break;
+			case OBJTYPE_REGFILEUNIQUE:
+				msgprintf(MSG_DEBUG1, "LINK: mklink=[%s], target=[%s], targettype=REGFILE\n", relpath, buffer);
+				if ( (fdtemp=creat(fullpath, 0644)) < 0)
+				{	errprintf("Cannot create file for ntfs symlink: path=[%s]\n", fullpath);
+					goto extractar_restore_obj_symlink_err;
+				}
+				close(fdtemp);
+				break;
+			default:
+				msgprintf(MSG_DEBUG1, "LINK: mklink=[%s], target=[%s], targettype=UNKNOWN\n", relpath, buffer);
+				errprintf("Unexpected target type for ntfs symlink: path=[%s]\n", fullpath);
+				goto extractar_restore_obj_symlink_err;
+				break;			
+		}
+	}
+	else // normal symbolic link for linux filesystems
+	{
+		msgprintf(MSG_DEBUG1, "LINK: symlink=[%s], target=[%s] (normal symlink)\n", relpath, buffer);
+		if (symlink(buffer, fullpath)<0)
+		{	sysprintf("symlink(%s, %s) failed\n", buffer, fullpath);
+			goto extractar_restore_obj_symlink_err;
+		}
 	}
 	
 	if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, d)!=0)

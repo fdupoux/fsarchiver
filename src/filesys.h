@@ -35,6 +35,7 @@ typedef struct s_filesys
 	int (*test)(char *partition);
 	int (*reqmntopt)(char *partition, cstrlist *reqopt, cstrlist *badopt);
 	bool winattr;
+	bool savesymtargettype; // we have to know the type of the target to recreate a symlink on ntfs
 } cfilesys;
 
 extern cfilesys filesys[];

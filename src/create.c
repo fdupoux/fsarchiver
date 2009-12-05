@@ -373,8 +373,11 @@ int createar_item_winattr(csavear *save, char *root, char *relpath, struct stat6
 
 int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat64 *statbuf, cdico *d, int *objtype, u64 objectid)
 {
+	struct stat64 stattarget;
 	char fullpath[PATH_MAX];
 	char buffer[PATH_MAX];
+	char buffer2[PATH_MAX];
+	char directory[PATH_MAX];
 	int res;
 	
 	// init
@@ -422,6 +425,7 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
 			*objtype=OBJTYPE_DIR;
 			break;
 		case S_IFLNK:
+			// save path of the target of the symlink
 			*objtype=OBJTYPE_SYMLINK;
 			memset(buffer, 0, sizeof(buffer));
 			if ((readlink(fullpath, buffer, sizeof(buffer)))<0)
@@ -429,6 +433,29 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
 				return -1;
 			}
 			dico_add_string(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SYMLINK, buffer);
+			// save type of the target of the symlink (required to recreate ntfs symlinks)
+			if (filesys[save->fstype].savesymtargettype==true)
+			{
+				extract_dirpath(fullpath, directory, sizeof(directory));
+				concatenate_paths(buffer2, sizeof(buffer2), directory, buffer);
+				if (lstat64(buffer2, &stattarget)==0)
+				{
+					switch (stattarget.st_mode & S_IFMT)
+					{
+						case S_IFDIR:
+							dico_add_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_LINKTARGETTYPE, OBJTYPE_DIR);
+							msgprintf(MSG_DEBUG1, "LINK: link=[%s], target=[%s]=DIR\n", relpath, buffer2);
+							break;
+						case S_IFREG:
+							dico_add_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_LINKTARGETTYPE, OBJTYPE_REGFILEUNIQUE);
+							msgprintf(MSG_DEBUG1, "LINK: link=[%s], target=[%s]=REGFILE\n", relpath, buffer2);
+							break;
+						default:
+							msgprintf(MSG_DEBUG1, "LINK: link=[%s], target=[%s]=UNKNOWN\n", relpath, buffer2);
+							break;
+					}
+				}
+			}
 			break;
 		case S_IFREG:
 			if (statbuf->st_nlink>1) // there are several links to that inode: there are hard links
