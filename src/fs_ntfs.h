@@ -21,11 +21,10 @@
 #include "dico.h"
 #include "strlist.h"
 
-#define NTFS3GAR_VERSION(year, month, day, ar)	((u64)((((u64)year&0xFFFF)<<48)+(((u64)month&0xFFFF)<<32)+(((u64)day&0xFFFF)<<16)+(((u64)ar&0xFFFF)<<0)))
-#define NTFS3GAR_MINVER_Y						2009
-#define NTFS3GAR_MINVER_M						4
-#define NTFS3GAR_MINVER_D						4
-#define NTFS3GAR_MINVER_AR						21
+#define NTFS3G_VERSION(year, month, day)	((u64)((((u64)year&0xFFFF)<<48)+(((u64)month&0xFFFF)<<32)+(((u64)day&0xFFFF)<<16)))
+#define NTFS3G_MINVER_Y						2009
+#define NTFS3G_MINVER_M						11
+#define NTFS3G_MINVER_D						14
 
 struct s_ntfsinfo
 {

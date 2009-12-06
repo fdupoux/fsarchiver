@@ -201,7 +201,7 @@ int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnti
 {
 	char minversion[1024];
 	char streamif[1024];
-	int year=0, month=0, day=0, ar=0;
+	int year=0, month=0, day=0;
 	char stderrbuf[2048];
 	char command[2048];
 	char options[1024];
@@ -212,8 +212,8 @@ int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnti
 	
 	// init
 	memset(options, 0, sizeof(options));
-	snprintf(minversion, sizeof(minversion), "ntfs-3g %d.%d.%dAR.%d (advanced release)", 
-		NTFS3GAR_MINVER_Y, NTFS3GAR_MINVER_M, NTFS3GAR_MINVER_D, NTFS3GAR_MINVER_AR);
+	snprintf(minversion, sizeof(minversion), "ntfs-3g %.4d.%.2d.%.2d (standard release)", 
+		NTFS3G_MINVER_Y, NTFS3G_MINVER_M, NTFS3G_MINVER_D);
 	
 	// check that mount.ntfs-3g is available
 	if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "which mount.ntfs-3g")!=0)
@@ -225,27 +225,24 @@ int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnti
 	memset(stderrbuf, 0, sizeof(stderrbuf));
 	exec_command(command, sizeof(command), NULL, 0, stderrbuf, sizeof(stderrbuf), "mount.ntfs-3g -h");
 	
-	// check if there is the "AR" (advanced release) version of ntfs-3g
+	// check if there is a recent ntfs-3g version installed
 	result=strtok_r(stderrbuf, delims, &saveptr);
 	while (result != NULL && instver==0)
-	{	if (memcmp(result, "ntfs-3g", 7)==0)
-		{
-			sscanf(result, "ntfs-3g %d.%d.%dAR.%d", &year, &month, &day, &ar);
-			instver=NTFS3GAR_VERSION(year, month, day, ar);
-			msgprintf(MSG_VERB2, "ntfs-3g detected version: year=[%d], month=[%d], day=[%d], ar=[%d]\n", year, month, day, ar);
+	{	if (sscanf(result, "ntfs-3g %4d.%2d.%2d ", &year, &month, &day)==3)
+		{   instver=NTFS3G_VERSION(year, month, day);
+			msgprintf(MSG_VERB2, "ntfs-3g detected version: year=[%.4d], month=[%.2d], day=[%.2d]\n", year, month, day);
 		}
 		result = strtok_r(NULL, delims, &saveptr);
 	}
 	
-	if (instver < NTFS3GAR_VERSION(NTFS3GAR_MINVER_Y, NTFS3GAR_MINVER_M, NTFS3GAR_MINVER_D, NTFS3GAR_MINVER_AR))
+	if (instver < NTFS3G_VERSION(NTFS3G_MINVER_Y, NTFS3G_MINVER_M, NTFS3G_MINVER_D))
 	{
-		errprintf("fsarchiver requires %s to operate\n"
-			"The version detected was either too old or it is not the AR (Advanced Release) edition\n", minversion);
+		errprintf("fsarchiver requires %s to operate. The version detected is too old\n", minversion);
 		return -1;
 	}
 	else
 	{
-		msgprintf(MSG_VERB2, "The advanced release of ntfs-3g has been found: version is %d.%d.%dAR.%d\n", year, month, day, ar);
+		msgprintf(MSG_VERB2, "ntfs-3g has been found: version is %d.%d.%d\n", year, month, day);
 	}
 	
 	// if mntinfo is specified, check which mount option was used at savefs and use the same for consistency
@@ -266,8 +263,7 @@ int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnti
 	
 	// ---- set the advanced filesystem settings from the dico
 	if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "mount.ntfs-3g %s %s %s", options, partition, mntbuf)!=0)
-	{	errprintf("command [%s] failed, make sure a recent version \n"
-			"of the advanced release of ntfs-3g is installed\n", command);
+	{	errprintf("command [%s] failed, make sure a recent version of ntfs-3g is installed\n", command);
 		return -1;
 	}
 	
