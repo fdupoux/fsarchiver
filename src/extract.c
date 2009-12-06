@@ -326,7 +326,7 @@ int extractar_restore_attr_everything(cextractar *exar, int objtype, char *fullp
     return (res==0)?(0):(-1);
 }
 
-int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype)
+int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype, int fstype)
 {
     char parentdir[PATH_MAX];
     struct timeval tv[2];
@@ -345,7 +345,8 @@ int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpat
     }
     
     // in ntfs a symlink has to be recreated as a standard file or directory (depending on what the target is)
-    if (dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_LINKTARGETTYPE, &targettype)==0)
+    if ((dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_LINKTARGETTYPE, &targettype)==0)
+	     && (strcmp(filesys[fstype].name, "ntfs")==0))
     {
         switch (targettype)
         {
@@ -401,7 +402,7 @@ extractar_restore_obj_symlink_err:
     return 0; // non fatal error
 }
 
-int extractar_restore_obj_hardlink(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype)
+int extractar_restore_obj_hardlink(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype, int fstype)
 {
     char parentdir[PATH_MAX];
     struct timeval tv[2];
@@ -447,7 +448,7 @@ extractar_restore_obj_hardlink_err:
     return 0; // non fatal error
 }
 
-int extractar_restore_obj_devfile(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype)
+int extractar_restore_obj_devfile(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype, int fstype)
 {
     char parentdir[PATH_MAX];
     struct timeval tv[2];
@@ -488,7 +489,7 @@ extractar_restore_obj_devfile_err:
     return 0; // non fatal error
 }
 
-int extractar_restore_obj_directory(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype)
+int extractar_restore_obj_directory(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype, int fstype)
 {
     char parentdir[PATH_MAX];
     struct timeval tv[2];
@@ -521,7 +522,7 @@ extractar_restore_obj_directory_err:
     return 0; // non fatal error
 }
 
-int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *dicofirstfile, int objtype) // d = obj-header of first small file
+int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *dicofirstfile, int objtype, int fstype) // d = obj-header of first small file
 {
     char databuf[FSA_MAX_SMALLFILESIZE];
     cdico *filehead=NULL;
@@ -685,7 +686,7 @@ extractar_restore_obj_regfile_multi_err:
     return 0;
 }
 
-int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype) // large or empty files
+int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype, int fstype) // large or empty files
 {
     cdico *footerdico=NULL;
     char magic[FSA_SIZEOF_MAGIC+1];
@@ -837,7 +838,7 @@ restore_obj_regfile_unique_error:
     return 0; // error is not fatal
 }
 
-int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico *dicoattr)
+int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico *dicoattr, int fstype)
 {
     char relpath[PATH_MAX];
     char fullpath[PATH_MAX];
@@ -863,42 +864,42 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
     {
         case OBJTYPE_DIR:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_DIR, path=[%s]\n", relpath);
-            res=extractar_restore_obj_directory(exar, fullpath, relpath, destdir, dicoattr, objtype);
+            res=extractar_restore_obj_directory(exar, fullpath, relpath, destdir, dicoattr, objtype, fstype);
             break;
         case OBJTYPE_SYMLINK:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_SYMLINK, path=[%s]\n", relpath);
-            res=extractar_restore_obj_symlink(exar, fullpath, relpath, destdir, dicoattr, objtype);
+            res=extractar_restore_obj_symlink(exar, fullpath, relpath, destdir, dicoattr, objtype, fstype);
             break;
         case OBJTYPE_HARDLINK:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_HARDLINK, path=[%s]\n", relpath);
-            res=extractar_restore_obj_hardlink(exar, fullpath, relpath, destdir, dicoattr, objtype);
+            res=extractar_restore_obj_hardlink(exar, fullpath, relpath, destdir, dicoattr, objtype, fstype);
             break;
         case OBJTYPE_CHARDEV:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_CHARDEV, path=[%s]\n", relpath);
-            res=extractar_restore_obj_devfile(exar, fullpath, relpath, destdir, dicoattr, objtype);
+            res=extractar_restore_obj_devfile(exar, fullpath, relpath, destdir, dicoattr, objtype, fstype);
             break;
         case OBJTYPE_BLOCKDEV:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_BLOCKDEV, path=[%s]\n", relpath);
-            res=extractar_restore_obj_devfile(exar, fullpath, relpath, destdir, dicoattr, objtype);
+            res=extractar_restore_obj_devfile(exar, fullpath, relpath, destdir, dicoattr, objtype, fstype);
             break;
         case OBJTYPE_FIFO:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_FIFO, path=[%s]\n", relpath);
-            res=extractar_restore_obj_devfile(exar, fullpath, relpath, destdir, dicoattr, objtype);
+            res=extractar_restore_obj_devfile(exar, fullpath, relpath, destdir, dicoattr, objtype, fstype);
             break;
         case OBJTYPE_SOCKET:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_SOCKET, path=[%s]\n", relpath);
-            res=extractar_restore_obj_devfile(exar, fullpath, relpath, destdir, dicoattr, objtype);
+            res=extractar_restore_obj_devfile(exar, fullpath, relpath, destdir, dicoattr, objtype, fstype);
             break;
         case OBJTYPE_REGFILEUNIQUE:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_REGFILEUNIQUE, path=[%s]\n", relpath);
-            if ((res=extractar_restore_obj_regfile_unique(exar, fullpath, relpath, destdir, dicoattr, objtype))<0)
+            if ((res=extractar_restore_obj_regfile_unique(exar, fullpath, relpath, destdir, dicoattr, objtype, fstype))<0)
             {   msgprintf(MSG_STACK, "restore_obj_regfile_unique(%s) failed with res=%d\n", relpath, res);
                 return -1;
             }
             break;
         case OBJTYPE_REGFILEMULTI:
             msgprintf(MSG_DEBUG2, "objtype=OBJTYPE_REGFILEMULTI, path=[%s]\n", relpath);
-            if ((res=extractar_restore_obj_regfile_multi(exar, destdir, dicoattr, objtype))<0)
+            if ((res=extractar_restore_obj_regfile_multi(exar, destdir, dicoattr, objtype, fstype))<0)
             {   msgprintf(MSG_STACK, "restore_obj_regfile_multi(%s) failed with res=%d\n", relpath, res);
                 return -1;
             }
@@ -915,7 +916,7 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
     return 0;
 }
 
-int extractar_extract_read_objects(cextractar *exar, int *errors, char *destdir)
+int extractar_extract_read_objects(cextractar *exar, int *errors, char *destdir, int fstype)
 {
     char magic[FSA_SIZEOF_MAGIC+1];
     cdico *dicoattr=NULL;
@@ -963,7 +964,7 @@ int extractar_extract_read_objects(cextractar *exar, int *errors, char *destdir)
             
             if (checkfsid==exar->fsid) // if filesystem-id is correct
             {
-                if ((res=extractar_restore_object(exar, &curerr, destdir, dicoattr))!=0)
+                if ((res=extractar_restore_object(exar, &curerr, destdir, dicoattr, fstype))!=0)
                 {   msgprintf(MSG_STACK, "restore_object() failed with res=%d\n", res);
                     //dico_destroy(dicoattr);
                     return -1; // fatal error
@@ -1229,7 +1230,7 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cdico *dicocmd
         return -1;
     }
     
-    if (extractar_extract_read_objects(exar, &errors, mntbuf)!=0)
+    if (extractar_extract_read_objects(exar, &errors, mntbuf, fstype)!=0)
     {   msgprintf(MSG_STACK, "extract_read_objects(%s) failed\n", mntbuf);
         ret=-1;
         goto filesystem_extract_umount;
@@ -1444,7 +1445,7 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
             }
             
             memset(&exar.stats, 0, sizeof(exar.stats)); // init stats to zero
-            if (extractar_extract_read_objects(&exar, &errors, destdir)!=0)
+            if (extractar_extract_read_objects(&exar, &errors, destdir, 0)!=0) // TODO: get the right fstype
             {   errprintf("extract_read_objects(%s) failed\n", destdir);
                 goto do_extract_error;
             }
