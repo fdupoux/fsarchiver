@@ -58,10 +58,10 @@
 #include "crypto.h"
 
 typedef struct
-{   carchive    ai;
-    cregmulti    regmulti;
-    cdichl        *dichardlinks;
-    cstats        stats;
+{   carchive   ai;
+    cregmulti  regmulti;
+    cdichl     *dichardlinks;
+    cstats     stats;
     int        fstype;
     int        fsid;
 } csavear;
