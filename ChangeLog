@@ -8,7 +8,8 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 	- Exit with an error if the user wants to use a compression level which is not supported (Thanks to mbiebl)
 	- Fixed crash when mount fails (mntbyfsa was set to true and not clear if mount fails)
 	- Fixed code for ntfs symlinks (they have to be recreated as normal files and dirs + special attributes)
-	- Changed the requirement from ntfs3g-AR (advanced release) to ntfs3g-20091114 (standard release) for ntfs
+	- Changed the requirement from ntfs3g-AR (advanced release) to ntfs3g >= 20091114 (standard release) for ntfs
+	- Improvements and fixes in the autotools build chain files (contribution from Michael Biebl)
 * 0.6.1 (2009-10-04):
 	- New encryption implementation was not thread-safe (broken when option -j was used)
 	- Dropped openssl support (this code was disabled in fsarchiver-0.6.0 anyway)
