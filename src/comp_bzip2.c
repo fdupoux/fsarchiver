@@ -26,26 +26,26 @@
 
 int compress_block_bzip2(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level)
 {
-	unsigned int destsize=compbufsize;
-	
-	if (BZ2_bzBuffToBuffCompress((char*)compbuf, &destsize, (char*)origbuf, origsize, 9, 0, 30)!=BZ_OK)
-		return -1;
-	
-	*compsize=(u64)destsize;
-	return 0;
+    unsigned int destsize=compbufsize;
+    
+    if (BZ2_bzBuffToBuffCompress((char*)compbuf, &destsize, (char*)origbuf, origsize, 9, 0, 30)!=BZ_OK)
+        return -1;
+    
+    *compsize=(u64)destsize;
+    return 0;
 }
 
 int uncompress_block_bzip2(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsize, u8 *compbuf)
 {
-	unsigned int destsize=origbufsize;
-	int res;
-	
-	res=BZ2_bzBuffToBuffDecompress((char*)origbuf, &destsize, (char*)compbuf, compsize, 0, 0);
-	if (res!=BZ_OK)
-	{	errprintf("uncompress failed, res=%d\n", res);
-		return -1;
-	}
+    unsigned int destsize=origbufsize;
+    int res;
+    
+    res=BZ2_bzBuffToBuffDecompress((char*)origbuf, &destsize, (char*)compbuf, compsize, 0, 0);
+    if (res!=BZ_OK)
+    {   errprintf("uncompress failed, res=%d\n", res);
+        return -1;
+    }
 
-	*origsize=(u64)destsize;
-	return 0;
+    *origsize=(u64)destsize;
+    return 0;
 }

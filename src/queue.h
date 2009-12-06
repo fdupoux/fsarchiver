@@ -22,62 +22,62 @@
 
 #include "dico.h"
 
-enum	{QITEM_STATUS_NULL=0, QITEM_STATUS_TODO, QITEM_STATUS_PROGRESS, QITEM_STATUS_DONE};
-enum	{QITEM_TYPE_NULL=0, QITEM_TYPE_BLOCK, QITEM_TYPE_HEADER};
+enum    {QITEM_STATUS_NULL=0, QITEM_STATUS_TODO, QITEM_STATUS_PROGRESS, QITEM_STATUS_DONE};
+enum    {QITEM_TYPE_NULL=0, QITEM_TYPE_BLOCK, QITEM_TYPE_HEADER};
 
 typedef struct s_blockinfo // used when (type==QITEM_TYPE_BLOCK)
 {
-	char		*blkdata; // pointer to data block as it is at a particular time (compressed or uncompressed)
-	u32		blkrealsize; // size of the data in the normal state (not compressed and not crypted)
-	u64		blkoffset; // offset of the block in the normal file
-	u32		blkarcsum; // checksum of the block as it it when it's in the archive (compressed and encrypted)
-	u32		blkarsize; // size of the block as it is in the archive (compressed and encrypted)
-	u16		blkcompalgo; // algo used to compressed the block
-	u32		blkcompsize; // size of the block after compression and before encryption
-	u16		blkcryptalgo; // algo used to compressed the block
-	u16		blkfsid; // id of filesystem to which the block belongs
-	bool		blklocked; // true if locked (being processed in the compress/crypt thread)
+    char        *blkdata; // pointer to data block as it is at a particular time (compressed or uncompressed)
+    u32        blkrealsize; // size of the data in the normal state (not compressed and not crypted)
+    u64        blkoffset; // offset of the block in the normal file
+    u32        blkarcsum; // checksum of the block as it it when it's in the archive (compressed and encrypted)
+    u32        blkarsize; // size of the block as it is in the archive (compressed and encrypted)
+    u16        blkcompalgo; // algo used to compressed the block
+    u32        blkcompsize; // size of the block after compression and before encryption
+    u16        blkcryptalgo; // algo used to compressed the block
+    u16        blkfsid; // id of filesystem to which the block belongs
+    bool        blklocked; // true if locked (being processed in the compress/crypt thread)
 } cblockinfo;
 
 typedef struct s_headinfo // used when (type==QITEM_TYPE_HEADER)
 {
-	char		magic[FSA_SIZEOF_MAGIC+1]; // magic which is used to identify the type of header
-	u16		fsid; // the filesystem to which this header belongs to, or FSA_FILESYSID_NULL if global header
-	cdico		*dico;
+    char        magic[FSA_SIZEOF_MAGIC+1]; // magic which is used to identify the type of header
+    u16        fsid; // the filesystem to which this header belongs to, or FSA_FILESYSID_NULL if global header
+    cdico        *dico;
 } cheadinfo;
 
 typedef struct s_queueitem
 {
-	int 			type; // QITEM_TYPE_BLOCK or QITEM_TYPE_HEADER
-	int			status; // compressed, being-compressed, not-yet-compressed
-	s64			itemnum; // unique identifier of the item in the queue
-	struct s_queueitem	*next; // next block in the linked list
-	struct s_blockinfo	blkinfo; // used when type==QITEM_TYPE_BLOCK (for blocks only)
-	struct s_headinfo	headinfo; // used when type==QITEM_TYPE_HEADER (for headers only)
+    int             type; // QITEM_TYPE_BLOCK or QITEM_TYPE_HEADER
+    int            status; // compressed, being-compressed, not-yet-compressed
+    s64            itemnum; // unique identifier of the item in the queue
+    struct s_queueitem    *next; // next block in the linked list
+    struct s_blockinfo    blkinfo; // used when type==QITEM_TYPE_BLOCK (for blocks only)
+    struct s_headinfo    headinfo; // used when type==QITEM_TYPE_HEADER (for headers only)
 } cqueueitem;
 
 typedef struct s_queue
 {
-	struct s_queueitem	*head; // head of the queue: first item
-	pthread_mutex_t		mutex; // pthread mutex for data protection
-	pthread_cond_t		cond; // condition for pthread synchronization
-	s64			curitemnum; // unique id given to every new item (block or header)
-	u64			itemcount; // how many items there are (headers + blocks)
-	u64			blkcount; // how many blocks items there are (items where type==QITEM_TYPE_BLOCK only)
-	u64			blkmax; // how many blocks items there can be before the queue is considered as full
-	bool			endofqueue; // set to true when no more data to put in queue (like eof): reader must stop
+    struct s_queueitem    *head; // head of the queue: first item
+    pthread_mutex_t        mutex; // pthread mutex for data protection
+    pthread_cond_t        cond; // condition for pthread synchronization
+    s64            curitemnum; // unique id given to every new item (block or header)
+    u64            itemcount; // how many items there are (headers + blocks)
+    u64            blkcount; // how many blocks items there are (items where type==QITEM_TYPE_BLOCK only)
+    u64            blkmax; // how many blocks items there can be before the queue is considered as full
+    bool            endofqueue; // set to true when no more data to put in queue (like eof): reader must stop
 } cqueue;
 
 // ---- error management
 enum
-{	QERR_SUCCESS=0, // should not be used
-	QERR_FAIL=-1, // any fatal error
-	QERR_NOMEM=-2, // malloc failed, out of memory
-	QERR_INVAL=-3, // a parameter is invalid (null pointer)
-	QERR_NOTFOUND=-4, // item not found in the list
-	QERR_ENDOFQUEUE=-5, // we have reached the end of the queue
-	QERR_WRONGTYPE=-6, // the first item found in the queue is not what expected
-	QERR_CLOSED=-7 // the queue has been closed by the reader: don't write anymore
+{   QERR_SUCCESS=0, // should not be used
+    QERR_FAIL=-1, // any fatal error
+    QERR_NOMEM=-2, // malloc failed, out of memory
+    QERR_INVAL=-3, // a parameter is invalid (null pointer)
+    QERR_NOTFOUND=-4, // item not found in the list
+    QERR_ENDOFQUEUE=-5, // we have reached the end of the queue
+    QERR_WRONGTYPE=-6, // the first item found in the queue is not what expected
+    QERR_CLOSED=-7 // the queue has been closed by the reader: don't write anymore
 };
 
 char *qerr(s64 err);

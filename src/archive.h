@@ -24,23 +24,23 @@
 
 typedef struct s_archive
 {
-	int	archfd; // file descriptor of the current volume (set to -1 when closed)
-	u32	archid; // 32bit archive id for checking (random number generated at creation)
-	u64	fscount; // how many filesystems in archive (valid only if archtype=filesystems)
-	int	locked; // true if the file is locked by the open/create/close functions
-	u32	archtype; // what has been saved in the archive: filesystems or directories
-	u32	curvol; // current volume number, starts at 0, incremented when we change the volume
-	u32	compalgo; // compression algorithm which has been used to create the archive
-	u32	cryptalgo; // encryption algorithm which has been used to create the archive
-	u32	complevel; // compression level which is specific to the compression algorithm
-	u32	fsacomp; // fsa compression level given on the command line by the user
-	u64	creattime; // archive create time (number of seconds since epoch)
-	bool	createdbyfsa; // true during savefs if archive has been created/written by fsa
-	char	filefmt[FSA_MAX_FILEFMTLEN]; // file format of that archive
-	char	creatver[FSA_MAX_PROGVERLEN]; // fsa version used to create archive
-	char	label[FSA_MAX_LABELLEN]; // archive label defined by the user
-	char	basepath[PATH_MAX]; // path of the first volume of an archive
-	char	volpath[PATH_MAX]; // path of the current volume of an archive
+    int    archfd; // file descriptor of the current volume (set to -1 when closed)
+    u32    archid; // 32bit archive id for checking (random number generated at creation)
+    u64    fscount; // how many filesystems in archive (valid only if archtype=filesystems)
+    int    locked; // true if the file is locked by the open/create/close functions
+    u32    archtype; // what has been saved in the archive: filesystems or directories
+    u32    curvol; // current volume number, starts at 0, incremented when we change the volume
+    u32    compalgo; // compression algorithm which has been used to create the archive
+    u32    cryptalgo; // encryption algorithm which has been used to create the archive
+    u32    complevel; // compression level which is specific to the compression algorithm
+    u32    fsacomp; // fsa compression level given on the command line by the user
+    u64    creattime; // archive create time (number of seconds since epoch)
+    bool    createdbyfsa; // true during savefs if archive has been created/written by fsa
+    char    filefmt[FSA_MAX_FILEFMTLEN]; // file format of that archive
+    char    creatver[FSA_MAX_PROGVERLEN]; // fsa version used to create archive
+    char    label[FSA_MAX_LABELLEN]; // archive label defined by the user
+    char    basepath[PATH_MAX]; // path of the first volume of an archive
+    char    volpath[PATH_MAX]; // path of the current volume of an archive
 } carchive;
 
 int archive_init(carchive *ai);

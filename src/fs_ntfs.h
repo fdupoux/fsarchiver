@@ -21,21 +21,20 @@
 #include "dico.h"
 #include "strlist.h"
 
-#define NTFS3G_VERSION(year, month, day)	((u64)((((u64)year&0xFFFF)<<48)+(((u64)month&0xFFFF)<<32)+(((u64)day&0xFFFF)<<16)))
-#define NTFS3G_MINVER_Y						2009
-#define NTFS3G_MINVER_M						11
-#define NTFS3G_MINVER_D						14
+#define NTFS3G_VERSION(year, month, day)    ((u64)((((u64)year&0xFFFF)<<48)+(((u64)month&0xFFFF)<<32)+(((u64)day&0xFFFF)<<16)))
+#define NTFS3G_MINVER_Y                     2009
+#define NTFS3G_MINVER_M                     11
+#define NTFS3G_MINVER_D                     14
 
 struct s_ntfsinfo
-{
-	u32 bytes_per_sector;
-	u32 sectors_per_clusters;
-	u64 total_sector_count;
-	u64 lcn_of_mft_data_attrib;
-	u32 bytes_per_cluster;
-	u32 file_record_size;
-	s32 clusters_per_mft_record;
-	u64 uuid;
+{   u32 bytes_per_sector;
+    u32 sectors_per_clusters;
+    u64 total_sector_count;
+    u64 lcn_of_mft_data_attrib;
+    u32 bytes_per_cluster;
+    u32 file_record_size;
+    s32 clusters_per_mft_record;
+    u64 uuid;
 };
 
 int ntfs_mkfs(cdico *d, char *partition);

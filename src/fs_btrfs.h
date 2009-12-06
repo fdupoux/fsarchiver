@@ -41,12 +41,12 @@ int btrfs_test(char *devname);
 #define BTRFS_SUPER_INFO_OFFSET (64 * 1024)
 #define BTRFS_SUPER_INFO_SIZE 4096
 
-#define BTRFS_SUPER_MIRROR_MAX	 3
+#define BTRFS_SUPER_MIRROR_MAX     3
 #define BTRFS_SUPER_MIRROR_SHIFT 12
 
 #define BTRFS_NAME_LEN 255
 #define BTRFS_CSUM_SIZE 32
-#define BTRFS_CSUM_TYPE_CRC32	0
+#define BTRFS_CSUM_TYPE_CRC32    0
 #define BTRFS_FSID_SIZE 16
 #define BTRFS_HEADER_FLAG_WRITTEN (1 << 0)
 #define BTRFS_SYSTEM_CHUNK_ARRAY_SIZE 2048
@@ -55,58 +55,58 @@ int btrfs_test(char *devname);
 
 static inline u64 btrfs_sb_offset(int mirror)
 {
-	u64 start = 16 * 1024;
-	if (mirror)
-		return start << (BTRFS_SUPER_MIRROR_SHIFT * mirror);
-	return BTRFS_SUPER_INFO_OFFSET;
+    u64 start = 16 * 1024;
+    if (mirror)
+        return start << (BTRFS_SUPER_MIRROR_SHIFT * mirror);
+    return BTRFS_SUPER_INFO_OFFSET;
 }
 
 struct btrfs_dev_item 
 {
-	/* the internal btrfs device id */
-	__le64 devid;
+    /* the internal btrfs device id */
+    __le64 devid;
 
-	/* size of the device */
-	__le64 total_bytes;
+    /* size of the device */
+    __le64 total_bytes;
 
-	/* bytes used */
-	__le64 bytes_used;
+    /* bytes used */
+    __le64 bytes_used;
 
-	/* optimal io alignment for this device */
-	__le32 io_align;
+    /* optimal io alignment for this device */
+    __le32 io_align;
 
-	/* optimal io width for this device */
-	__le32 io_width;
+    /* optimal io width for this device */
+    __le32 io_width;
 
-	/* minimal io size for this device */
-	__le32 sector_size;
+    /* minimal io size for this device */
+    __le32 sector_size;
 
-	/* type and info about this device */
-	__le64 type;
+    /* type and info about this device */
+    __le64 type;
 
-	/* expected generation for this device */
-	__le64 generation;
+    /* expected generation for this device */
+    __le64 generation;
 
-	/*
-	 * starting byte of this partition on the device,
-	 * to allowr for stripe alignment in the future
-	 */
-	__le64 start_offset;
+    /*
+     * starting byte of this partition on the device,
+     * to allowr for stripe alignment in the future
+     */
+    __le64 start_offset;
 
-	/* grouping information for allocation decisions */
-	__le32 dev_group;
+    /* grouping information for allocation decisions */
+    __le32 dev_group;
 
-	/* seek speed 0-100 where 100 is fastest */
-	u8 seek_speed;
+    /* seek speed 0-100 where 100 is fastest */
+    u8 seek_speed;
 
-	/* bandwidth 0-100 where 100 is fastest */
-	u8 bandwidth;
+    /* bandwidth 0-100 where 100 is fastest */
+    u8 bandwidth;
 
-	/* btrfs generated uuid for this device */
-	u8 uuid[BTRFS_UUID_SIZE];
+    /* btrfs generated uuid for this device */
+    u8 uuid[BTRFS_UUID_SIZE];
 
-	/* uuid of FS who owns this device */
-	u8 fsid[BTRFS_UUID_SIZE];
+    /* uuid of FS who owns this device */
+    u8 fsid[BTRFS_UUID_SIZE];
 } __attribute__ ((__packed__));
 
 /*
@@ -115,45 +115,45 @@ struct btrfs_dev_item
  */
 struct btrfs_super_block 
 {
-	u8 csum[BTRFS_CSUM_SIZE];
-	/* the first 4 fields must match struct btrfs_header */
-	u8 fsid[BTRFS_FSID_SIZE];    /* FS specific uuid */
-	__le64 bytenr; /* this block number */
-	__le64 flags;
+    u8 csum[BTRFS_CSUM_SIZE];
+    /* the first 4 fields must match struct btrfs_header */
+    u8 fsid[BTRFS_FSID_SIZE];    /* FS specific uuid */
+    __le64 bytenr; /* this block number */
+    __le64 flags;
 
-	/* allowed to be different from the btrfs_header from here own down */
-	__le64 magic;
-	__le64 generation;
-	__le64 root;
-	__le64 chunk_root;
-	__le64 log_root;
+    /* allowed to be different from the btrfs_header from here own down */
+    __le64 magic;
+    __le64 generation;
+    __le64 root;
+    __le64 chunk_root;
+    __le64 log_root;
 
-	/* this will help find the new super based on the log root */
-	__le64 log_root_transid;
-	__le64 total_bytes;
-	__le64 bytes_used;
-	__le64 root_dir_objectid;
-	__le64 num_devices;
-	__le32 sectorsize;
-	__le32 nodesize;
-	__le32 leafsize;
-	__le32 stripesize;
-	__le32 sys_chunk_array_size;
-	__le64 chunk_root_generation;
-	__le64 compat_flags;
-	__le64 compat_ro_flags;
-	__le64 incompat_flags;
-	__le16 csum_type;
-	u8 root_level;
-	u8 chunk_root_level;
-	u8 log_root_level;
-	struct btrfs_dev_item dev_item;
+    /* this will help find the new super based on the log root */
+    __le64 log_root_transid;
+    __le64 total_bytes;
+    __le64 bytes_used;
+    __le64 root_dir_objectid;
+    __le64 num_devices;
+    __le32 sectorsize;
+    __le32 nodesize;
+    __le32 leafsize;
+    __le32 stripesize;
+    __le32 sys_chunk_array_size;
+    __le64 chunk_root_generation;
+    __le64 compat_flags;
+    __le64 compat_ro_flags;
+    __le64 incompat_flags;
+    __le16 csum_type;
+    u8 root_level;
+    u8 chunk_root_level;
+    u8 log_root_level;
+    struct btrfs_dev_item dev_item;
 
-	char label[BTRFS_LABEL_SIZE];
+    char label[BTRFS_LABEL_SIZE];
 
-	/* future expansion */
-	__le64 reserved[32];
-	u8 sys_chunk_array[BTRFS_SYSTEM_CHUNK_ARRAY_SIZE];
+    /* future expansion */
+    __le64 reserved[32];
+    u8 sys_chunk_array[BTRFS_SYSTEM_CHUNK_ARRAY_SIZE];
 } __attribute__ ((__packed__));
 
 #endif // __FS_BTRFS_H__

@@ -22,8 +22,8 @@
 
 struct s_writebuf
 {
-	char	*data;
-	u64	size;
+    char    *data;
+    u64    size;
 };
 
 struct s_writebuf *writebuf_alloc();

@@ -20,22 +20,22 @@
 
 #include <stdio.h>
 
-#define PROGVER(x, y, z)	(((u64)x)<<16)+(((u64)y)<<8)+(((u64)z)<<0)
+#define PROGVER(x, y, z)    (((u64)x)<<16)+(((u64)y)<<8)+(((u64)z)<<0)
 
 #include "dico.h"
 #include "strlist.h"
 
 typedef struct s_filesys
 {
-	char *name;
-	int (*mount)(char *partition, char *mntbuf, char *fsname, int flags, char *mntinfo);
-	int (*umount)(char *partition, char *mntbuf);
-	int (*getinfo)(cdico *d, char *devname);
-	int (*mkfs)(cdico *d, char *partition);
-	int (*test)(char *partition);
-	int (*reqmntopt)(char *partition, cstrlist *reqopt, cstrlist *badopt);
-	bool winattr;
-	bool savesymtargettype; // we have to know the type of the target to recreate a symlink on ntfs
+    char *name;
+    int (*mount)(char *partition, char *mntbuf, char *fsname, int flags, char *mntinfo);
+    int (*umount)(char *partition, char *mntbuf);
+    int (*getinfo)(cdico *d, char *devname);
+    int (*mkfs)(cdico *d, char *partition);
+    int (*test)(char *partition);
+    int (*reqmntopt)(char *partition, cstrlist *reqopt, cstrlist *badopt);
+    bool winattr;
+    bool savesymtargettype; // we have to know the type of the target to recreate a symlink on ntfs
 } cfilesys;
 
 extern cfilesys filesys[];

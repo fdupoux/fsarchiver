@@ -25,23 +25,23 @@ int partlist_showlist(bool details);
 
 struct s_blkdev
 {
-	char devname[FSA_MAX_DEVLEN];
-	char longname[FSA_MAX_DEVLEN];
-	char label[FSA_MAX_LABELLEN];
-	char uuid[FSA_MAX_UUIDLEN];
-	char fsname[FSA_MAX_FSNAMELEN];
-	char txtsize[64];
-	u64 devsize;
-	char minor[16];
-	char major[16];
-	u64 rdev;
+    char devname[FSA_MAX_DEVLEN];
+    char longname[FSA_MAX_DEVLEN];
+    char label[FSA_MAX_LABELLEN];
+    char uuid[FSA_MAX_UUIDLEN];
+    char fsname[FSA_MAX_FSNAMELEN];
+    char txtsize[64];
+    u64 devsize;
+    char minor[16];
+    char major[16];
+    u64 rdev;
 };
 
 struct s_diskinfo
 {
-	bool detailed;
-	char format[256];
-	char title[256];
+    bool detailed;
+    char format[256];
+    char title[256];
 };
 
 #endif // __SHOWPART_H__

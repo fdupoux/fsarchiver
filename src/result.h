@@ -20,12 +20,12 @@
 
 typedef struct s_result
 {
-	char	text[4096];
-	char	stack[8192];
-	int		status;
-	int		origline;
-	char	origfunction[256];
-	char	origfile[256];
+    char    text[4096];
+    char    stack[8192];
+    int        status;
+    int        origline;
+    char    origfunction[256];
+    char    origfile[256];
 } cres;
 
 #define resnew(fmt, args...) _resnew(__FILE__ , __FUNCTION__, __LINE__, fmt, ## args)

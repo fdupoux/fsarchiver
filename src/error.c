@@ -36,44 +36,44 @@
 
 int fsaprintf(int level, bool showerrno, bool showloc, const char *file, const char *fct, int line, char *format, ...)
 {
-	char buffer[8192];
-	char temp[1024];
-	bool msgscreen;
-	bool msglogfile;
-	va_list ap;
-	int res;
-	
-	// init
-	memset(buffer, 0, sizeof(buffer));
-	msgscreen=(g_options.verboselevel >= level);
-	msglogfile=(g_logfile>=0 && g_options.debuglevel >= level);
-	
-	if (msgscreen || msglogfile)
-	{
-		// 1. format errno and its meaning
-		if (showerrno)
-			strlcatf(buffer, sizeof(buffer), "[errno=%d, %s]: ", errno, strerror(errno));
-		
-		// 2. format location of the message
-		if (showloc)
-			strlcatf(buffer, sizeof(buffer), "%s#%d,%s(): ", file, line, fct);
-		
-		// 3. format text message
-		va_start(ap, format);
-		vsnprintf(temp, sizeof(temp), format, ap);
-		va_end(ap);
-		strlcat(buffer, temp, sizeof(buffer));
-		
-		// 4. show message on screen
-		if (msgscreen)
-		{	fprintf(stderr, "%s", buffer);
-			fflush(stderr);
-		}
-		
-		// 5. write message in logfile if requested
-		if (msglogfile)
-			res=write(g_logfile, buffer, strlen(buffer));
-	}
-	
-	return 0;
+    char buffer[8192];
+    char temp[1024];
+    bool msgscreen;
+    bool msglogfile;
+    va_list ap;
+    int res;
+    
+    // init
+    memset(buffer, 0, sizeof(buffer));
+    msgscreen=(g_options.verboselevel >= level);
+    msglogfile=(g_logfile>=0 && g_options.debuglevel >= level);
+    
+    if (msgscreen || msglogfile)
+    {
+        // 1. format errno and its meaning
+        if (showerrno)
+            strlcatf(buffer, sizeof(buffer), "[errno=%d, %s]: ", errno, strerror(errno));
+        
+        // 2. format location of the message
+        if (showloc)
+            strlcatf(buffer, sizeof(buffer), "%s#%d,%s(): ", file, line, fct);
+        
+        // 3. format text message
+        va_start(ap, format);
+        vsnprintf(temp, sizeof(temp), format, ap);
+        va_end(ap);
+        strlcat(buffer, temp, sizeof(buffer));
+        
+        // 4. show message on screen
+        if (msgscreen)
+        {   fprintf(stderr, "%s", buffer);
+            fflush(stderr);
+        }
+        
+        // 5. write message in logfile if requested
+        if (msglogfile)
+            res=write(g_logfile, buffer, strlen(buffer));
+    }
+    
+    return 0;
 }

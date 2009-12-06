@@ -53,13 +53,13 @@ atomic_t g_stopfillqueue={ (false) };
 atomic_t g_aborted={ (false) };
 
 void set_stopfillqueue()
-{	
-	atomic_set(&g_stopfillqueue, true);
+{   
+    atomic_set(&g_stopfillqueue, true);
 }
 
 bool get_stopfillqueue()
 {
-	return atomic_read(&g_stopfillqueue);
+    return atomic_read(&g_stopfillqueue);
 }
 
 // how many secondary threads are running (compression/decompression and archio threads)
@@ -67,46 +67,46 @@ atomic_t g_secthreads={ (0) };
 
 void inc_secthreads()
 {
-	(void)__sync_add_and_fetch(&g_secthreads.counter, 1);
+    (void)__sync_add_and_fetch(&g_secthreads.counter, 1);
 }
 
 void dec_secthreads()
 {
-	(void)__sync_sub_and_fetch(&g_secthreads.counter, 1);
+    (void)__sync_sub_and_fetch(&g_secthreads.counter, 1);
 }
 
 int get_secthreads()
 {
-	return atomic_read(&g_secthreads);
+    return atomic_read(&g_secthreads);
 }
 
 bool get_interrupted()
 {
-	return (get_abort()==true || get_stopfillqueue()==true);
+    return (get_abort()==true || get_stopfillqueue()==true);
 }
 
 // get_abort() returns true if a SIGINT/SIGTERM has been received (interrupted by the user)
 int get_abort()
 {
-	int mysigs[]={SIGINT, SIGTERM, -1};
-	sigset_t mask_set;
-	sigpending(&mask_set);
-	int i;
-	
-	if (atomic_read(&g_aborted)==true)
-		return true;
-	
-	if (sigpending(&mask_set)==0)
-	{
-		for (i=0; mysigs[i]!=-1; i++)
-		{
-			if (sigismember(&mask_set, mysigs[i]))
-			{	//msgprintf(MSG_FORCE, "get_terminate(): received signal %d\n", mysigs[i]);
-				atomic_set(&g_aborted, true);
-				return true;
-			}
-		}
-	}
-	
-	return false;
+    int mysigs[]={SIGINT, SIGTERM, -1};
+    sigset_t mask_set;
+    sigpending(&mask_set);
+    int i;
+    
+    if (atomic_read(&g_aborted)==true)
+        return true;
+    
+    if (sigpending(&mask_set)==0)
+    {
+        for (i=0; mysigs[i]!=-1; i++)
+        {
+            if (sigismember(&mask_set, mysigs[i]))
+            {   //msgprintf(MSG_FORCE, "get_terminate(): received signal %d\n", mysigs[i]);
+                atomic_set(&g_aborted, true);
+                return true;
+            }
+        }
+    }
+    
+    return false;
 }
