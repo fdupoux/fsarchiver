@@ -74,9 +74,9 @@
 
 // ------------ struct that stores the options passed on the command line ---------------------------
 typedef struct s_options
-{   bool    overwrite;
-    bool    allowsaverw;
-    bool    dontcheckmountopts;
+{   bool   overwrite;
+    bool   allowsaverw;
+    bool   dontcheckmountopts;
     int    verboselevel;
     int    debuglevel;
     int    compresslevel;
@@ -87,7 +87,8 @@ typedef struct s_options
     u64    splitsize;
     u16    encryptalgo;
     u16    fsacomplevel;
-    u8    encryptpass[FSA_MAX_PASSLEN+1];
+	char   archlabel[FSA_MAX_LABELLEN];
+    u8     encryptpass[FSA_MAX_PASSLEN+1];
 } coptions;
 
 // ------------ struct that stores the options passed on the command line ---------------------------

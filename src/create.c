@@ -1131,7 +1131,7 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     }
     
     // write archive main header
-    if (createar_write_mainhead(&save, "archive-label")!=0)
+    if (createar_write_mainhead(&save, g_options.archlabel)!=0)
     {      errprintf("archive_write_mainhead(%s) failed\n", archive);
         ret=-1;
         goto do_create_error;

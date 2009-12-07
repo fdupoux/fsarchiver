@@ -10,6 +10,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
   - Fixed code for ntfs symlinks (they have to be recreated as normal files and dirs + special attributes)
   - Changed the requirement from ntfs3g-AR (advanced release) to ntfs3g >= 20091114 (standard release) for ntfs
   - Improvements and fixes in the autotools build chain files (contribution from Michael Biebl)
+  - Added option "-L" to specify the label of the archive: it's just a comment about the contents
   - Detabified the sources: find . -iname "*.[ch]" -exec sed -i -e "s/[\t]/    /g" -e 's!{    !{   !g' {} \;
 * 0.6.1 (2009-10-04):
   - New encryption implementation was not thread-safe (broken when option -j was used)

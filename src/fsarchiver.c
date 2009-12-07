@@ -83,6 +83,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -d: debug mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -A: allow to save a filesystem which is mounted in read-write (live backup)\n");
     msgprintf(MSG_FORCE, " -a: allow to run savefs when partition mounted without the acl/xattr options\n");
+    msgprintf(MSG_FORCE, " -L <label>: set the label of the archive: it's just a comment about the contents\n");
     msgprintf(MSG_FORCE, " -z <level>: valid compression level are between 1 (very fast) and 9 (very good)\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one compression thread. useful on multi-core cpu\n");
@@ -225,6 +226,7 @@ int main(int argc, char **argv)
     g_options.compresslevel=6; // default level for gzip
     g_options.datablocksize=FSA_DEF_BLKSIZE;
     g_options.encryptalgo=ENCRYPT_NONE;
+    snprintf(g_options.archlabel, sizeof(g_options.archlabel), "<none>");
     g_options.encryptpass[0]=0;
     
     if (geteuid()!=0)
@@ -232,7 +234,7 @@ int main(int argc, char **argv)
         return 1;
     }
     
-    while ((c = getopt(argc, argv, "oaAvdz:j:hVs:c:")) != -1)
+    while ((c = getopt(argc, argv, "oaAvdz:j:hVs:c:L:")) != -1)
     {
         switch (c)
         {
@@ -295,6 +297,9 @@ int main(int argc, char **argv)
                 errprintf("support for encryption has been disabled at compilation, cannot use that option.\n");
                 return 1;
 #endif // OPTION_CRYPTO_SUPPORT
+                break;
+            case 'L': // archive label
+                snprintf(g_options.archlabel, sizeof(g_options.archlabel), "%s", optarg);
                 break;
             case 'h': // help
                 usage(progname, true);
