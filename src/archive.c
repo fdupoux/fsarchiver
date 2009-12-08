@@ -375,7 +375,9 @@ int archive_write_data(carchive *ai, void *data, u64 size)
             }
             
             u64 freebytes = statvfsbuf.f_bfree * statvfsbuf.f_bsize;
-            errprintf("Can't write archive file: space on device is %s\n", 
+            errprintf("Can't write to the archive file. Space on device is %s. \n"
+                "If the archive is being written to a FAT filesystem, you may have reached \n"
+                "the maximum filesize that it can handle (in general 2 GB)\n", 
                 format_size(freebytes, textbuf, sizeof(textbuf), 'h'));
             return -1;
         }
