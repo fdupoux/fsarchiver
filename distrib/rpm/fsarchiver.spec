@@ -1,5 +1,5 @@
 Name:		fsarchiver
-Version:	0.6.0
+Version:	0.6.2
 Release:	1%{?dist}
 Summary:	Safe and flexible file-system backup/deployment tool
 
@@ -10,14 +10,15 @@ Source0:  	http://downloads.sourceforge.net/%{name}/%{name}-%{version}.tar.gz
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:	e2fsprogs-devel => 1.41.4
+BuildRequires:	libuuid-devel
+BuildRequires:	libblkid-devel
 BuildRequires:	e2fsprogs
 BuildRequires:	libattr-devel
-BuildRequires:  libgcrypt-devel	
+BuildRequires:	libgcrypt-devel
 BuildRequires:	zlib-devel
 BuildRequires:	bzip2-devel
 BuildRequires:	lzo-devel
-# Disabled because it needs a beta release of lzma which we do not ship
-#BuildRequires:	lzma-devel
+BuildRequires:	xz-devel
 
 %description
 FSArchiver is a system tool that allows you to save the contents of a 
@@ -32,7 +33,7 @@ is corrupt, you just loose the current file, not the whole archive.
 %setup -q
 
 %build
-%configure --disable-lzma
+%configure
 make %{?_smp_mflags}
 
 
@@ -48,13 +49,36 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %{_sbindir}/%{name}
+%{_mandir}/man8/%{name}*
 %doc COPYING README THANKS NEWS
 
 %changelog
-* Sun Sep 27 2009 Francois Dupoux <fdupoux@free.fr> - 0.6.0-1
-- Update to 0.6.0 and replace openssl with libgcrypt
+* Tue Dec 08 2009 Francois Dupoux <fdupoux@free.fr> - 0.6.2-1
+- Update to 0.6.2
 
-* Sat Jul 11 2009 Francois Dupoux <fdupoux@free.fr> - 0.5.8-1
+* Sat Oct 10 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.6.1-1
+- Update to 0.6.1
+
+* Sun Sep 27 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.6.0-1
+- Update to 0.6.0
+- Fixes licensing issue (no longer links against openssl)
+
+* Thu Sep 03 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.9-1
+- Update to 0.5.9
+
+* Fri Aug 21 2009 Tomas Mraz <tmraz@redhat.com> - 0.5.8-5
+- rebuilt with new openssl
+
+* Mon Aug 17 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.8-4
+- Enable XZ support
+
+* Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.5.8-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* Sun Jul 12 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.8-2
+- BR libblkid-devel
+
+* Sun Jul 12 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.8-1
 - Update to 0.5.8
 
 * Tue May 19 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.6-1
@@ -94,4 +118,3 @@ rm -rf $RPM_BUILD_ROOT
 
 * Thu Feb 12 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.4.1-1
 - Initial package
-

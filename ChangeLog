@@ -1,6 +1,6 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
-* 0.6.2 (not yet released):
+* 0.6.2 (2009-12-08):
   - Dynamic memory allocation for ntfs specific extended-attributes in create.c
   - Fix related the the ntfs attributes when lgetxattr returns a negative size
   - Saves the name of the original device where the filesystem is stored (FSYSHEADKEY_ORIGDEV)
