@@ -83,7 +83,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -d: debug mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -A: allow to save a filesystem which is mounted in read-write (live backup)\n");
     msgprintf(MSG_FORCE, " -a: allow to run savefs when partition mounted without the acl/xattr options\n");
-    msgprintf(MSG_FORCE, " -L <label>: set the label of the archive: it's just a comment about the contents\n");
+    msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
     msgprintf(MSG_FORCE, " -z <level>: valid compression level are between 1 (very fast) and 9 (very good)\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one compression thread. useful on multi-core cpu\n");
