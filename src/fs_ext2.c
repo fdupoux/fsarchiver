@@ -141,6 +141,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
     int compat_type;
     u64 temp64;
     int ret=0;
+    int res;
     int i;
     
     // init    
@@ -282,8 +283,8 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
         // http://article.gmane.org/gmane.comp.file-systems.ext4/11181
         if (extfstype==EXTFSTYPE_EXT4 && e2fstoolsver<PROGVER(1,41,4))
         {
-            if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "e2fsck -fy %s", partition)!=0)
-            {   errprintf("command [%s] failed\n", command);
+            if ( ((res=exec_command(command, sizeof(command), NULL, 0, NULL, 0, "e2fsck -fy %s", partition))!=0) && (res!=1) )
+            {   errprintf("command [%s] failed with return status=%d\n", command, res);
                 ret=-1;
                 goto extfs_mkfs_cleanup;
             }
