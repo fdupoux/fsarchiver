@@ -52,9 +52,11 @@
 #include "crypto.h"
 
 typedef struct s_extractar
-{   carchive    ai;
+{   carchive   ai;
     int        fsid;
-    cstats        stats;
+    cstats     stats;
+    u64        cost_global;
+    u64        cost_current;
 } cextractar;
 
 // convert a string such as "id=0,dest=/dev/sda1,fs=reiserfs" to a dico
@@ -167,7 +169,17 @@ int convert_argv_to_dicos(cdico *dicoargv[], char *cmdargv[])
 
 int extractar_listing_print_file(cextractar *exar, int objtype, char *relpath)
 {
-    msgprintf(MSG_VERB1, "-[%.2d][%s] %s\n", exar->fsid, get_objtype_name(objtype), relpath);
+    char strprogress[256];
+    u64 progress;
+    
+    memset(strprogress, 0, sizeof(strprogress));
+    if (exar->cost_global>0)
+    {
+        progress=(((exar->cost_current)*100)/(exar->cost_global));
+        if (progress>=0 && progress<=100)
+            snprintf(strprogress, sizeof(strprogress), "[%3d%%]", (int)progress);
+    }
+    msgprintf(MSG_VERB1, "-[%.2d]%s[%s] %s\n", exar->fsid, strprogress, get_objtype_name(objtype), relpath);
     return 0;
 }
 
@@ -334,6 +346,8 @@ int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpat
     u64 targettype;
     int fdtemp;
     
+    // update cost statistics and progress bar
+    exar->cost_current+=FSA_COST_PER_FILE; 
     extractar_listing_print_file(exar, objtype, relpath);
     
     // backup parent dir atime/mtime
@@ -346,7 +360,7 @@ int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpat
     
     // in ntfs a symlink has to be recreated as a standard file or directory (depending on what the target is)
     if ((dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_LINKTARGETTYPE, &targettype)==0)
-	     && (strcmp(filesys[fstype].name, "ntfs")==0))
+         && (strcmp(filesys[fstype].name, "ntfs")==0))
     {
         switch (targettype)
         {
@@ -410,6 +424,8 @@ int extractar_restore_obj_hardlink(cextractar *exar, char *fullpath, char *relpa
     char regfile[PATH_MAX];
     int res;
     
+    // update cost statistics and progress bar
+    exar->cost_current+=FSA_COST_PER_FILE; 
     extractar_listing_print_file(exar, objtype, relpath);
     
     // backup parent dir atime/mtime
@@ -455,6 +471,8 @@ int extractar_restore_obj_devfile(cextractar *exar, char *fullpath, char *relpat
     u64 dev;
     u32 mode;
     
+    // update cost statistics and progress bar
+    exar->cost_current+=FSA_COST_PER_FILE; 
     extractar_listing_print_file(exar, objtype, relpath);
     
     // backup parent dir atime/mtime
@@ -494,6 +512,8 @@ int extractar_restore_obj_directory(cextractar *exar, char *fullpath, char *relp
     char parentdir[PATH_MAX];
     struct timeval tv[2];
     
+    // update cost statistics and progress bar
+    exar->cost_current+=FSA_COST_PER_FILE; 
     extractar_listing_print_file(exar, objtype, relpath);
     
     // backup parent dir atime/mtime
@@ -610,6 +630,10 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
             goto extractar_restore_obj_regfile_multi_err;
         }
         concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
+
+        // update cost statistics and progress bar
+        exar->cost_current+=FSA_COST_PER_FILE; 
+        exar->cost_current+=datsize; // filesize
         extractar_listing_print_file(exar, tmpobjtype, relpath);
         
         // backup parent dir atime/mtime
@@ -710,8 +734,6 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     memset(magic, 0, sizeof(magic));
     md5_init_ctx(&md5ctx);
     
-    extractar_listing_print_file(exar, objtype, relpath);
-    
     // backup parent dir atime/mtime
     get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
@@ -719,6 +741,11 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     {   errprintf("Cannot read filesize DISKITEMKEY_SIZE from archive for file=[%s]\n", relpath);
         goto restore_obj_regfile_unique_error;
     }
+    
+    // update cost statistics and progress bar
+    exar->cost_current+=FSA_COST_PER_FILE; 
+    exar->cost_current+=filesize;
+    extractar_listing_print_file(exar, objtype, relpath);
     
     errno=0;
     if ((fd=open64(fullpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))<0)
@@ -843,6 +870,7 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
     char relpath[PATH_MAX];
     char fullpath[PATH_MAX];
     char parentdir[PATH_MAX];
+    u64 filesize;
     u32 objtype;
     int res;
     
@@ -853,8 +881,10 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
         return -1;
     if (dico_get_u32(dicoattr, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_OBJTYPE, &objtype)!=0)
         return -2;
+    if (dico_get_u64(dicoattr, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SIZE, &filesize)!=0)
+        return -3;
     concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
-    
+        
     // ---- create parent directory first
     extract_dirpath(fullpath, parentdir, sizeof(parentdir));
     mkdir_recursive(parentdir);
@@ -1277,14 +1307,17 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     char *destdir;
     cextractar exar;
     u64 totalerr=0;
+    u64 fscost;
     int errors=0;
     int ret=0;
     int i;
     
     // init
     memset(&exar, 0, sizeof(exar));
+    exar.cost_global=0;
+    exar.cost_current=0;
     archive_init(&exar.ai);
-    
+
     // init misc data struct to zero
     for (i=0; i<FSA_MAX_FSPERARCH; i++)
         dicoargv[i]=NULL;
@@ -1322,14 +1355,14 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     for (i=0; (i<g_options.compressjobs) && (i<FSA_MAX_COMPJOBS); i++)
     {
         if (pthread_create(&thread_decomp[i], NULL, thread_decomp_fct, (void*)&exar.ai) != 0)
-        {      errprintf("pthread_create(thread_decomp_fct) failed\n");
+        {     errprintf("pthread_create(thread_decomp_fct) failed\n");
             goto do_extract_error;
         }
     }
     
     // create archive-reader thread
     if (pthread_create(&thread_reader, NULL, thread_reader_fct, (void*)&exar.ai) != 0)
-    {      errprintf("pthread_create(thread_reader_fct) failed\n");
+    {     errprintf("pthread_create(thread_reader_fct) failed\n");
         goto do_extract_error;
     }
     
@@ -1340,7 +1373,7 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     }
     
     if (oper==OPER_ARCHINFO && archinfo_show_mainhead(&exar.ai, dicomainhead)!=0)
-    {      errprintf("archinfo_show_mainhead(%s) failed\n", archive);
+    {     errprintf("archinfo_show_mainhead(%s) failed\n", archive);
         goto do_extract_error;
     }
     
@@ -1391,6 +1424,10 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
         {   errprintf("archinfo_show_fshead() failed\n");
             goto do_extract_error;
         }
+        
+        // calculate total cost of the restfs
+        if ((dicoargv[i]!=NULL) && (dico_get_u64(dicofsinfo[i], 0, FSYSHEADKEY_TOTALCOST, &fscost)==0))
+            exar.cost_global+=fscost;
     }
     
     if ((oper==OPER_RESTFS) || (oper==OPER_RESTDIR))

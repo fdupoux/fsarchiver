@@ -56,6 +56,7 @@
 #define FSA_DEF_BLKSIZE          262144
 #define FSA_MAX_SMALLFILECOUNT   512      // there can be up to FSA_MAX_SMALLFILECOUNT files copied in a single data block 
 #define FSA_MAX_SMALLFILESIZE    131072   // files smaller than that will be grouped with other small files in a single data block
+#define FSA_COST_PER_FILE        16384    // how much it cost to copy an empty file/dir/link: used to eval the progress bar
 
 #define FSA_FILESYSID_NULL       0xFFFF
 #define FSA_CHECKPASSBUF_SIZE    4096
@@ -87,7 +88,7 @@ typedef struct s_options
     u64    splitsize;
     u16    encryptalgo;
     u16    fsacomplevel;
-	char   archlabel[FSA_MAX_LABELLEN];
+    char   archlabel[FSA_MAX_LABELLEN];
     u8     encryptpass[FSA_MAX_PASSLEN+1];
 } coptions;
 
@@ -163,7 +164,7 @@ enum {FSYSHEADKEY_NULL=0, FSYSHEADKEY_FILESYSTEM, FSYSHEADKEY_MNTPATH, FSYSHEADK
       FSYSHEADKEY_FSXFSBLOCKSIZE, FSYSHEADKEY_FSBTRFSSECTORSIZE, FSYSHEADKEY_NTFSSECTORSIZE,
       FSYSHEADKEY_NTFSCLUSTERSIZE, FSYSHEADKEY_BTRFSFEATURECOMPAT, FSYSHEADKEY_BTRFSFEATUREINCOMPAT,
       FSYSHEADKEY_BTRFSFEATUREROCOMPAT, FSYSHEADKEY_NTFSUUID, FSYSHEADKEY_MINFSAVERSION,
-      FSYSHEADKEY_MOUNTINFO, FSYSHEADKEY_ORIGDEV};
+      FSYSHEADKEY_MOUNTINFO, FSYSHEADKEY_ORIGDEV, FSYSHEADKEY_TOTALCOST};
 
 enum {FSINFOKEY_NULL=0, FSINFOKEY_FSID, FSINFOKEY_DEST, FSINFOKEY_MKFS};
 

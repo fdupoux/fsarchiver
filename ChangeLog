@@ -2,6 +2,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.6.3 (not released yet):
   - Dont fail when e2fsck returns 1 in extfs_mkfs() since it means the filesystem has been fixed
+  - Displays the percentage of the operation which has been completed when verbose >= 1 (sort of progress bar)
 * 0.6.2 (2009-12-08):
   - Dynamic memory allocation for ntfs specific extended-attributes in create.c
   - Fix related the the ntfs attributes when lgetxattr returns a negative size
