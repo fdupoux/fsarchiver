@@ -23,6 +23,7 @@
 #include "config.h"
 #include "types.h"
 #include "error.h"
+#include "options.h"
 
 // ----------------------------- min and max -----------------------------
 #if !defined(min)
@@ -73,26 +74,6 @@
 #define FSA_MAGIC_FILF           "FiLf" // filedat footer (one per regfile, after the list of data blocks)
 #define FSA_MAGIC_DATF           "DaEn" // data footer (one per file system, at the end of its contents, or after the contents of the flatfiles)
 
-// ------------ struct that stores the options passed on the command line ---------------------------
-typedef struct s_options
-{   bool   overwrite;
-    bool   allowsaverw;
-    bool   dontcheckmountopts;
-    int    verboselevel;
-    int    debuglevel;
-    int    compresslevel;
-    int    compressjobs;
-    u16    compressalgo;
-    u32    datablocksize;
-    u32    smallfilethresh;
-    u64    splitsize;
-    u16    encryptalgo;
-    u16    fsacomplevel;
-    char   archlabel[FSA_MAX_LABELLEN];
-    u8     encryptpass[FSA_MAX_PASSLEN+1];
-} coptions;
-
-// ------------ struct that stores the options passed on the command line ---------------------------
 typedef struct s_stats
 {   u64    cnt_regfile;
     u64    cnt_dir;
@@ -109,7 +90,6 @@ typedef struct s_stats
 // ------------ global variables ---------------------------
 extern coptions g_options;
 extern char *valid_magic[];
-extern int g_logfile;
 
 // -------------------------------- version_number to u64 -------------------------------------------
 #define FSA_VERSION_BUILD(a, b, c, d)     ((u64)((((u64)a&0xFFFF)<<48)+(((u64)b&0xFFFF)<<32)+(((u64)c&0xFFFF)<<16)+(((u64)d&0xFFFF)<<0)))

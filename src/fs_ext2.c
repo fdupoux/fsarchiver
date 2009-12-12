@@ -33,8 +33,8 @@
 u64 e2fsprogs_minver[]={PROGVER(1,39,0), PROGVER(1,39,0), PROGVER(1,41,0)};
 
 struct mntopt
-{      unsigned int    mask;
-        const char      *string;
+{   unsigned int   mask;
+    const char     *string;
 };
 
 struct s_features

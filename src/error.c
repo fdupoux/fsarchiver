@@ -33,6 +33,7 @@
 
 #include "error.h"
 #include "common.h"
+#include "logfile.h"
 
 int fsaprintf(int level, bool showerrno, bool showloc, const char *file, const char *fct, int line, char *format, ...)
 {
@@ -41,12 +42,11 @@ int fsaprintf(int level, bool showerrno, bool showloc, const char *file, const c
     bool msgscreen;
     bool msglogfile;
     va_list ap;
-    int res;
     
     // init
     memset(buffer, 0, sizeof(buffer));
-    msgscreen=(g_options.verboselevel >= level);
-    msglogfile=(g_logfile>=0 && g_options.debuglevel >= level);
+    msgscreen=(level <= g_options.verboselevel);
+    msglogfile=(level <= g_options.debuglevel);
     
     if (msgscreen || msglogfile)
     {
@@ -72,7 +72,7 @@ int fsaprintf(int level, bool showerrno, bool showloc, const char *file, const c
         
         // 5. write message in logfile if requested
         if (msglogfile)
-            res=write(g_logfile, buffer, strlen(buffer));
+            logfile_write(buffer, strlen(buffer));
     }
     
     return 0;

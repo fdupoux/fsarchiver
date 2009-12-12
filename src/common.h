@@ -30,6 +30,7 @@ int path_force_extension(char *buf, int bufsize, char *origpath, char *ext);
 char *format_size(u64 size, char *text, int max, char units);
 int image_write_data(int fdarch, char *buffer, int buflen);
 int extract_dirpath(char *filepath, char *dirbuf, int dirbufsize);
+int extract_basename(char *filepath, char *basenamebuf, int basenamebufsize);
 int generate_random_tmpdir(char *buffer, int bufsize, int n);
 char *format_time(char *buffer, int bufsize, u64 t);
 int stream_readline(FILE *f, char *buf, int buflen);
@@ -46,5 +47,6 @@ char *strlcatf(char *dest, int destbufsize, char *format, ...) __attribute__ ((f
 int format_stacktrace(char *buffer, int bufsize);
 int stats_show(cstats stats, int fsid);
 u64 stats_errcount(cstats stats);
+int exclude_check(cstrlist *patlist, char *string);
 
 #endif // __COMMON_H__

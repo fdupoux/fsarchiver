@@ -86,7 +86,7 @@ The details will be printed to the console.
 .TP
 .B -d
 Debug mode (can be used several times to increase the level of details).
-The details will be printed to /var/log/fsarchiver.log.
+The details will be written in /var/log/fsarchiver.log.
 .TP
 .B -A
 Allow to save a filesystem which is mounted in read-write (live backup).
@@ -104,6 +104,11 @@ in such a way that the ACL and Extended-Attributes are not readable. These
 attributes would not be saved and then such attributes could be lost. If you
 know what you don't need ACL and Extended-Attributes to be preserved then
 it's safe to run fsarchiver with that option.
+.TP
+.BI "-e " pattern
+Exclude files and directories that match that pattern. The pattern can 
+contains shell asterisks such as * and ?, and the pattern may be either
+a simple file/dir name or an absolute file/dir path.
 .TP
 .BI "-L " label
 Set the label of the archive: it's just a comment about the contents. 

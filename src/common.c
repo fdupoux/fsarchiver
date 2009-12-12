@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <execinfo.h>
 #include <wordexp.h>
+#include <fnmatch.h>
 
 #include "syncthread.h"
 #include "common.h"
@@ -127,6 +128,18 @@ int extract_dirpath(char *filepath, char *dirbuf, int dirbufsize)
         dirbuf[i--]=0;
     if ((i>0) && (dirbuf[i]=='/'))
         dirbuf[i]=0;
+    return 0;
+}
+
+int extract_basename(char *filepath, char *basenamebuf, int basenamebufsize)
+{
+    int i;
+
+    for (i=0; filepath[i]; i++);
+    while ((i>0) && (filepath[i]!='/') && (filepath[i-1]!='/'))
+        i--;
+    snprintf(basenamebuf, basenamebufsize, "%s", &filepath[i]);
+
     return 0;
 }
 
@@ -520,20 +533,36 @@ int format_stacktrace(char *buffer, int bufsize)
 {
     const int stack_depth=20;
     void *temp[stack_depth];
-        char **strings;
-        int nptrs;
-        int i;
+    char **strings;
+    int nptrs;
+    int i;
     
-        // format the backtrace (advanced error info)
-        memset(buffer, 0, bufsize);
-        nptrs=backtrace(temp, stack_depth);
-        strings=backtrace_symbols(temp, nptrs);
-        if (strings!=NULL)
-        {
-                for (i = 0; i < nptrs; i++)
-                        strlcatf(buffer, bufsize, "%s\n", strings[i]);
-                free(strings);
-        }
+    // format the backtrace (advanced error info)
+    memset(buffer, 0, bufsize);
+    nptrs=backtrace(temp, stack_depth);
+    strings=backtrace_symbols(temp, nptrs);
+    if (strings!=NULL)
+    {
+        for (i = 0; i < nptrs; i++)
+            strlcatf(buffer, bufsize, "%s\n", strings[i]);
+        free(strings);
+    }
     
-        return 0;
+    return 0;
+}
+
+int exclude_check(cstrlist *patlist, char *string)
+{
+    char pattern[1024];
+    int count;
+    int i;
+    
+    count=strlist_count(patlist);
+    for (i=0; i < count; i++)
+    {
+        strlist_getitem(patlist, i, pattern, sizeof(pattern));
+        if (fnmatch(pattern, string, 0)==0)
+            return true;
+    }
+    return false;
 }

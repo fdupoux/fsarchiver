@@ -45,9 +45,8 @@
 #include "syncthread.h"
 #include "comp_lzo.h"
 #include "crypto.h"
-
-coptions g_options;
-int g_logfile=-1;
+#include "options.h"
+#include "logfile.h"
 
 char *valid_magic[]={FSA_MAGIC_MAIN, FSA_MAGIC_VOLH, FSA_MAGIC_VOLF, FSA_MAGIC_FSIN, 
     FSA_MAGIC_FSYB, FSA_MAGIC_DATF, FSA_MAGIC_OBJT, FSA_MAGIC_BLKH, FSA_MAGIC_FILF, NULL};
@@ -78,11 +77,12 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " * archinfo: show information about an existing archive file and its contents\n");
     msgprintf(MSG_FORCE, " * probe simple|detailed: show list of filesystems detected on the disks\n");
     msgprintf(MSG_FORCE, "<options>\n");
-    msgprintf(MSG_FORCE, " -o: overwrite the archive if it already exists\n");
+    msgprintf(MSG_FORCE, " -o: overwrite the archive if it already exists instead of failing\n");
     msgprintf(MSG_FORCE, " -v: verbose mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -d: debug mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -A: allow to save a filesystem which is mounted in read-write (live backup)\n");
     msgprintf(MSG_FORCE, " -a: allow to run savefs when partition mounted without the acl/xattr options\n");
+    msgprintf(MSG_FORCE, " -e <pattern>: exclude files and directories that match that pattern\n");
     msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
     msgprintf(MSG_FORCE, " -z <level>: valid compression level are between 1 (very fast) and 9 (very good)\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
@@ -127,92 +127,24 @@ void usage(char *progname, bool examples)
     }
 }
 
-int select_compress_options(int opt)
+int process_cmdline(int argc, char **argv)
 {
-    switch (opt)
-    {
-#ifdef OPTION_LZO_SUPPORT
-        case 1: // lzo
-            g_options.compressalgo=COMPRESS_LZO;
-            g_options.compresslevel=3;
-            break;
-#else
-        case 1: // lzo
-            errprintf("compression level %d is not available: lzo has been disabled at compilation time\n", opt);
-            return -1;
-#endif // OPTION_LZO_SUPPORT
-        case 2: // gzip fast
-            g_options.compressalgo=COMPRESS_GZIP;
-            g_options.compresslevel=3;
-            break;
-        case 3: // gzip standard
-            g_options.compressalgo=COMPRESS_GZIP;
-            g_options.compresslevel=6;
-            break;
-        case 4: // gzip best
-            g_options.compressalgo=COMPRESS_GZIP;
-            g_options.compresslevel=9;
-            break;
-        case 5: // bzip2 fast
-            g_options.compressalgo=COMPRESS_BZIP2;
-            g_options.datablocksize=262144;
-            g_options.compresslevel=2;
-            break;
-        case 6: // bzip2 good
-            g_options.compressalgo=COMPRESS_BZIP2;
-            g_options.datablocksize=524288;
-            g_options.compresslevel=5;
-            break;
-#ifdef OPTION_LZMA_SUPPORT
-        case 7: // lzma fast
-            g_options.compressalgo=COMPRESS_LZMA;
-            g_options.datablocksize=262144;
-            g_options.compresslevel=1;
-            break;
-        case 8: // lzma medium
-            g_options.compressalgo=COMPRESS_LZMA;
-            g_options.datablocksize=524288;
-            g_options.compresslevel=6;
-            break;
-        case 9: // lzma best
-            g_options.compressalgo=COMPRESS_LZMA;
-            g_options.datablocksize=FSA_MAX_BLKSIZE;
-            g_options.compresslevel=9;
-            break;
-#else
-        case 7: // lzma
-        case 8: // lzma
-        case 9: // lzma
-            errprintf("compression level %d is not available: lzma has been disabled at compilation time\n", opt);
-            return -1;
-#endif
-        default:
-            errprintf("invalid compression level: %d\n", opt);
-            return -1;
-    }
-    
-    return 0;
-}
-
-int main(int argc, char **argv)
-{
-    sigset_t mask_set;
     char *probemode;
+    sigset_t mask_set;
     bool probedetailed=0;
     char *command=NULL;
     char *archive=NULL;
     char *partition[32];
     char *progname;
     int fscount;
-    int ret=0;
     int argcok;
+    int ret=0;
     int cmd;
     int c;
     
     // init
-    progname=argv[0];
     memset(partition, 0, sizeof(partition));
-    memset(&g_options, 0, sizeof(coptions));
+    progname=argv[0];
     
     // set default options
     g_options.overwrite=false;
@@ -229,12 +161,7 @@ int main(int argc, char **argv)
     snprintf(g_options.archlabel, sizeof(g_options.archlabel), "<none>");
     g_options.encryptpass[0]=0;
     
-    if (geteuid()!=0)
-    {   errprintf("%s must be run as root. cannot continue.\n", progname);
-        return 1;
-    }
-    
-    while ((c = getopt(argc, argv, "oaAvdz:j:hVs:c:L:")) != -1)
+    while ((c = getopt(argc, argv, "oaAvdz:j:hVs:c:L:e:")) != -1)
     {
         switch (c)
         {
@@ -265,13 +192,16 @@ int main(int argc, char **argv)
                     return 1;
                 }
                 break;
+            case 'e': // exclude files/directories
+                strlist_add(&g_options.exclude, optarg);
+                break;
             case 's': // split archive into several volumes
                 g_options.splitsize=atol(optarg)*1024*1024;
                 if (g_options.splitsize==0)
                 {
                     errprintf("argument of option -s is invalid (%s). It must be a valid integer\n", optarg);
                     usage(progname, false);
-                    return 1;
+                    return -1;
                 }
                 break;
             case 'z': // compression level
@@ -279,10 +209,10 @@ int main(int argc, char **argv)
                 if (g_options.fsacomplevel<1 || g_options.fsacomplevel>9)
                 {   errprintf("[%s] is not a valid compression level, it must be an integer between 1 and 9.\n", optarg);
                     usage(progname, false);
-                    return 1;
+                    return -1;
                 }
-                if (select_compress_options(g_options.fsacomplevel)<0)
-                    return 1;
+                if (options_select_compress_level(g_options.fsacomplevel)<0)
+                    return -1;
                 break;
             case 'c': // encryption
 #ifdef OPTION_CRYPTO_SUPPORT
@@ -290,7 +220,7 @@ int main(int argc, char **argv)
                 if (strlen(optarg)<FSA_MIN_PASSLEN || strlen(optarg)>FSA_MAX_PASSLEN)
                 {   errprintf("the password lenght is incorrect, it must between %d and %d chars.\n", FSA_MIN_PASSLEN, FSA_MAX_PASSLEN);
                     usage(progname, false);
-                    return 1;
+                    return -1;
                 }
                 snprintf((char*)g_options.encryptpass, FSA_MAX_PASSLEN, "%s", optarg);
 #else // OPTION_CRYPTO_SUPPORT
@@ -306,9 +236,12 @@ int main(int argc, char **argv)
                 return 0;
             default:
                 usage(progname, false);
-                return 1;
+                return -1;
         }
     }
+    
+    // DEBUG only
+    options_show();
     
     argc -= optind;
     argv += optind;
@@ -317,7 +250,7 @@ int main(int argc, char **argv)
     if (argc < 1)
     {   fprintf(stderr, "the first argument must be a command.\n");
         usage(progname, false);
-        return 1;
+        return -1;
     }
     else // mandatory and unique parameters
     {   
@@ -356,14 +289,14 @@ int main(int argc, char **argv)
     else // command not found
     {   errprintf("[%s] is not a valid command.\n", command);
         usage(progname, false);
-        return 1;
+        return -1;
     }
     
     // check there are enough parameters on the cmd line
     if (argcok!=true)
     {   errprintf("invalid arguments on the command line\n");
         usage(progname, false);
-        return 1;
+        return -1;
     }
     
     // commands that require an archive as the first argument
@@ -383,43 +316,9 @@ int main(int argc, char **argv)
         else
         {   errprintf("command 'probe' expects one argument: it must be either 'simple' or 'detailed'\n");
             usage(progname, false);
-            return 1;
+            return -1;
         }
     }
-    
-    // open debug logfile if requested
-    if (g_options.debuglevel>0)
-    {   mkdir_recursive("/var/log");
-        msgprintf(1, "g_options.debuglevel=%d\n", g_options.debuglevel);
-        g_logfile=open64("/var/log/fsarchiver.log", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-        if (g_logfile>=0)
-        { 
-            msgprintf(1, "Creating logfile in /var/log/fsarchiver.log\n");
-            msgprintf(1, "Running fsarchiver version=[%s], fileformat=[%s]\n", FSA_VERSION, FSA_FILEFORMAT);
-        }
-        else
-        {
-            sysprintf("Cannot create logfile in /var/log/fsarchiver.log\n");
-        }
-    }
-    
-    // init the queue
-    queue_init(&g_queue, FSA_MAX_QUEUESIZE);
-    
-#ifdef OPTION_LZO_SUPPORT
-    // init the lzo library
-    if (lzo_init() != LZO_E_OK)
-    {   errprintf("internal error - lzo_init() failed\n");
-        return 1;
-    }
-#endif // OPTION_LZO_SUPPORT
-    
-#ifdef OPTION_CRYPTO_SUPPORT
-    if (crypto_init()!=0)
-    {   errprintf("cannot initialize the crypto environment\n");
-        return 1;
-    }
-#endif // OPTION_CRYPTO_SUPPORT
     
     // list of partitions to backup/restore
     for (fscount=0; (fscount < argc) && (argv[fscount]); fscount++)
@@ -450,20 +349,57 @@ int main(int argc, char **argv)
         default:
             errprintf("[%s] is not a valid command.\n", command);
             usage(progname, false);
-            ret=1;
+            ret=-1;
             break;
     };
     
-    // destroy the queue
+    return ret;
+}
+
+int main(int argc, char **argv)
+{
+    int ret;
+    
+    // must be run as root
+    if (geteuid()!=0)
+    {   errprintf("%s must be run as root. cannot continue.\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    
+    // init the lzo library
+#ifdef OPTION_LZO_SUPPORT
+    if (lzo_init() != LZO_E_OK)
+    {   errprintf("internal error - lzo_init() failed\n");
+        exit(EXIT_FAILURE);
+    }
+#endif // OPTION_LZO_SUPPORT
+    
+    // init libgcrypt
+#ifdef OPTION_CRYPTO_SUPPORT
+    if (crypto_init()!=0)
+    {   errprintf("cannot initialize the crypto environment\n");
+        exit(EXIT_FAILURE);
+    }
+#endif // OPTION_CRYPTO_SUPPORT
+    
+    // init
+    logfile_open();
+    options_init(&g_options);
+    queue_init(&g_queue, FSA_MAX_QUEUESIZE);
+    
+    // bulk of the program
+    ret=process_cmdline(argc, argv);
+    
+    // cleanup
     queue_destroy(&g_queue);
+    options_destroy(&g_options);
+    logfile_close();
     
-    // close the debug logfile if it has been open
-    if (g_logfile>=0)
-        close(g_logfile);
-    
+    // cleanup libgcrypt
 #ifdef OPTION_CRYPTO_SUPPORT
     crypto_cleanup();
 #endif // OPTION_CRYPTO_SUPPORT
     
     return !!ret;
 }
+

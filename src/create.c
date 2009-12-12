@@ -705,18 +705,28 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
     
     while (((dir = readdir(dirdesc)) != NULL) && (get_interrupted()==false))
     {
+        // ---- ignore "." and ".." and ignore mount-points
+        if (strcmp(dir->d_name,".")==0 || strcmp(dir->d_name,"..")==0)
+            continue; // ignore "." and ".."
+        
         // ---- calculate paths
         concatenate_paths(relpath, sizeof(relpath), path, dir->d_name);
         concatenate_paths(fullpath, sizeof(fullpath), fulldirpath, dir->d_name);
+        
+        // ---- get details about current file
         if (lstat64(fullpath, &statbuf)!=0)
         {   sysprintf("cannot lstat64(%s)\n", fullpath);
             ret=-1;
             goto backup_dir_err;
         }
         
-        // ---- ignore "." and ".." and ignore mount-points
-        if (strcmp(dir->d_name,".")==0 || strcmp(dir->d_name,"..")==0)
-            continue; // ignore "." and ".."
+        // check the list of excluded files/dirs
+        if ((exclude_check(&g_options.exclude, dir->d_name)==true) // is filename excluded ?
+            || (exclude_check(&g_options.exclude, relpath)==true)) // is filepath excluded ?
+        {
+            msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
+            continue;
+        }
         
         // ---- if dev!=0 (when we backup a filesystem not a dir), ignore all other devices
         if ((dev!=0) && (u64)(statbuf.st_dev)!=dev)

@@ -59,6 +59,49 @@ typedef struct s_extractar
     u64        cost_current;
 } cextractar;
 
+// returns true if this file of a parent directory has been excluded
+int is_filedir_excluded(char *relpath)
+{
+    char dirpath[PATH_MAX];
+    char basename[PATH_MAX];
+    int pos;
+    
+    // check if that particular file has been excluded
+    extract_basename(relpath, basename, sizeof(basename));
+    
+    if ((exclude_check(&g_options.exclude, basename)==true) // is filename excluded ?
+        || (exclude_check(&g_options.exclude, relpath)==true)) // is filepath excluded ?
+    {
+        msgprintf(MSG_VERB2, "file/dir=[%s] excluded because of its own name/path\n", relpath);
+        return true;
+    }
+    
+    // check if that file belongs to a directory which has been excluded
+    snprintf(dirpath, sizeof(dirpath), "%s", relpath);
+    for (pos=0; dirpath[pos]; pos++); // go to the end of the string
+    while (pos>0)
+    {
+        // dirpath=parent_directory(dirpath)
+        while ((pos>=0) && (dirpath[pos]!='/'))
+            dirpath[pos--]=0;
+        if ((pos>0) && (dirpath[pos]=='/'))
+            dirpath[pos]=0;
+        extract_basename(dirpath, basename, sizeof(basename));
+        
+        if (strlen(dirpath)>1 && strlen(basename)>0)
+        {
+            if ((exclude_check(&g_options.exclude, basename)==true)
+                || (exclude_check(&g_options.exclude, dirpath)==true))
+            {
+                msgprintf(MSG_VERB2, "file/dir=[%s] excluded because of its parent=[%s]\n", relpath, dirpath);
+                return true; // a parent directory is excluded
+            }
+        }
+    }
+    
+    return false; // no exclusion found for that file
+}
+
 // convert a string such as "id=0,dest=/dev/sda1,fs=reiserfs" to a dico
 int convert_string_to_dico(cdico **d, int *retfsid, char *argv)
 {
@@ -348,8 +391,17 @@ int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpat
     
     // update cost statistics and progress bar
     exar->cost_current+=FSA_COST_PER_FILE; 
-    extractar_listing_print_file(exar, objtype, relpath);
     
+    // check the list of excluded files/dirs
+    if (is_filedir_excluded(relpath)==true)
+    {
+        //msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
+        goto extractar_restore_obj_symlink_err;
+    }
+    
+    // update progress bar
+    extractar_listing_print_file(exar, objtype, relpath);
+
     // backup parent dir atime/mtime
     get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
@@ -426,8 +478,17 @@ int extractar_restore_obj_hardlink(cextractar *exar, char *fullpath, char *relpa
     
     // update cost statistics and progress bar
     exar->cost_current+=FSA_COST_PER_FILE; 
-    extractar_listing_print_file(exar, objtype, relpath);
     
+    // check the list of excluded files/dirs
+    if (is_filedir_excluded(relpath)==true)
+    {
+        msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
+        goto extractar_restore_obj_hardlink_err;
+    }
+    
+    // update progress bar
+    extractar_listing_print_file(exar, objtype, relpath);
+
     // backup parent dir atime/mtime
     get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
@@ -473,8 +534,17 @@ int extractar_restore_obj_devfile(cextractar *exar, char *fullpath, char *relpat
     
     // update cost statistics and progress bar
     exar->cost_current+=FSA_COST_PER_FILE; 
-    extractar_listing_print_file(exar, objtype, relpath);
     
+    // check the list of excluded files/dirs
+    if (is_filedir_excluded(relpath)==true)
+    {
+        msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
+        goto extractar_restore_obj_devfile_err;
+    }
+    
+    // update progress bar
+    extractar_listing_print_file(exar, objtype, relpath);
+
     // backup parent dir atime/mtime
     get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
@@ -514,8 +584,14 @@ int extractar_restore_obj_directory(cextractar *exar, char *fullpath, char *relp
     
     // update cost statistics and progress bar
     exar->cost_current+=FSA_COST_PER_FILE; 
-    extractar_listing_print_file(exar, objtype, relpath);
     
+    // check the list of excluded files/dirs
+    if (is_filedir_excluded(relpath)==true)
+        goto extractar_restore_obj_directory_err;
+    
+    // update progress bar
+    extractar_listing_print_file(exar, objtype, relpath);
+
     // backup parent dir atime/mtime
     get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
@@ -545,6 +621,7 @@ extractar_restore_obj_directory_err:
 int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *dicofirstfile, int objtype, int fstype) // d = obj-header of first small file
 {
     char databuf[FSA_MAX_SMALLFILESIZE];
+    char basename[PATH_MAX];
     cdico *filehead=NULL;
     char magic[FSA_SIZEOF_MAGIC+1];
     char fullpath[PATH_MAX];
@@ -630,75 +707,81 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
             goto extractar_restore_obj_regfile_multi_err;
         }
         concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
-
+        extract_basename(fullpath, basename, sizeof(basename));
+        
         // update cost statistics and progress bar
         exar->cost_current+=FSA_COST_PER_FILE; 
         exar->cost_current+=datsize; // filesize
-        extractar_listing_print_file(exar, tmpobjtype, relpath);
         
-        // backup parent dir atime/mtime
-        get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
-        
-        if (dico_get_data(filehead, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_MD5SUM, md5sumorig, 16, NULL))
-        {   errprintf("cannot get md5sum from file footer for file=[%s]\n", relpath);
-            dico_show(filehead, DICO_OBJ_SECTION_STDATTR, "filehead");
-            goto extractar_restore_obj_regfile_multi_err;
-        }
-        
-        errno=0;
-        if ((fd=open64(fullpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))<0)
-        {   if (errno==ENOSPC)
-            {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
-                close(fd);
-                return -1; // fatal error
-            }
-            else // another error
-            {   sysprintf("Cannot open %s for writing\n", relpath);
-                goto extractar_restore_obj_regfile_multi_err;
-            }
-        }
-        
-        md5_init_ctx(&md5ctx);
-        md5_process_bytes(databuf, (long)datsize, &md5ctx);
-        md5_finish_ctx(&md5ctx, md5sumcalc);
-        
-        errno=0;
-        if ((lres=write(fd, databuf, datsize))!=datsize) // error
+        // check the list of excluded files/dirs
+        if (is_filedir_excluded(relpath)!=true)
         {
-            if ((errno==ENOSPC) || ((lres>0) && (lres < datsize)))
-            {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
-                close(fd);
-                return -1; // fatal error
+            extractar_listing_print_file(exar, tmpobjtype, relpath);
+            
+            // backup parent dir atime/mtime
+            get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
+            
+            if (dico_get_data(filehead, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_MD5SUM, md5sumorig, 16, NULL))
+            {   errprintf("cannot get md5sum from file footer for file=[%s]\n", relpath);
+                dico_show(filehead, DICO_OBJ_SECTION_STDATTR, "filehead");
+                goto extractar_restore_obj_regfile_multi_err;
             }
-            else // another error
-            {   sysprintf("cannot extract %s, curblocksize=%ld\n", relpath, (long)datsize);
+            
+            errno=0;
+            if ((fd=open64(fullpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))<0)
+            {   if (errno==ENOSPC)
+                {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
+                    close(fd);
+                    return -1; // fatal error
+                }
+                else // another error
+                {   sysprintf("Cannot open %s for writing\n", relpath);
+                    goto extractar_restore_obj_regfile_multi_err;
+                }
+            }
+            
+            md5_init_ctx(&md5ctx);
+            md5_process_bytes(databuf, (long)datsize, &md5ctx);
+            md5_finish_ctx(&md5ctx, md5sumcalc);
+            
+            errno=0;
+            if ((lres=write(fd, databuf, datsize))!=datsize) // error
+            {
+                if ((errno==ENOSPC) || ((lres>0) && (lres < datsize)))
+                {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
+                    close(fd);
+                    return -1; // fatal error
+                }
+                else // another error
+                {   sysprintf("cannot extract %s, curblocksize=%ld\n", relpath, (long)datsize);
+                    close(fd);
+                    goto extractar_restore_obj_regfile_multi_err;
+                }
+            }
+            
+            if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
+            {   errprintf("cannot restore file %s, the data block (which is shared by multiple files) is corrupt\n", relpath);
+                res=ftruncate(fd, 0); // don't leave corrupt data in the file
                 close(fd);
                 goto extractar_restore_obj_regfile_multi_err;
             }
-        }
-        
-        if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
-        {   errprintf("cannot restore file %s, the data block (which is shared by multiple files) is corrupt\n", relpath);
-            res=ftruncate(fd, 0); // don't leave corrupt data in the file
+            
             close(fd);
-            goto extractar_restore_obj_regfile_multi_err;
-        }
-        
-        close(fd);
-        
-        if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, filehead)!=0)
-        {   msgprintf(MSG_STACK, "cannot restore file attributes for file [%s]\n", relpath);
-            goto extractar_restore_obj_regfile_multi_err;
-        }
-        
-        // restore parent dir mtime/atime
-        if (utimes(parentdir, tv)!=0)
-        {   sysprintf("utimes(%s) failed\n", parentdir);
-            goto extractar_restore_obj_regfile_multi_err;
+            
+            if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, filehead)!=0)
+            {   msgprintf(MSG_STACK, "cannot restore file attributes for file [%s]\n", relpath);
+                goto extractar_restore_obj_regfile_multi_err;
+            }
+            
+            // restore parent dir mtime/atime
+            if (utimes(parentdir, tv)!=0)
+            {   sysprintf("utimes(%s) failed\n", parentdir);
+                goto extractar_restore_obj_regfile_multi_err;
+            }
+            exar->stats.cnt_regfile++;
         }
         
         dico_destroy(filehead);
-        exar->stats.cnt_regfile++;
         continue; // success on that file
         
 extractar_restore_obj_regfile_multi_err:
@@ -721,6 +804,7 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     u8 md5sumcalc[16];
     u8 md5sumorig[16];
     char text[256];
+    int excluded;
     u64 filesize;
     u64 filepos;
     int errors;
@@ -745,20 +829,33 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     // update cost statistics and progress bar
     exar->cost_current+=FSA_COST_PER_FILE; 
     exar->cost_current+=filesize;
-    extractar_listing_print_file(exar, objtype, relpath);
     
-    errno=0;
-    if ((fd=open64(fullpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))<0)
-    {   if (errno==ENOSPC)
-        {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
-            exar->stats.err_regfile++;
-            dico_destroy(footerdico);
-            close(fd);
-            return -1; // fatal error
-        }
-        else
-        {   sysprintf("Cannot open %s for writing\n", relpath);
-            goto restore_obj_regfile_unique_error;
+    // check the list of excluded files/dirs
+    if (is_filedir_excluded(relpath)==true)
+    {
+        excluded=true;
+    }
+    else // file not excluded
+    {
+        excluded=false;
+        
+        // show progress bar
+        extractar_listing_print_file(exar, objtype, relpath);
+        
+        // open file to restore
+        errno=0;
+        if ((fd=open64(fullpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))<0)
+        {   if (errno==ENOSPC)
+            {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
+                exar->stats.err_regfile++;
+                dico_destroy(footerdico);
+                close(fd);
+                return -1; // fatal error
+            }
+            else
+            {   sysprintf("Cannot open %s for writing\n", relpath);
+                goto restore_obj_regfile_unique_error;
+            }
         }
     }
     
@@ -781,48 +878,55 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
         
         md5_process_bytes(blkinfo.blkdata, blkinfo.blkrealsize, &md5ctx);
         
-        errno=0;
-        if ((lres=write(fd, blkinfo.blkdata, blkinfo.blkrealsize))!=blkinfo.blkrealsize) // error
+        if (excluded!=true) // don't write data if file is excluded
         {
-            if ((errno==ENOSPC) || ((lres>0) && (lres < blkinfo.blkrealsize)))
+            errno=0;
+            if ((lres=write(fd, blkinfo.blkdata, blkinfo.blkrealsize))!=blkinfo.blkrealsize) // error
             {
-                sysprintf("Can't write file [%s]: no space left on device\n", relpath);
-                exar->stats.err_regfile++;
-                dico_destroy(footerdico);
-                close(fd);
-                return -1; // fatal error
-            }
-            else // another error
-            {
-                sysprintf("cannot extract %s, curblocksize=%ld\n", relpath, (long)blkinfo.blkrealsize);
-                goto restore_obj_regfile_unique_error;
+                if ((errno==ENOSPC) || ((lres>0) && (lres < blkinfo.blkrealsize)))
+                {
+                    sysprintf("Can't write file [%s]: no space left on device\n", relpath);
+                    exar->stats.err_regfile++;
+                    dico_destroy(footerdico);
+                    close(fd);
+                    return -1; // fatal error
+                }
+                else // another error
+                {
+                    sysprintf("cannot extract %s, curblocksize=%ld\n", relpath, (long)blkinfo.blkrealsize);
+                    goto restore_obj_regfile_unique_error;
+                }
             }
         }
         free(blkinfo.blkdata);
     }
-    close(fd);
-    fd=-1;
     
     if (get_interrupted()==true)
     {   errprintf("operation has been interrupted\n");
         goto restore_obj_regfile_unique_error;
-    }
+    } 
     
-    if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, d)!=0)
-    {   msgprintf(MSG_STACK, "cannot restore file attributes for file [%s]\n", relpath);
-        goto restore_obj_regfile_unique_error;
-    }
+    if (excluded!=true)
+    {
+        close(fd);
+        fd=-1;
+        
+        if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, d)!=0)
+        {   msgprintf(MSG_STACK, "cannot restore file attributes for file [%s]\n", relpath);
+            goto restore_obj_regfile_unique_error;
+        }
     
-    // restore parent dir mtime/atime
-    if (utimes(parentdir, tv)!=0)
-    {   sysprintf("utimes(%s) failed\n", parentdir);
-        goto restore_obj_regfile_unique_error;
+        // restore parent dir mtime/atime
+        if (utimes(parentdir, tv)!=0)
+        {   sysprintf("utimes(%s) failed\n", parentdir);
+            goto restore_obj_regfile_unique_error;
+        }
+        
+        // check the whole file md5 checksum
+        md5_finish_ctx(&md5ctx, md5sumcalc);
+        msgprintf(MSG_DEBUG2, "--> finished loop for file=%s, size=%lld, md5sumcalc=[%s]\n", relpath, 
+            (long long)filesize, format_md5(text, sizeof(text), md5sumcalc));
     }
-    
-    // check the whole file md5 checksum
-    md5_finish_ctx(&md5ctx, md5sumcalc);
-    msgprintf(MSG_DEBUG2, "--> finished loop for file=%s, size=%lld, md5sumcalc=[%s]\n", relpath, 
-        (long long)filesize, format_md5(text, sizeof(text), md5sumcalc));
     
     // empty file have no footer (no need for a checksum)
     if (filesize>0)
@@ -833,25 +937,30 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
             goto restore_obj_regfile_unique_error;
         }
         
-        if (memcmp(magic, FSA_MAGIC_FILF, FSA_SIZEOF_MAGIC)!=0)
-        {   errprintf("header is not what we expected: found=[%s] and expected=[%s]\n", magic, FSA_MAGIC_FILF);
-            goto restore_obj_regfile_unique_error;
-        }
-        
-        if (dico_get_data(footerdico, 0, BLOCKFOOTITEMKEY_MD5SUM, md5sumorig, 16, NULL))
-        {   errprintf("cannot get md5sum from file footer for file=[%s]\n", relpath);
-            dico_show(footerdico, 0, "footerdico");
-            goto restore_obj_regfile_unique_error;
-        }
-        
-        if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
-        {   errprintf("cannot restore file %s, file is corrupt\n", relpath);
-            res=ftruncate(fd, 0); // don't leave corrupt data in the file
-            goto restore_obj_regfile_unique_error;
+        if (excluded!=true)
+        {
+            if (memcmp(magic, FSA_MAGIC_FILF, FSA_SIZEOF_MAGIC)!=0)
+            {   errprintf("header is not what we expected: found=[%s] and expected=[%s]\n", magic, FSA_MAGIC_FILF);
+                goto restore_obj_regfile_unique_error;
+            }
+            
+            if (dico_get_data(footerdico, 0, BLOCKFOOTITEMKEY_MD5SUM, md5sumorig, 16, NULL))
+            {   errprintf("cannot get md5sum from file footer for file=[%s]\n", relpath);
+                dico_show(footerdico, 0, "footerdico");
+                goto restore_obj_regfile_unique_error;
+            }
+            
+            if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
+            {   errprintf("cannot restore file %s, file is corrupt\n", relpath);
+                res=ftruncate(fd, 0); // don't leave corrupt data in the file
+                goto restore_obj_regfile_unique_error;
+            }
         }
     }
     
-    exar->stats.cnt_regfile++;
+    if (excluded!=true)
+        exar->stats.cnt_regfile++;
+    
     dico_destroy(footerdico);
     if (fd>=0) close(fd);
     dico_destroy(d);
@@ -870,6 +979,7 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
     char relpath[PATH_MAX];
     char fullpath[PATH_MAX];
     char parentdir[PATH_MAX];
+    char basename[PATH_MAX];
     u64 filesize;
     u32 objtype;
     int res;
@@ -887,6 +997,7 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
         
     // ---- create parent directory first
     extract_dirpath(fullpath, parentdir, sizeof(parentdir));
+    extract_basename(fullpath, basename, sizeof(basename));
     mkdir_recursive(parentdir);
     
     // ---- recreate specific object on the filesystem
