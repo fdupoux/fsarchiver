@@ -240,9 +240,6 @@ int process_cmdline(int argc, char **argv)
         }
     }
     
-    // DEBUG only
-    options_show();
-    
     argc -= optind;
     argv += optind;
     
