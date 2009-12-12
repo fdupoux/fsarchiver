@@ -34,6 +34,7 @@
 #include <endian.h>
 #include <byteswap.h>
 #include <signal.h>
+#include <getopt.h>
 #include <linux/limits.h>
 
 #include "dico.h"
@@ -127,6 +128,24 @@ void usage(char *progname, bool examples)
     }
 }
 
+static struct option const long_options[] =
+{
+    {"overwrite", no_argument, NULL, 'o'},
+    {"allow-no-acl-xattr", no_argument, NULL, 'a'},
+    {"allow-rw-mounted", no_argument, NULL, 'A'},
+    {"verbose", no_argument, NULL, 'v'},
+    {"debug", no_argument, NULL, 'd'},
+    {"compress", required_argument, NULL, 'z'},
+    {"jobs", required_argument, NULL, 'j'},
+    {"help", no_argument, NULL, 'h'},
+    {"version", no_argument, NULL, 'V'},
+    {"split", required_argument, NULL, 's'},
+    {"cryptpass", required_argument, NULL, 'c'},
+    {"label", required_argument, NULL, 'L'},
+    {"exclude", required_argument, NULL, 'e'},
+    {NULL, 0, NULL, 0}
+};
+
 int process_cmdline(int argc, char **argv)
 {
     char *probemode;
@@ -161,7 +180,7 @@ int process_cmdline(int argc, char **argv)
     snprintf(g_options.archlabel, sizeof(g_options.archlabel), "<none>");
     g_options.encryptpass[0]=0;
     
-    while ((c = getopt(argc, argv, "oaAvdz:j:hVs:c:L:e:")) != -1)
+    while ((c = getopt_long(argc, argv, "oaAvdz:j:hVs:c:L:e:", long_options, NULL)) != EOF)
     {
         switch (c)
         {
@@ -399,4 +418,3 @@ int main(int argc, char **argv)
     
     return !!ret;
 }
-
