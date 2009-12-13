@@ -721,7 +721,7 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
         if ((exclude_check(&g_options.exclude, dir->d_name)==true) // is filename excluded ?
             || (exclude_check(&g_options.exclude, relpath)==true)) // is filepath excluded ?
         {
-            if (costeval!=NULL) // dont log twice (eval + real)
+            if (costeval==NULL) // dont log twice (eval + real)
                 msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
             continue;
         }
