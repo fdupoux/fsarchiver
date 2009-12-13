@@ -18,12 +18,8 @@
 #ifndef __OPTIONS_H__
 #define __OPTIONS_H__
 
-#include "fsarchiver.h"
 #include "strlist.h"
-
-// TODO: redefined in fsarchiver.h
-#define FSA_MAX_LABELLEN         512
-#define FSA_MAX_PASSLEN          64
+#include "crypto.h"
 
 // struct that stores the options passed on the command line
 typedef struct s_options
@@ -44,6 +40,8 @@ typedef struct s_options
     u8       encryptpass[FSA_MAX_PASSLEN+1];
     cstrlist exclude;
 } coptions;
+
+extern coptions g_options;
 
 int options_init();
 int options_destroy();

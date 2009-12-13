@@ -15,12 +15,12 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <bzlib.h>
 
+#include "fsarchiver.h"
 #include "common.h"
 #include "comp_bzip2.h"
+#include "error.h"
 
 int compress_block_bzip2(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level)
 {

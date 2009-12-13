@@ -15,10 +15,11 @@
  * Homepage: http://www.fsarchiver.org
  */
 
+#include <string.h>
+
 #include "fsarchiver.h"
 #include "options.h"
-
-#include <string.h>
+#include "error.h"
 
 coptions g_options;
 

@@ -15,24 +15,20 @@
  * Homepage: http://www.fsarchiver.org
  */
 
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <blkid/blkid.h>
+
 #include "fsarchiver.h"
 #include "showpart.h"
 #include "common.h"
 #include "fs_ext2.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <dirent.h>
-#include <blkid/blkid.h>
-#include <sys/ioctl.h>
+#include "error.h"
 
 int partlist_getlongname(char *longnamebuf, int longbufsize, char *shortname)
 {

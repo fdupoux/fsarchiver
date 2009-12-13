@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -24,9 +22,11 @@
 #include <string.h>
 #include <time.h>
 
+#include "fsarchiver.h"
 #include "writebuf.h"
 #include "archive.h"
 #include "common.h"
+#include "options.h"
 #include "dico.h"
 #include "error.h"
 #include "syncthread.h"

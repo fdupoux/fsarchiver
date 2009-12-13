@@ -15,20 +15,23 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <fcntl.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/time.h>
 #include <sys/mount.h>
 #include <sys/statvfs.h>
 #include <attr/xattr.h>
 #include <zlib.h>
 #include <assert.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "dichl.h"
 #include "archive.h"
+#include "options.h"
 #include "common.h"
 #include "create.h"
 #include "md5.h"
@@ -46,6 +49,7 @@
 #include "syncthread.h"
 #include "regmulti.h"
 #include "crypto.h"
+#include "error.h"
 
 typedef struct
 {   carchive   ai;

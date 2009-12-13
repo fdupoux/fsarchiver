@@ -16,10 +16,10 @@
  */
 
 #include "fsarchiver.h"
+#include "comp_lzo.h"
+#include "error.h"
 
 #ifdef OPTION_LZO_SUPPORT
-
-#include "comp_lzo.h"
 
 int compress_block_lzo(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level)
 {

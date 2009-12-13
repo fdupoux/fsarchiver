@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -24,11 +22,13 @@
 #include <sys/mount.h>
 
 #include "fsarchiver.h"
+#include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
 #include "fs_ntfs.h"
 #include "filesys.h"
 #include "strlist.h"
+#include "error.h"
 
 int ntfs_mkfs(cdico *d, char *partition)
 {

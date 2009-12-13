@@ -15,15 +15,15 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 
+#include "fsarchiver.h"
 #include "writebuf.h"
 #include "common.h"
+#include "error.h"
 
 struct s_writebuf *writebuf_alloc()
 {

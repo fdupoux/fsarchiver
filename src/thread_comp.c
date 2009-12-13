@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -25,8 +23,10 @@
 #include <string.h>
 #include <pthread.h>
 
+#include "fsarchiver.h"
 #include "archive.h"
 #include "common.h"
+#include "options.h"
 #include "comp_gzip.h"
 #include "comp_bzip2.h"
 #include "comp_lzma.h"
@@ -34,6 +34,7 @@
 #include "crypto.h"
 #include "syncthread.h"
 #include "thread_comp.h"
+#include "error.h"
 
 int compress_block_generic(struct s_blockinfo *blkinfo)
 {

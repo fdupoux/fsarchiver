@@ -15,19 +15,19 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdio.h>
 #include <ext2fs/ext2fs.h>
 #include <blkid/blkid.h>
 #include <e2p/e2p.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
 #include "strlist.h"
 #include "uuid.h"
 #include "filesys.h"
 #include "fs_ext2.h"
+#include "error.h"
 
 // e2fsprogs version required to work on ext2, ext3, ext4
 u64 e2fsprogs_minver[]={PROGVER(1,39,0), PROGVER(1,39,0), PROGVER(1,41,0)};

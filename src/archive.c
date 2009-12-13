@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -24,12 +22,15 @@
 #include <sys/statvfs.h>
 #include <assert.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
+#include "options.h"
 #include "archive.h"
 #include "queue.h"
 #include "comp_gzip.h"
 #include "comp_bzip2.h"
+#include "error.h"
 
 int archive_init(carchive *ai)
 {

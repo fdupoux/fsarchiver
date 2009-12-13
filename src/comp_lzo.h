@@ -15,13 +15,15 @@
  * Homepage: http://www.fsarchiver.org
  */
 
+#include "fsarchiver.h"
+#include "types.h"
+
 #ifndef __COMPRESS_LZO_H__
 #define __COMPRESS_LZO_H__
 
 #ifdef OPTION_LZO_SUPPORT
 
 #include <lzo/lzo1x.h>
-#include "types.h"
 
 int compress_block_lzo(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level);
 int uncompress_block_lzo(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsize, u8 *compbuf);

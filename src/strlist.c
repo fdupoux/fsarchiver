@@ -15,14 +15,14 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include "fsarchiver.h"
 #include "strlist.h"
 #include "common.h"
+#include "error.h"
 
 int strlist_init(cstrlist *l)
 {

@@ -15,16 +15,16 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
+#include "error.h"
 
 cdico *dico_alloc()
 {

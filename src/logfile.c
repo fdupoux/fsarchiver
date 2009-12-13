@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -24,8 +22,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "fsarchiver.h"
 #include "logfile.h"
 #include "common.h"
+#include "error.h"
 
 int g_logfile=-1;
 

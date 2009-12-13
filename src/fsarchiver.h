@@ -20,8 +20,6 @@
 
 #include "config.h"
 #include "types.h"
-#include "error.h"
-#include "options.h"
 
 // ----------------------------- min and max -----------------------------
 #if !defined(min)
@@ -39,14 +37,10 @@
 
 #define FSA_MAX_FILEFMTLEN       32
 #define FSA_MAX_PROGVERLEN       32
-#define FSA_MAX_LABELLEN         512
 #define FSA_MAX_FSNAMELEN        128
 #define FSA_MAX_DEVLEN           256
 #define FSA_MAX_UUIDLEN          128
 #define FSA_MAX_BLKDEVICES       256
-
-#define FSA_MIN_PASSLEN          6
-#define FSA_MAX_PASSLEN          64
 
 #define FSA_MAX_FSPERARCH        128
 #define FSA_MAX_COMPJOBS         32
@@ -56,6 +50,10 @@
 #define FSA_MAX_SMALLFILECOUNT   512      // there can be up to FSA_MAX_SMALLFILECOUNT files copied in a single data block 
 #define FSA_MAX_SMALLFILESIZE    131072   // files smaller than that will be grouped with other small files in a single data block
 #define FSA_COST_PER_FILE        16384    // how much it cost to copy an empty file/dir/link: used to eval the progress bar
+
+#define FSA_MAX_LABELLEN         512
+#define FSA_MIN_PASSLEN          6
+#define FSA_MAX_PASSLEN          64
 
 #define FSA_FILESYSID_NULL       0xFFFF
 #define FSA_CHECKPASSBUF_SIZE    4096
@@ -86,7 +84,6 @@ typedef struct s_stats
 } cstats;
 
 // ------------ global variables ---------------------------
-extern coptions g_options;
 extern char *valid_magic[];
 
 // -------------------------------- version_number to u64 -------------------------------------------

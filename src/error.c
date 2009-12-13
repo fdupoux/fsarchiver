@@ -15,14 +15,14 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
 
+#include "fsarchiver.h"
 #include "error.h"
 #include "common.h"
+#include "options.h"
 #include "logfile.h"
 
 int fsaprintf(int level, bool showerrno, bool showloc, const char *file, const char *fct, int line, char *format, ...)

@@ -20,7 +20,6 @@
 
 #ifdef OPTION_CRYPTO_SUPPORT
 
-#include <gcrypt.h>
 #include "types.h"
 
 int crypto_init();

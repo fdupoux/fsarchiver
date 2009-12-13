@@ -20,6 +20,7 @@
 
 #include <limits.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 
 typedef struct s_archive

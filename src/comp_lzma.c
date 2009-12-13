@@ -16,13 +16,13 @@
  */
 
 #include "fsarchiver.h"
+#include "common.h"
+#include "comp_lzma.h"
+#include "error.h"
 
 #ifdef OPTION_LZMA_SUPPORT
 
 #include <lzma.h>
-
-#include "common.h"
-#include "comp_lzma.h"
 
 int compress_block_lzma(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level)
 {

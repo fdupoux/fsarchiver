@@ -15,14 +15,14 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <string.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
 #include "archinfo.h"
 #include "archive.h"
+#include "error.h"
 
 char *compalgostr(int algo)
 {

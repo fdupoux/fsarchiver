@@ -15,14 +15,13 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/vfs.h>
 #include <sys/utsname.h>
 #include <sys/mount.h>
 
+#include "fsarchiver.h"
 #include "common.h"
 #include "filesys.h"
 #include "fs_ext2.h"
@@ -32,6 +31,7 @@
 #include "fs_xfs.h"
 #include "fs_jfs.h"
 #include "fs_ntfs.h"
+#include "error.h"
 
 cfilesys filesys[]=
 {

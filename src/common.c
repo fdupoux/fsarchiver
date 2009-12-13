@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
@@ -31,8 +29,10 @@
 #include <wordexp.h>
 #include <fnmatch.h>
 
+#include "fsarchiver.h"
 #include "syncthread.h"
 #include "common.h"
+#include "error.h"
 
 int stream_readline(FILE *f, char *buf, int buflen)
 {

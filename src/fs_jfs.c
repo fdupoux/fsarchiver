@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -24,12 +22,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
 #include "fs_jfs.h"
 #include "uuid.h"
 #include "filesys.h"
 #include "strlist.h"
+#include "error.h"
 
 int jfs_mkfs(cdico *d, char *partition)
 {

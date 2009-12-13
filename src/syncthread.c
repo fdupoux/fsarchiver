@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -37,6 +35,7 @@
 #include <signal.h>
 #include <linux/limits.h>
 
+#include "fsarchiver.h"
 #include "fsarchiver.h"
 #include "syncthread.h"
 

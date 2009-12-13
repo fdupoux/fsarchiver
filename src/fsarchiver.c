@@ -15,13 +15,13 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <unistd.h>
-#include <strings.h>
+#include <string.h>
 #include <signal.h>
 #include <getopt.h>
+#include <stdlib.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
 #include "extract.h"
@@ -33,6 +33,7 @@
 #include "crypto.h"
 #include "options.h"
 #include "logfile.h"
+#include "error.h"
 
 char *valid_magic[]={FSA_MAGIC_MAIN, FSA_MAGIC_VOLH, FSA_MAGIC_VOLF, FSA_MAGIC_FSIN, 
     FSA_MAGIC_FSYB, FSA_MAGIC_DATF, FSA_MAGIC_OBJT, FSA_MAGIC_BLKH, FSA_MAGIC_FILF, NULL};

@@ -15,16 +15,16 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "regmulti.h"
 #include "common.h"
 #include "queue.h"
+#include "error.h"
 
 int regmulti_empty(cregmulti *m)
 {

@@ -15,15 +15,17 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <pthread.h>
 #include <errno.h>
 
-#ifdef OPTION_CRYPTO_SUPPORT
-
+#include "fsarchiver.h"
 #include "common.h"
 #include "crypto.h"
+#include "error.h"
+
+#ifdef OPTION_CRYPTO_SUPPORT
+
+#include <gcrypt.h>
 
 // required for safety with multi-threading in gcrypt
 GCRY_THREAD_OPTION_PTHREAD_IMPL;

@@ -15,15 +15,18 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <unistd.h>
 #include <fcntl.h>
-#include <attr/xattr.h>
 #include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <attr/xattr.h>
+#include <sys/time.h>
 
+#include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
+#include "options.h"
 #include "extract.h"
 #include "archive.h"
 #include "archinfo.h"
@@ -41,6 +44,7 @@
 #include "syncthread.h"
 #include "regmulti.h"
 #include "crypto.h"
+#include "error.h"
 
 typedef struct s_extractar
 {   carchive   ai;

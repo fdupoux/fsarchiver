@@ -15,13 +15,13 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdlib.h>
 #include <string.h>
 
+#include "fsarchiver.h"
 #include "dichl.h"
 #include "common.h"
+#include "error.h"
 
 cdichl *dichl_alloc()
 {

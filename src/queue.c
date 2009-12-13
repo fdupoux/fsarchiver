@@ -15,8 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,9 +24,11 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "fsarchiver.h"
 #include "queue.h"
 #include "common.h"
 #include "syncthread.h"
+#include "error.h"
 
 #define printwait()                                                                \
 {                                                                       \

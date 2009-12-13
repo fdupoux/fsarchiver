@@ -19,7 +19,9 @@
 #define __COMMON_H__
 
 #include <stdio.h>
+
 #include "types.h"
+#include "strlist.h"
 
 struct timeval;
 
