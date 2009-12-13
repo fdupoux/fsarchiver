@@ -64,6 +64,7 @@ typedef struct
     cstats     stats;
     int        fstype;
     int        fsid;
+    u64        objectid;
     u64        cost_global;
     u64        cost_current;
 } csavear;
@@ -372,7 +373,7 @@ int createar_item_winattr(csavear *save, char *root, char *relpath, struct stat6
     return ret;
 }
 
-int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat64 *statbuf, cdico *d, int *objtype, u64 objectid)
+int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat64 *statbuf, cdico *d, int *objtype)
 {
     struct stat64 stattarget;
     char fullpath[PATH_MAX];
@@ -385,8 +386,8 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
     *objtype=OBJTYPE_NULL;
     concatenate_paths(fullpath, sizeof(fullpath), root, relpath);
     
-    msgprintf(MSG_DEBUG2, "Adding [%.5ld]=[%s]\n", (long)objectid, relpath);
-    if (dico_add_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_OBJECTID, (u64)objectid)!=0)
+    msgprintf(MSG_DEBUG2, "Adding [%.5lld]=[%s]\n", (long long)save->objectid, relpath);
+    if (dico_add_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_OBJECTID, (u64)(save->objectid)++)!=0)
     {   errprintf("dico_add_u64(DICO_OBJ_SECTION_STDATTR) failed\n");
         return -1;
     }
@@ -511,7 +512,7 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
     return 0;
 }
 
-int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *statbuf, u64 objectid, u64 *costeval)
+int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *statbuf, u64 *costeval)
 {
     char fullpath[PATH_MAX];
     char strprogress[256];
@@ -547,7 +548,7 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
         return -1; // fatal error
     }
     
-    if (createar_item_stdattr(save, root, relpath, statbuf, dicoattr, &objtype, objectid)!=0)
+    if (createar_item_stdattr(save, root, relpath, statbuf, dicoattr, &objtype)!=0)
     {   msgprintf(MSG_STACK, "backup_item_stdattr() failed: cannot read standard attributes on [%s]\n", relpath);
         attrerrors++;
     }
@@ -682,7 +683,7 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
     return 0;
 }
 
-int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 *objectid, u64 *costeval)
+int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 *costeval)
 {
     char fulldirpath[PATH_MAX];
     char fullpath[PATH_MAX];
@@ -709,7 +710,7 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
     }
     
     // save info about the directory itself
-    if (createar_save_file(save, root, path, &statbuf, (*objectid)++, costeval)!=0)
+    if (createar_save_file(save, root, path, &statbuf, costeval)!=0)
     {   errprintf("createar_save_file(%s,%s) failed\n", root, path);
         ret=-1;
         goto backup_dir_err;
@@ -747,7 +748,7 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
             // copy directories which are used as mount-points (important especially for /dev, /proc, /sys)
             if (S_ISDIR(statbuf.st_mode))
             {
-                if (createar_save_file(save, root, relpath, &statbuf, (*objectid)++, costeval)!=0)
+                if (createar_save_file(save, root, relpath, &statbuf, costeval)!=0)
                 {   ret=-1;
                     errprintf("createar_save_file(%s,%s) failed\n", root, path);
                     goto backup_dir_err;
@@ -756,7 +757,7 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
                 // copy the files in /dev/ during a live-backup (option -A) else /dev files such as /dev/console would be missing
                 if (g_options.allowsaverw==true && strcmp(relpath, "/dev")==0)
                 {   
-                    if (createar_save_directory(save, root, relpath, statbuf.st_dev, objectid, costeval)!=0)
+                    if (createar_save_directory(save, root, relpath, statbuf.st_dev, costeval)!=0)
                     {   ret=-1;
                         msgprintf(MSG_STACK, "createar_save_directory(%s) failed\n", relpath);
                         goto backup_dir_err;
@@ -775,11 +776,11 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
             // since the cdichl is able to manage several filesystems (its key1)
             if ((dev==0) && (u64)(statbuf.st_dev)!=dev) // cross filesystems when archtype=ARCHTYPE_DIRECTORIES
             {
-                res=createar_save_directory(save, root, relpath, statbuf.st_dev, objectid, costeval);
+                res=createar_save_directory(save, root, relpath, statbuf.st_dev, costeval);
             }
             else // we are still on the same filesystem
             {
-                res=createar_save_directory(save, root, relpath, dev, objectid, costeval);
+                res=createar_save_directory(save, root, relpath, dev, costeval);
             }
             if (res!=0)
             {   msgprintf(MSG_STACK, "createar_save_directory(%s) failed\n", relpath);
@@ -789,7 +790,7 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
         }
         else // not a directory
         {
-            if (createar_save_file(save, root, relpath, &statbuf, (*objectid)++, costeval)!=0)
+            if (createar_save_file(save, root, relpath, &statbuf, costeval)!=0)
             {   msgprintf(MSG_STACK, "createar_save_directory(%s) failed\n", relpath);
                 ret=-1;
                 goto backup_dir_err;
@@ -799,6 +800,34 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
     
 backup_dir_err:
     closedir(dirdesc);
+    return ret;
+}
+
+int createar_save_directory_wrapper(csavear *save, char *root, char *path, u64 dev, u64 *costeval)
+{
+    int ret;
+    
+    if ((save->dichardlinks=dichl_alloc())==NULL)
+    {   errprintf("dichardlinks=dichl_alloc() failed\n");
+        return -1;
+    }
+    
+    if (regmulti_init(&save->regmulti, g_options.datablocksize)!=0)
+    {   errprintf("regmulti_init failed\n");
+        return -1;
+    }
+    
+    ret=createar_save_directory(save, root, path, dev, costeval);
+    
+    // put all small files that are in the last block to the queue
+    if (regmulti_save_enqueue(&save->regmulti, &g_queue, save->fsid)!=0)
+    {   errprintf("Cannot queue last block of small-files\n");
+        return -1;
+    }
+    
+    // dico for hard links not required anymore
+    dichl_destroy(save->dichardlinks);
+    
     return ret;
 }
 
@@ -1014,7 +1043,6 @@ int createar_oper_savefs(csavear *save, char *partition, char *partmount, int fs
     cdico *dicobegin=NULL;
     cdico *dicoend=NULL;
     struct stat64 statbuf;
-    u64 objectid=0;
     int ret=0;
     
     // write "begin of filesystem" header
@@ -1022,6 +1050,7 @@ int createar_oper_savefs(csavear *save, char *partition, char *partmount, int fs
     {   errprintf("dicostart=dico_alloc() failed\n");
         return -1;
     }
+    queue_add_header(&g_queue, dicobegin, FSA_MAGIC_FSYB, save->fsid);
     
     // get dev ids of the filesystem to ignore mount points
     if (lstat64(partmount, &statbuf)!=0)
@@ -1031,25 +1060,23 @@ int createar_oper_savefs(csavear *save, char *partition, char *partmount, int fs
     
     // init filesystem data struct
     save->fstype=fstype;
-    regmulti_init(&save->regmulti, g_options.datablocksize);
+    /*regmulti_init(&save->regmulti, g_options.datablocksize);
     if ((save->dichardlinks=dichl_alloc())==NULL)
     {   errprintf("dichardlinks=dichl_alloc() failed\n");
         return -1;
-    }
+    }*/
     
-    queue_add_header(&g_queue, dicobegin, FSA_MAGIC_FSYB, save->fsid);
-    
-    objectid=0;
-    ret=createar_save_directory(save, partmount, "/", (u64)statbuf.st_dev, &objectid, NULL);
+    ret=createar_save_directory_wrapper(save, partmount, "/", (u64)statbuf.st_dev, NULL);
+    //ret=createar_save_directory(save, partmount, "/", (u64)statbuf.st_dev, &objectid, NULL);
     
     // put all small files that are in the last block to the queue
-    if (regmulti_save_enqueue(&save->regmulti, &g_queue, save->fsid)!=0)
+    /*if (regmulti_save_enqueue(&save->regmulti, &g_queue, save->fsid)!=0)
     {   errprintf("Cannot queue last block of small-files\n");
         return -1;
-    }
+    }*/
     
     // dico for hard links not required anymore
-    dichl_destroy(save->dichardlinks);
+    //dichl_destroy(save->dichardlinks);
     
     // write "end of filesystem" header
     if ((dicoend=dico_alloc())==NULL)
@@ -1067,35 +1094,35 @@ int createar_oper_savedir(csavear *save, char *rootdir)
 {
     char fullpath[PATH_MAX];
     char currentdir[PATH_MAX];
-    u64 objectid=0;
+    //u64 objectid=0;
     
     // init filesystemdata struct
-    regmulti_init(&save->regmulti, g_options.datablocksize);
-    
+    /*regmulti_init(&save->regmulti, g_options.datablocksize);
     if ((save->dichardlinks=dichl_alloc())==NULL)
     {   errprintf("dichardlinks=dichl_alloc() failed\n");
         return -1;
-    }
+    }*/
     
     if (rootdir[0]=='/') // absolute path
     {
         snprintf(fullpath, sizeof(fullpath), "%s", rootdir);
-        createar_save_directory(save, "/", fullpath, (u64)0, &objectid, NULL);
+        createar_save_directory_wrapper(save, "/", fullpath, (u64)0, NULL);
+        //createar_save_directory(save, "/", fullpath, (u64)0, &objectid, NULL);
     }
     else // relative path
     {
         concatenate_paths(fullpath, sizeof(fullpath), getcwd(currentdir, sizeof(currentdir)), rootdir);
-        createar_save_directory(save, ".", rootdir, (u64)0, &objectid, NULL);
+        createar_save_directory_wrapper(save, ".", rootdir, (u64)0, NULL);
+        //createar_save_directory(save, ".", rootdir, (u64)0, &objectid, NULL);
     }
     
     // put all small files that are in the last block to the queue
-    if (regmulti_save_enqueue(&save->regmulti, &g_queue, 0)!=0)
+    /*if (regmulti_save_enqueue(&save->regmulti, &g_queue, 0)!=0)
     {   errprintf("Cannot queue last block of small-files\n");
         return -1;
     }
-    
     // dico for hard links not required anymore
-    dichl_destroy(save->dichardlinks);
+    dichl_destroy(save->dichardlinks);*/
     
     return 0;
 }
@@ -1119,7 +1146,6 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     // init
     memset(&save, 0, sizeof(save));
     save.cost_global=0;
-    save.cost_current=0;
     
     // init archive
     archive_init(&save.ai);
@@ -1209,17 +1235,17 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
         {   sysprintf("cannot lstat64(%s)\n", partmounts[i]);
             goto do_create_error;
         }
-        if ((save.dichardlinks=dichl_alloc())==NULL)
+        /*if ((save.dichardlinks=dichl_alloc())==NULL)
         {   errprintf("dichardlinks=dichl_alloc() failed\n");
             goto do_create_error;
-        }
-        u64 objectid=0;
+        }*/
         u64 cost_evalfs=0;
-        if (createar_save_directory(&save, partmounts[i], "/", (u64)statbuf.st_dev, &objectid, &cost_evalfs)!=0)
+        //if (createar_save_directory(&save, partmounts[i], "/", (u64)statbuf.st_dev, &objectid, &cost_evalfs)!=0)
+        if (createar_save_directory_wrapper(&save, partmounts[i], "/", (u64)statbuf.st_dev, &cost_evalfs)!=0)
         {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", partmounts[i]);
             goto do_create_error;
         }
-        dichl_destroy(save.dichardlinks);
+        //dichl_destroy(save.dichardlinks);
         if (dico_add_u64(dicofsinfo[i], 0, FSYSHEADKEY_TOTALCOST, cost_evalfs)!=0)
         {   errprintf("dico_add_u64(FSYSHEADKEY_TOTALCOST) failed\n");
             goto do_create_error;
@@ -1232,6 +1258,10 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
             goto do_create_error;
         }
     }
+    
+    // init counters to zero before real savefs/savedir
+    save.cost_current=0;
+    save.objectid=0;
     
     // copy contents to archive
     switch (archtype)
@@ -1256,6 +1286,7 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
             // there is no filesystem
             save.fsid=0;
             save.fstype=0;
+            save.objectid=0;
             memset(&save.stats, 0, sizeof(save.stats));
             // write the contents of each directory passed on the command line
             for (i=0; (i < fscount) && (partition[i]!=NULL) && (get_interrupted()==false); i++)
