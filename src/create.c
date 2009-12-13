@@ -525,22 +525,23 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
     // init    
     concatenate_paths(fullpath, sizeof(fullpath), root, relpath);
     
-    // calculate cost (required for the progress bar)
-    curfilecost=FSA_COST_PER_FILE; // fixed cost per file
-    if ((statbuf->st_mode & S_IFMT)==S_IFREG)
-        curfilecost+=statbuf->st_size;
-    if (costeval!=NULL) // evaluating cost
-    {   *costeval+=curfilecost;
-        return 0;
-    }
-    
+    // don't backup the archive file itself
     if (archive_is_path_to_curvol(&save->ai, fullpath)==true)
     {   errprintf("file [%s] ignored: it's the current archive file\n", fullpath);
         save->stats.err_regfile++;
         return 0; // not a fatal error, oper must continue
     }
     
-    // ---- backup file attributes (standard + xattr + winattr)
+    // --- calculate cost (required for the progress bar)
+    /*curfilecost=FSA_COST_PER_FILE; // fixed cost per file
+    if ((statbuf->st_mode & S_IFMT)==S_IFREG)
+        curfilecost+=statbuf->st_size;
+    if (costeval!=NULL) // evaluating cost
+    {   *costeval+=curfilecost;
+        return 0;
+    }*/
+    
+    // ---- backup standard file attributes
     if ((dicoattr=dico_alloc())==NULL)
     {   errprintf("dico_alloc() failed\n");
         return -1; // fatal error
@@ -551,6 +552,17 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
         attrerrors++;
     }
     
+    // --- calculate cost (required for the progression info)
+    curfilecost=FSA_COST_PER_FILE; // fixed cost per file
+    if (objtype==OBJTYPE_REGFILEUNIQUE || objtype==OBJTYPE_REGFILEMULTI)
+        curfilecost+=statbuf->st_size;
+    if (costeval!=NULL) // evaluating cost
+    {   *costeval+=curfilecost;
+        dico_destroy(dicoattr);
+        return 0;
+    }
+    
+    // ---- backup other file attributes (xattr + winattr)
     if (createar_item_xattr(save, root, relpath, statbuf, dicoattr)!=0)
     {   msgprintf(MSG_STACK, "backup_item_xattr() failed: cannot prepare xattr-dico for item %s\n", relpath);
         attrerrors++;
@@ -724,7 +736,8 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
         if ((exclude_check(&g_options.exclude, dir->d_name)==true) // is filename excluded ?
             || (exclude_check(&g_options.exclude, relpath)==true)) // is filepath excluded ?
         {
-            msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
+            if (costeval!=NULL) // dont log twice (eval + real)
+                msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
             continue;
         }
         
@@ -1196,12 +1209,17 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
         {   sysprintf("cannot lstat64(%s)\n", partmounts[i]);
             goto do_create_error;
         }
+        if ((save.dichardlinks=dichl_alloc())==NULL)
+        {   errprintf("dichardlinks=dichl_alloc() failed\n");
+            goto do_create_error;
+        }
         u64 objectid=0;
         u64 cost_evalfs=0;
         if (createar_save_directory(&save, partmounts[i], "/", (u64)statbuf.st_dev, &objectid, &cost_evalfs)!=0)
         {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", partmounts[i]);
             goto do_create_error;
         }
+        dichl_destroy(save.dichardlinks);
         if (dico_add_u64(dicofsinfo[i], 0, FSYSHEADKEY_TOTALCOST, cost_evalfs)!=0)
         {   errprintf("dico_add_u64(FSYSHEADKEY_TOTALCOST) failed\n");
             goto do_create_error;
