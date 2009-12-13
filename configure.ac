@@ -103,9 +103,9 @@ dnl Check for header files installed with a library
 AC_CHECK_HEADER([attr/xattr.h],, [AC_MSG_ERROR([attr/xattr.h not found. you may have to install a package called attr, libattr, libattr-devel])])
 
 dnl Check for standard header files.
-AC_CHECK_HEADERS(malloc.h unistd.h pthread.h)
-AC_CHECK_HEADERS(sys/param.h sys/statfs.h sys/mount.h)
-AC_CHECK_HEADERS([stdint.h endian.h stdbool.h stdlib.h stdio.h getopt.h fcntl.h time.h wordexp.h execinfo.h])
+AC_CHECK_HEADERS([malloc.h unistd.h pthread.h])
+AC_CHECK_HEADERS([sys/param.h sys/statfs.h sys/mount.h])
+AC_CHECK_HEADERS([stdint.h endian.h stdbool.h stdlib.h stdio.h getopt.h fcntl.h time.h wordexp.h execinfo.h fnmatch.h])
 
 dnl Check for library functions.
 AC_CHECK_FUNCS(strerror open64 lstat64 stat64 fstatfs64 fstatvfs64 mempcpy lutimes)

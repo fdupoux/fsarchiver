@@ -979,7 +979,6 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
     char relpath[PATH_MAX];
     char fullpath[PATH_MAX];
     char parentdir[PATH_MAX];
-    char basename[PATH_MAX];
     u64 filesize;
     u32 objtype;
     int res;
@@ -994,10 +993,9 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
     if (dico_get_u64(dicoattr, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SIZE, &filesize)!=0)
         return -3;
     concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
-        
+    
     // ---- create parent directory first
     extract_dirpath(fullpath, parentdir, sizeof(parentdir));
-    extract_basename(fullpath, basename, sizeof(basename));
     mkdir_recursive(parentdir);
     
     // ---- recreate specific object on the filesystem
