@@ -18,9 +18,7 @@
 #include "fsarchiver.h"
 #include "options.h"
 
-#include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 coptions g_options;
 
@@ -37,23 +35,6 @@ int options_destroy()
     if (strlist_destroy(&g_options.exclude)!=0)
         return -1;
     memset(&g_options, 0, sizeof(coptions));
-    return 0;
-}
-
-int options_show()
-{
-    int i;
-    int count;
-    char temp[1024];
-    
-    count=strlist_count(&g_options.exclude);
-    printf("---------- options_show: %d items ----------\n", count);
-    for (i=0; i < count; i++)
-    {
-        strlist_getitem(&g_options.exclude, i, temp, sizeof(temp));
-        printf("item[%2d]=[%s]\n", i, temp);
-    }
-    printf("--------------------\n\n");
     return 0;
 }
 

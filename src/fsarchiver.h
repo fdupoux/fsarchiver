@@ -18,8 +18,6 @@
 #ifndef __FSARCHIVER_H__
 #define __FSARCHIVER_H__
 
-#include <assert.h>
-
 #include "config.h"
 #include "types.h"
 #include "error.h"

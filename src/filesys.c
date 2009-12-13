@@ -17,15 +17,10 @@
 
 #include "fsarchiver.h"
 
-#include <stdio.h>
 #include <string.h>
-#include <strings.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <sys/vfs.h>
 #include <sys/utsname.h>
-#include <linux/limits.h>
 #include <sys/mount.h>
 
 #include "common.h"

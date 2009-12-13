@@ -19,8 +19,6 @@
 
 #ifdef OPTION_LZMA_SUPPORT
 
-#include <stdio.h>
-#include <unistd.h>
 #include <lzma.h>
 
 #include "common.h"

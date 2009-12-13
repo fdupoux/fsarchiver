@@ -47,7 +47,6 @@ typedef struct s_options
 
 int options_init();
 int options_destroy();
-int options_show();
 int options_select_compress_level(int opt);
 
 #endif // __OPTIONS_H__

@@ -17,8 +17,6 @@
 
 #include "fsarchiver.h"
 
-#include <stdio.h>
-#include <unistd.h>
 #include <bzlib.h>
 
 #include "common.h"

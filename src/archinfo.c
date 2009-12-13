@@ -17,7 +17,6 @@
 
 #include "fsarchiver.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #include "dico.h"

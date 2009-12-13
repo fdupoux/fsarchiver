@@ -18,18 +18,13 @@
 #include "fsarchiver.h"
 
 #include <stdarg.h>
-#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <linux/limits.h>
 #include <dirent.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <execinfo.h>

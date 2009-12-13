@@ -17,24 +17,14 @@
 
 #include "fsarchiver.h"
 
-#include <stdio.h>
 #include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
-#include <stdlib.h>
 #include <dirent.h>
-#include <sys/stat.h>
-#include <endian.h>
 #include <unistd.h>
-#include <byteswap.h>
-#include <sys/types.h>
-#include <sys/time.h>
 #include <sys/mount.h>
 #include <sys/statvfs.h>
 #include <attr/xattr.h>
-#include <linux/limits.h>
 #include <zlib.h>
+#include <assert.h>
 
 #include "dico.h"
 #include "dichl.h"
