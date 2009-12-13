@@ -373,7 +373,7 @@ int createar_item_winattr(csavear *save, char *root, char *relpath, struct stat6
     return ret;
 }
 
-int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat64 *statbuf, cdico *d, int *objtype)
+int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat64 *statbuf, cdico *d, int *objtype, u64 *filecost)
 {
     struct stat64 stattarget;
     char fullpath[PATH_MAX];
@@ -384,6 +384,7 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
     
     // init
     *objtype=OBJTYPE_NULL;
+    *filecost=FSA_COST_PER_FILE; // fixed cost per file
     concatenate_paths(fullpath, sizeof(fullpath), root, relpath);
     
     msgprintf(MSG_DEBUG2, "Adding [%.5lld]=[%s]\n", (long long)save->objectid, relpath);
@@ -478,6 +479,7 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
                 // the file would be copied later in the archive (when the block for small files is ready)
                 // and then the hardlink may come before the regfile (first link to that object)
                 // case 1: file smaller than threshold: pack its data with other small files in a single compressed block
+                *filecost+=statbuf->st_size;
                 if ((statbuf->st_size > 0) && (statbuf->st_size < g_options.smallfilethresh) && (statbuf->st_nlink==1))
                     *objtype=OBJTYPE_REGFILEMULTI;
                 else // case 2: file having hardlinks or larger than the threshold
@@ -518,7 +520,7 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
     char strprogress[256];
     cdico *dicoattr;
     int attrerrors=0;
-    u64 curfilecost;
+    u64 filecost;
     u64 progress;
     int objtype;
     int res;
@@ -533,32 +535,20 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
         return 0; // not a fatal error, oper must continue
     }
     
-    // --- calculate cost (required for the progress bar)
-    /*curfilecost=FSA_COST_PER_FILE; // fixed cost per file
-    if ((statbuf->st_mode & S_IFMT)==S_IFREG)
-        curfilecost+=statbuf->st_size;
-    if (costeval!=NULL) // evaluating cost
-    {   *costeval+=curfilecost;
-        return 0;
-    }*/
-    
     // ---- backup standard file attributes
     if ((dicoattr=dico_alloc())==NULL)
     {   errprintf("dico_alloc() failed\n");
         return -1; // fatal error
     }
     
-    if (createar_item_stdattr(save, root, relpath, statbuf, dicoattr, &objtype)!=0)
+    if (createar_item_stdattr(save, root, relpath, statbuf, dicoattr, &objtype, &filecost)!=0)
     {   msgprintf(MSG_STACK, "backup_item_stdattr() failed: cannot read standard attributes on [%s]\n", relpath);
         attrerrors++;
     }
     
-    // --- calculate cost (required for the progression info)
-    curfilecost=FSA_COST_PER_FILE; // fixed cost per file
-    if (objtype==OBJTYPE_REGFILEUNIQUE || objtype==OBJTYPE_REGFILEMULTI)
-        curfilecost+=statbuf->st_size;
-    if (costeval!=NULL) // evaluating cost
-    {   *costeval+=curfilecost;
+    // --- cost required for the progression info
+    if (costeval!=NULL) 
+    {   *costeval+=filecost;
         dico_destroy(dicoattr);
         return 0;
     }
@@ -582,7 +572,7 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
     {
         memset(strprogress, 0, sizeof(strprogress));
         if (save->cost_global>0)
-        {   save->cost_current+=curfilecost;
+        {   save->cost_current+=filecost;
             progress=((save->cost_current)*100)/(save->cost_global);
             if (progress>=0 && progress<=100)
                 snprintf(strprogress, sizeof(strprogress), "[%3d%%]", (int)progress);
