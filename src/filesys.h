@@ -48,6 +48,5 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
 int generic_mount(char *partition, char *mntbuf, char *fsbuf, char *mntopt, int flags);
 char *format_prog_version(u64 version, char *bufdat, int buflen);
 int generic_umount(char *mntbuf);
-u64 check_prog_version(char *prog);
 
 #endif // __FILESYS_H__

@@ -35,13 +35,14 @@ int ntfs_mkfs(cdico *d, char *partition)
     char command[2048];
     char buffer[2048];
     char options[2048];
+    int exitst;
     u64 temp64;
     u32 temp32;
     u16 temp16;
     
     // there is no option that just displays the version and return 0 in mkfs.ntfs
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "which mkfs.ntfs")!=0)
-    {   errprintf("mkfs.ntfs not found. please install ntfs-3g 2009.1.1AR.1 or more recent on your system or check the PATH.\n");
+    if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "mkfs.ntfs")!=0)
+    {   errprintf("mkfs.ntfs not found. please install ntfsprogs-2.0.0 on your system or check the PATH.\n");
         return -1;
     }
     
@@ -56,7 +57,7 @@ int ntfs_mkfs(cdico *d, char *partition)
     if (dico_get_u32(d, 0, FSYSHEADKEY_NTFSCLUSTERSIZE, &temp32)==0)
         strlcatf(options, sizeof(options), " -c %ld ", (long)temp32);
     
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "mkfs.ntfs -f %s %s", partition, options)!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.ntfs -f %s %s", partition, options)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }
@@ -209,21 +210,20 @@ int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnti
     char *saveptr;
     char *result;
     u64 instver=0;
+    int exitst;
     
     // init
     memset(options, 0, sizeof(options));
+    memset(stderrbuf, 0, sizeof(stderrbuf));
     snprintf(minversion, sizeof(minversion), "ntfs-3g %.4d.%.2d.%.2d (standard release)", 
         NTFS3G_MINVER_Y, NTFS3G_MINVER_M, NTFS3G_MINVER_D);
     
-    // check that mount.ntfs-3g is available
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "which mount.ntfs-3g")!=0)
-    {   errprintf("mount.ntfs-3g not found. please install %s\n"
+    // check that mount.ntfs-3g is available (don't check the exit status, it's not supposed to be 0)
+    if (exec_command(command, sizeof(command), NULL, NULL, 0, stderrbuf, sizeof(stderrbuf), "ntfs-3g -h")!=0)
+    {   errprintf("ntfs-3g not found. please install %s\n"
             "or a newer version on your system or check the PATH.\n", minversion);
         return -1;
     }
-    
-    memset(stderrbuf, 0, sizeof(stderrbuf));
-    exec_command(command, sizeof(command), NULL, 0, stderrbuf, sizeof(stderrbuf), "mount.ntfs-3g -h");
     
     // check if there is a recent ntfs-3g version installed
     result=strtok_r(stderrbuf, delims, &saveptr);
@@ -237,7 +237,7 @@ int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnti
     
     if (instver < NTFS3G_VERSION(NTFS3G_MINVER_Y, NTFS3G_MINVER_M, NTFS3G_MINVER_D))
     {
-        errprintf("fsarchiver requires %s to operate. The version detected is too old\n", minversion);
+        errprintf("fsarchiver requires %s to operate. The detected version is too old\n", minversion);
         return -1;
     }
     else
@@ -262,7 +262,7 @@ int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnti
         strlcatf(options, sizeof(options), " -o ro ");
     
     // ---- set the advanced filesystem settings from the dico
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "mount.ntfs-3g %s %s %s", options, partition, mntbuf)!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "ntfs-3g %s %s %s", options, partition, mntbuf)!=0 || exitst!=0)
     {   errprintf("command [%s] failed, make sure a recent version of ntfs-3g is installed\n", command);
         return -1;
     }
@@ -273,13 +273,14 @@ int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnti
 int ntfs_umount(char *partition, char *mntbuf)
 {
     char command[2048];
+    int existst;
 
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "which fusermount")!=0)
+    if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "fusermount")!=0)
     {   errprintf("fusermount not found. please install fuse on your system or check the PATH.\n");
         return -1;
     }
     
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "fusermount -u %s", mntbuf)!=0)
+    if (exec_command(command, sizeof(command), &existst, NULL, 0, NULL, 0, "fusermount -u %s", mntbuf)!=0 || existst!=0)
     {   errprintf("cannot unmount [%s]\n", mntbuf);
         return -1;
     }

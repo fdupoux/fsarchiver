@@ -25,7 +25,7 @@
 
 struct timeval;
 
-int exec_command(char *command, int cmdbufsize, char *stdoutbuf, int stdoutsize, char *stderrbuf, int stderrsize, char *format, ...);
+int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, int stdoutsize, char *stderrbuf, int stderrsize, char *format, ...);
 int get_parent_dir_time_attrib(char *filepath, char *parentdirbuf, int bufsize, struct timeval *tv);
 void concatenate_paths(char *buffer, int maxbufsize, char *p1, char *p2);
 int path_force_extension(char *buf, int bufsize, char *origpath, char *ext);
@@ -37,6 +37,7 @@ int generate_random_tmpdir(char *buffer, int bufsize, int n);
 char *format_time(char *buffer, int bufsize, u64 t);
 int stream_readline(FILE *f, char *buf, int buflen);
 char *format_md5(char *buf, int maxbuf, u8 *md5bin);
+int getpathtoprog(char *buffer, int bufsize, char *prog);
 int mkdir_recursive(char *path);
 char *get_objtype_name(int objtype);
 int is_dir_empty(char *path);

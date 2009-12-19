@@ -35,9 +35,10 @@ int xfs_mkfs(cdico *d, char *partition)
     char command[2048];
     char buffer[2048];
     char options[2048];
+    int exitst;
     u64 temp64;
     
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "mkfs.xfs -V")!=0)
+    if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "mkfs.xfs -V")!=0)
     {   errprintf("mkfs.xfs not found. please install xfsprogs on your system or check the PATH.\n");
         return -1;
     }
@@ -49,7 +50,7 @@ int xfs_mkfs(cdico *d, char *partition)
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, &temp64)==0) && (temp64%512==0) && (temp64>=512) && (temp64<=65536))
         strlcatf(options, sizeof(options), " -b size=%ld ", (long)temp64);
     
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, options)!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, options)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }
@@ -61,7 +62,7 @@ int xfs_mkfs(cdico *d, char *partition)
     
     if (options[0])
     {
-        if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "xfs_admin %s %s", options, partition)!=0)
+        if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "xfs_admin %s %s", options, partition)!=0 || exitst!=-0)
         {   errprintf("command [%s] failed\n", command);
             return -1;
         }

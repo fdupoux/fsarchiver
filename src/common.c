@@ -245,18 +245,46 @@ int regfile_exists(char *filepath)
     return -1; // don't know
 }
 
-int exec_command(char *command, int cmdbufsize, char *stdoutbuf, int stdoutsize, char *stderrbuf, int stderrsize, char *format, ...)
+int getpathtoprog(char *buffer, int bufsize, char *prog)
 {
+    char pathtest[PATH_MAX];
+    char delims[]=":\t\n";
+    struct stat bufstat;
+    char pathenv[4096];
+    char *saveptr=0;
+    char *result;
+    char *vp;
+    int i;
+    
+    memset(buffer, 0, bufsize);
+    if ((vp=getenv("PATH")) == NULL)
+        return -1;
+    snprintf(pathenv, sizeof(pathenv), "%s", vp);
+    result=strtok_r(pathenv, delims, &saveptr);
+    for(i=0; result != NULL; i++)
+    {
+        snprintf(pathtest, sizeof(pathtest), "%s/%s", result, prog);
+        if (stat(pathtest, &bufstat)==0 && access(pathtest, X_OK)==0)
+        {
+            snprintf(buffer, bufsize, "%s", pathtest);
+            return 0;
+        }
+        result = strtok_r(NULL, delims, &saveptr);
+    }
+    return -1;
+}
+
+int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, int stdoutsize, char *stderrbuf, int stderrsize, char *format, ...)
+{
+    char pathtoprog[PATH_MAX]; // full path to the program to run
     const int max_argv=128; // maximum arguments to a command
     char *argv[max_argv]; // pointer to arguments processed by wordexp()
     int outpos=0; // how many bytes have already been stored in the buffer for stdout
     int errpos=0; // how many bytes have already been stored in the buffer for stderr
-    char temp[2048];
     int pfildes1[2];
     int pfildes2[2];
     wordexp_t p;
     int status;
-    int exitst;
     int mystdout;
     int mystderr;
     va_list ap;
@@ -268,18 +296,20 @@ int exec_command(char *command, int cmdbufsize, char *stdoutbuf, int stdoutsize,
     int i;
     
     // init
+    memset(pathtoprog, 0, sizeof(pathtoprog));
     for (i=0; i < max_argv; argv[i++]=NULL);
+    if (exitst)
+        *exitst=-1;
     
     // format the string
-    memset(stdoutbuf, 0, stdoutsize);
-    memset(stderrbuf, 0, stderrsize);
+    if (stdoutbuf && stdoutsize)
+        memset(stdoutbuf, 0, stdoutsize);
+    if (stderrbuf && stderrsize)
+        memset(stderrbuf, 0, stderrsize);
     memset(command, 0, cmdbufsize);
     va_start(ap, format);
     vsnprintf(command, cmdbufsize, format, ap);
     va_end(ap);
-    
-    // parse the command
-    //snprintf(temp, sizeof(temp), "%s", command);
     
     // do shell expansion to parse the quotes for args with spaces
     wordexp(command, &p, 0); // will require wordfree to free the memory
@@ -288,15 +318,13 @@ int exec_command(char *command, int cmdbufsize, char *stdoutbuf, int stdoutsize,
         msgprintf(MSG_DEBUG1, "argv[%d]=[%s]\n", i, argv[i]);
     }
     
-    // make sure the program exists
-    snprintf(temp, sizeof(temp), "which %s 1>/dev/null 2>/dev/null", argv[0]);
-    res=system(temp);
-    msgprintf(MSG_DEBUG1, "system(%s)=%d\n", temp, res);
-    if (res!=0)
-    {   errprintf("program [%s] cannot be executed\n", argv[0]);
+    // get the full path to the program
+    if (getpathtoprog(pathtoprog, sizeof(pathtoprog), argv[0])!=0)
+    {   errprintf("program [%s] no found in PATH or bad permissions on that program\n", argv[0]);
         wordfree(&p);
         return -1;
     }
+    msgprintf(MSG_VERB2, "getpathtoprog(%s)=[%s]\n", argv[0], pathtoprog);
     
     // execute the command
     if ((pipe(pfildes1)==-1) || (pipe(pfildes2)==-1))
@@ -320,8 +348,8 @@ int exec_command(char *command, int cmdbufsize, char *stdoutbuf, int stdoutsize,
         close(pfildes1[1]); // close excess fildes
         dup2(pfildes2[1],2); // make 1 same as write-to end of pipe
         close(pfildes2[1]); // close excess fildes
-        execvp(argv[0], argv);
-        errprintf("execvp(%s) failed\n", argv[0]); // still around? exec failed
+        execvp(pathtoprog, argv);
+        errprintf("execvp(%s) failed\n", pathtoprog); // still around? exec failed
         wordfree(&p);
         exit(EXIT_FAILURE);
     }
@@ -341,14 +369,14 @@ int exec_command(char *command, int cmdbufsize, char *stdoutbuf, int stdoutsize,
         do
         {   // read data stored in the stdout pipe (read to prevents the sub-process command from blocking on write)
             do
-            {    res=read(mystdout, &c, 1);
+            {   res=read(mystdout, &c, 1);
                 if ((stdoutbuf!=NULL) && (res>0) && (outpos+1 < stdoutsize))
                     stdoutbuf[outpos++]=c;
             } while (res>0);
             
             // read data stored in the stderr pipe (read to prevents the sub-process command from blocking on write)
             do
-            {    res=read(mystderr, &c, 1);
+            {   res=read(mystderr, &c, 1);
                 if ((stderrbuf!=NULL) && (res>0) && (errpos+1 < stderrsize))
                     stderrbuf[errpos++]=c;
             } while (res>0);
@@ -362,9 +390,9 @@ int exec_command(char *command, int cmdbufsize, char *stdoutbuf, int stdoutsize,
         if ((stderrbuf!=NULL) && (errpos+1 < stderrsize))
             res=read(mystderr, stderrbuf+errpos, stderrsize-errpos-1);
         
-        exitst=WEXITSTATUS(status);
-        
-        msgprintf(MSG_VERB1, "command [%s] returned %d\n", command, exitst);
+        msgprintf(MSG_VERB1, "command [%s] returned %d\n", command, WEXITSTATUS(status));
+        if (exitst)
+            *exitst=WEXITSTATUS(status);
         
         if ((stdoutbuf!=NULL) && (outpos>0))
             msgprintf(MSG_DEBUG1, "\n----stdout----\n%s\n----stdout----\n\n", stdoutbuf);
@@ -372,7 +400,7 @@ int exec_command(char *command, int cmdbufsize, char *stdoutbuf, int stdoutsize,
             msgprintf(MSG_DEBUG1, "\n----stderr----\n%s\n----stderr----\n\n", stderrbuf);
         
         wordfree(&p);
-        return exitst;
+        return 0;
     }
 }
 

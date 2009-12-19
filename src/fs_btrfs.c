@@ -54,6 +54,7 @@ int btrfs_mkfs(cdico *d, char *partition)
     u64 compat_flags;
     u64 incompat_flags;
     u64 compat_ro_flags;
+    int exitst;
     u64 temp64;
     
     // ---- get original filesystem features (if the original filesystem was a btrfs)
@@ -73,7 +74,7 @@ int btrfs_mkfs(cdico *d, char *partition)
     }
     
     // ---- there is no option that just displays the version and return 0 in mkfs.btrfs-0.16
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "which mkfs.btrfs")!=0)
+    if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "mkfs.btrfs")!=0)
     {   errprintf("mkfs.btrfs not found. please install btrfs-progs on your system or check the PATH.\n");
         return -1;
     }
@@ -86,7 +87,7 @@ int btrfs_mkfs(cdico *d, char *partition)
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSBTRFSSECTORSIZE, &temp64)==0)
         strlcatf(options, sizeof(options), " -s %ld ", (long)temp64);
     
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "mkfs.btrfs %s %s", partition, options)!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.btrfs %s %s", partition, options)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }

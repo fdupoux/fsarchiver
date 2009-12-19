@@ -140,6 +140,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
     u64 e2fstoolsver;
     int compat_type;
     u64 temp64;
+    int exitst;
     int ret=0;
     int res;
     int i;
@@ -150,7 +151,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
     strlist_init(&strfeatures);
     
     // ---- check that mkfs is installed and get its version
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "%s -V", progname)!=0)
+    if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "%s -V", progname)!=0)
     {   errprintf("%s not found. please install a recent e2fsprogs on your system or check the PATH.\n", progname);
         ret=-1;
         goto extfs_mkfs_cleanup;
@@ -257,8 +258,8 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
     
     // ---- execute mke2fs
     msgprintf(MSG_VERB2, "exec: %s\n", command);
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "%s %s %s", progname, partition, options)!=0)
-    {   errprintf("command [%s] failed\n", command);
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "%s %s %s", progname, partition, options)!=0 || exitst!=0)
+    {   errprintf("command [%s] failed with return status=%d\n", command, exitst);
         ret=-1;
         goto extfs_mkfs_cleanup;
     }
@@ -273,8 +274,8 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
     
     if (options[0])
     {
-        if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "tune2fs %s %s", partition, options)!=0)
-        {   errprintf("command [%s] failed\n", command);
+        if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "tune2fs %s %s", partition, options)!=0 || exitst!=0)
+        {   errprintf("command [%s] failed with return status=%d\n", command, exitst);
             ret=-1;
             goto extfs_mkfs_cleanup;
         }
@@ -283,8 +284,8 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
         // http://article.gmane.org/gmane.comp.file-systems.ext4/11181
         if (extfstype==EXTFSTYPE_EXT4 && e2fstoolsver<PROGVER(1,41,4))
         {
-            if ( ((res=exec_command(command, sizeof(command), NULL, 0, NULL, 0, "e2fsck -fy %s", partition))!=0) && (res!=1) )
-            {   errprintf("command [%s] failed with return status=%d\n", command, res);
+            if ( ((res=exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "e2fsck -fy %s", partition))!=0) || ((exitst!=0) && (exitst!=1)) )
+            {   errprintf("command [%s] failed with return status=%d\n", command, exitst);
                 ret=-1;
                 goto extfs_mkfs_cleanup;
             }
@@ -478,4 +479,50 @@ int extfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt)
     ext2fs_close(fs);
     
     return 0;
+}
+
+u64 check_prog_version(char *prog)
+{
+    char stderrbuf[2048];
+    char command[2048];
+    char options[1024];
+    char temp1[1024];
+    char delims[]="\n\r";
+    char *saveptr;
+    char *result;
+    int foundversion;
+    int x, y, z;
+    
+    // init
+    memset(options, 0, sizeof(options));
+    memset(stderrbuf, 0, sizeof(stderrbuf));
+    
+    if (exec_command(command, sizeof(command), NULL, NULL, 0, stderrbuf, sizeof(stderrbuf), "%s -V", prog)!=0)
+    {   errprintf("program %s was not found or has bad permissions.\n", prog);
+        return -1;
+    }
+    
+    foundversion=false;
+    result=strtok_r(stderrbuf, delims, &saveptr);
+    while (result != NULL && foundversion==false)
+    {   if ((memcmp(result, prog, strlen(prog))==0))
+            foundversion=true;
+        else
+            result = strtok_r(NULL, delims, &saveptr);
+    }
+    
+    if (foundversion==false)
+    {   errprintf("can't parse %s version number: no match\n", prog);
+        return 0;
+    }
+    
+    x=y=z=0;
+    sscanf(result, "%s %d.%d.%d", temp1, &x, &y, &z);
+    
+    if (x==0 && y==0)
+    {   errprintf("can't parse %s version number: x=y=0\n", prog);
+        return 0;
+    }
+    
+    return PROGVER(x,y,z);
 }

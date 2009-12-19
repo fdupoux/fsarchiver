@@ -36,10 +36,11 @@ int reiser4_mkfs(cdico *d, char *partition)
     char command[2048];
     char buffer[2048];
     char options[2048];
+    int exitst;
     u64 temp64;
     
     // ---- check mkfs.reiser4 is available
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "mkfs.reiser4 -V")!=0)
+    if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "mkfs.reiser4 -V")!=0)
     {   errprintf("mkfs.reiser4 not found. please install reiser4progs on your system or check the PATH.\n");
         return -1;
     }
@@ -55,7 +56,7 @@ int reiser4_mkfs(cdico *d, char *partition)
     if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0 && strlen(buffer)==36)
         strlcatf(options, sizeof(options), " -U %s ", buffer);
     
-    if (exec_command(command, sizeof(command), NULL, 0, NULL, 0, "mkfs.reiser4 -y %s %s", partition, options)!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.reiser4 -y %s %s", partition, options)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }

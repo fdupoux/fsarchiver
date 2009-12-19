@@ -36,6 +36,7 @@ int extfs_test(char *partition, int extfstype);
 int ext2_test(char *partition);
 int ext3_test(char *partition);
 int ext4_test(char *partition);
+u64 check_prog_version(char *prog);
 
 /* for s_feature_compat */
 #define FSA_EXT2_FEATURE_COMPAT_DIR_PREALLOC        0x0001
