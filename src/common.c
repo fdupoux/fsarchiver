@@ -336,7 +336,7 @@ int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, in
     msgprintf(MSG_VERB1, "executing [%s]...\n", command);
     
     if ((pid = fork()) == -1)
-    {   errprintf("fork() failed\n");
+    {   sysprintf("fork() failed\n");
         wordfree(&p);
         return -1;
     }
