@@ -103,7 +103,7 @@ void usage(char *progname, bool examples)
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs\n");
         msgprintf(MSG_FORCE, " * save the contents of /usr/src/linux to an archive (similar to tar):\n");
         msgprintf(MSG_FORCE, "   fsarchiver savedir /data/linux-sources.fsa /usr/src/linux\n");
-        msgprintf(MSG_FORCE, " * save a filesystem (/dev/sda1) to an archive splitted into volumes of 680MB:\n");
+        msgprintf(MSG_FORCE, " * save a filesystem (/dev/sda1) to an archive split into volumes of 680MB:\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -s 680 /data/myarchive1.fsa /dev/sda1\n");
         msgprintf(MSG_FORCE, " * save a filesystem (/dev/sda1) to an encrypted archive:\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -c mypassword /data/myarchive1.fsa /dev/sda1\n");
@@ -211,7 +211,7 @@ int process_cmdline(int argc, char **argv)
                 }
                 else // show the calculated size since it was probably incorrect before due to an integer overflow
                 {
-                    msgprintf(MSG_FORCE, "Archives will be splitted into volumes of the following size:\n%lld bytes (%s)",
+                    msgprintf(MSG_FORCE, "Archives will be split into volumes of the following size:\n%lld bytes (%s)",
                         (long long)g_options.splitsize, format_size(g_options.splitsize, tempbuf, sizeof(tempbuf), 'h'));
                 }
                 break;
