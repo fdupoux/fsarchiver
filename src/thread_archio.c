@@ -358,8 +358,10 @@ void *thread_writer_fct(void *args)
             // c. check for splitting
             if (((cursize=archive_get_currentpos(ai))>=0) && (g_options.splitsize>0 && cursize+wb->size > g_options.splitsize))
             {
+                msgprintf(MSG_DEBUG2, "splitchk: YES --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
+                    (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
                 if (archio_write_volfooter(ai, false)!=0)
-                {      msgprintf(MSG_STACK, "cannot write volume footer: archio_write_volfooter() failed\n");
+                {   msgprintf(MSG_STACK, "cannot write volume footer: archio_write_volfooter() failed\n");
                     goto thread_writer_fct_error;
                 }
                 archive_close(ai);
@@ -373,6 +375,11 @@ void *thread_writer_fct(void *args)
                 {      msgprintf(MSG_STACK, "cannot write volume header: archio_write_volheader() failed\n");
                     goto thread_writer_fct_error;
                 }
+            }
+            else // don't split now
+            {
+                msgprintf(MSG_DEBUG2, "splitchk: NO --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
+                    (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
             }
             
             // d. write s_writebuf to disk

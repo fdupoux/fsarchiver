@@ -140,6 +140,7 @@ int process_cmdline(int argc, char **argv)
     char *command=NULL;
     char *archive=NULL;
     char *partition[32];
+    char tempbuf[1024];
     char *progname;
     int fscount;
     int argcok;
@@ -201,12 +202,17 @@ int process_cmdline(int argc, char **argv)
                 strlist_add(&g_options.exclude, optarg);
                 break;
             case 's': // split archive into several volumes
-                g_options.splitsize=atol(optarg)*1024*1024;
+                g_options.splitsize=((u64)atoll(optarg))*((u64)1024LL*1024LL);
                 if (g_options.splitsize==0)
                 {
                     errprintf("argument of option -s is invalid (%s). It must be a valid integer\n", optarg);
                     usage(progname, false);
                     return -1;
+                }
+                else // show the calculated size since it was probably incorrect before due to an integer overflow
+                {
+                    msgprintf(MSG_FORCE, "Archives will be splitted into volumes of the following size:\n%lld bytes (%s)",
+                        (long long)g_options.splitsize, format_size(g_options.splitsize, tempbuf, sizeof(tempbuf), 'h'));
                 }
                 break;
             case 'z': // compression level
