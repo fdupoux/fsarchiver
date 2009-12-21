@@ -3,6 +3,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 * 0.6.3 (not released yet):
   - Dont fail when e2fsck returns 1 in extfs_mkfs() since it means the filesystem has been fixed
   - Displays the percentage of the operation which has been completed when verbose >= 1 (sort of progress bar)
+  - Display information about physical disks as well as partitions in "fsarchiver probe <mode>"
   - Added option "-e <pattern>" to exclude files/dirs. It works for both archiving and extracting.
   - Added support for long options (--option) using getopt_long
   - Removed the dependency on "which" to find the path to a program

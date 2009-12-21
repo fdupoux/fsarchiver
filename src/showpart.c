@@ -65,11 +65,12 @@ int partlist_getlongname(char *longnamebuf, int longbufsize, char *shortname)
     return -1;
 }
 
-int partlist_probe(struct s_blkdev *sdev)
+int partlist_probefs(struct s_blkdev *sdev)
 {
     blkid_tag_iterate iter;
     const char *type, *value;
     struct stat64 statbuf;
+    char devname[PATH_MAX];
     blkid_dev dev;
     int fd;
     
@@ -82,7 +83,8 @@ int partlist_probe(struct s_blkdev *sdev)
     blkid_cache cache = NULL;
     if (blkid_get_cache(&cache, NULL) < 0)
         return -1;
-    if ((dev=blkid_get_dev(cache, sdev->devname, BLKID_DEV_NORMAL))!=NULL)
+    snprintf(devname, sizeof(devname), "/dev/%s", sdev->devname);
+    if ((dev=blkid_get_dev(cache, devname, BLKID_DEV_NORMAL))!=NULL)
     {
         iter = blkid_tag_iterate_begin(dev);
         while (blkid_tag_next(iter, &type, &value)==0)
@@ -99,7 +101,7 @@ int partlist_probe(struct s_blkdev *sdev)
         // workaround: blkid < 1.41 don't know ext4 and say it is ext3 instead
         if (strcmp(sdev->fsname, "ext3")==0)
         {
-            if (ext3_test(sdev->devname)==true)
+            if (ext3_test(devname)==true)
                 snprintf(sdev->fsname, sizeof(sdev->fsname), "ext3");
             else // cannot run ext4_test(): it would fail on an ext4 when e2fsprogs < 1.41
                 snprintf(sdev->fsname, sizeof(sdev->fsname), "ext4");
@@ -108,17 +110,17 @@ int partlist_probe(struct s_blkdev *sdev)
     blkid_put_cache(cache); // free memory allocated by blkid_get_cache
 
     // ---- get misc infos about the device (size, minor, major)
-    if ((stat64(sdev->devname, &statbuf)!=0) || !S_ISBLK(statbuf.st_mode))
+    if ((stat64(devname, &statbuf)!=0) || !S_ISBLK(statbuf.st_mode))
         return -1;
     
     sdev->rdev=statbuf.st_rdev;
     snprintf(sdev->major, sizeof(sdev->major), "%d", major(statbuf.st_rdev));
     snprintf(sdev->minor, sizeof(sdev->minor), "%d", minor(statbuf.st_rdev));
     
-    if (partlist_getlongname(sdev->longname, sizeof(sdev->longname), sdev->devname)!=0)
-        snprintf(sdev->longname, sizeof(sdev->longname), "%s", sdev->devname);
+    if (partlist_getlongname(sdev->longname, sizeof(sdev->longname), devname)!=0)
+        snprintf(sdev->longname, sizeof(sdev->longname), "%s", devname);
     
-    if ((fd=open64(sdev->devname, O_RDONLY|O_LARGEFILE))<0)
+    if ((fd=open64(devname, O_RDONLY|O_LARGEFILE))<0)
         return -1;
     
     sdev->devsize=lseek64(fd, 0, SEEK_END);
@@ -131,53 +133,54 @@ int partlist_probe(struct s_blkdev *sdev)
     return 0;
 }
 
-int is_partition(const char *devname)
+int partlist_getdevtype(struct s_blkdev *dev)
 {
-    int chr;
+    char sysblkinfo[PATH_MAX];
+    char sysblkdevname[512];
+    struct stat bufstat;
+    char temp[512];
+    FILE *finfo;
+    int i;
     
-    // when HDIO_GETGEO works use it
-/*
-    #define HDIO_GETGEO 0x0301 // get device geometry
+    // init
+    memset(dev->name, 0, sizeof(dev->name));
+    dev->devtype=BLKDEV_INVALID;
     
-    struct hd_geometry {
-    unsigned char heads;
-    unsigned char sectors;
-    unsigned short cylinders;
-    unsigned long start;
-    };
-    
-#ifdef HDIO_GETGEO
-        struct hd_geometry geometry;
-        int fd=-1;
-    int res;
-    
-        if ((fd=open(devname, O_RDONLY))>=0)
-    {
-        res=ioctl(fd, HDIO_GETGEO, &geometry);
-        //printf("ioctl(%s)=%d and (geometry.start!=0)=%d: geometry.start=%d, geometry.sectors=%d\n", devname, res, geometry.start!=0, geometry.start, geometry.sectors);
-        close(fd);
-        if (res==0)
-            return geometry.start!=0;
+    // check that device exists
+    snprintf(sysblkinfo, sizeof(sysblkinfo), "/dev/%s", dev->devname);
+    if (stat(sysblkinfo, &bufstat)!=0)
+    {   dev->devtype=BLKDEV_INVALID;
+        return -1;
     }
-#endif
-    return -1;*/
     
-    // case-1: HP CCISS devices ('/dev/cciss/c0d0' and '/dev/cciss/c1d1' are disks, '/dev/cciss/c1d1p1' is partition)
-    if (strstr(devname, "/dev/cciss"))
-        return (strstr(devname, "p")!=NULL);
-    // case-2: device mapper devices
-    if (strstr(devname, "/dev/dm-") || strstr(devname, "/dev/mapper"))
-        return true;
-    // case-3: standard devices
-    for (chr=0; devname[chr] && devname[chr+1]; chr++);
-    while ((chr>0) && (isdigit(devname[chr-1]))) chr--;
-    if (atol(devname+chr)==0) // partitions names terminates with a number > 0
-        return false; // not a partition device name
+    // devname shown in /sys/block (eg for HP-cciss: "/dev/cciss/c0d0" -> "/sys/block/cciss!c0d0")
+    snprintf(sysblkdevname, sizeof(sysblkdevname), "%s", dev->devname);
+    for (i=0; (sysblkdevname[i]!=0) && (i<sizeof(sysblkdevname)); i++)
+        if (sysblkdevname[i]=='/')
+            sysblkdevname[i]='!';
+    
+    // check if it's a physical disk (there is a "/sys/block/${devname}/device")
+    snprintf(sysblkinfo, sizeof(sysblkinfo), "/sys/block/%s/device", sysblkdevname);
+    if (stat(sysblkinfo, &bufstat)==0)
+        dev->devtype=BLKDEV_PHYSDISK;
     else
-            return true; // this is a partition device name
+        dev->devtype=BLKDEV_FILESYSDEV;
+    
+    // read details available for physical disks only
+    if (dev->devtype==BLKDEV_PHYSDISK)
+    {
+        snprintf(sysblkinfo, sizeof(sysblkinfo), "/sys/block/%s/device/model", sysblkdevname);
+        if ( ((finfo=fopen(sysblkinfo, "rb")) != NULL) && (fread(temp, 1, sizeof(temp), finfo)>0) && fclose(finfo)==0 )
+        {
+            for (i=0; (temp[i]!=0) && (temp[i]!='\r') && (temp[i]!='\n'); i++)
+                dev->name[i]=temp[i];
+        }
+    }
+    
+    return 0;
 }
 
-int partlist_getlist(struct s_blkdev *blkdev, int maxblkdev)
+int partlist_getlist(struct s_blkdev *blkdev, int maxblkdev, int *diskcount, int *partcount)
 {
     int best; // index of the best item found in old array
     int pos=0; // pos of latest item in new array
@@ -191,60 +194,62 @@ int partlist_getlist(struct s_blkdev *blkdev, int maxblkdev)
     int i, j;
     FILE *fpart;
     
-    // ---- 1. add partitions listed in /proc/partitions
-    if ((fpart=fopen("/proc/partitions","rb"))!=NULL)
+    // init
+    *diskcount=0;
+    *partcount=0;
+    
+    // browse list in "/proc/partitions"
+    if ((fpart=fopen("/proc/partitions","rb"))==NULL)
+        return -1;
+    while(!feof(fpart) && (count < FSA_MAX_BLKDEVICES) && (count < maxblkdev))
     {
-        while(!feof(fpart) && (count < FSA_MAX_BLKDEVICES) && (count < maxblkdev))
+        if (stream_readline(fpart, line, sizeof(line))>1)
         {
-            if (stream_readline(fpart, line, sizeof(line))>1)
+            memset(&tmpdev, 0, sizeof(tmpdev));
+            result=strtok_r(line, delims, &saveptr);
+            
+            for(i=0; result != NULL && i<=4; i++)
             {
-                memset(&tmpdev, 0, sizeof(tmpdev));
-                result=strtok_r(line, delims, &saveptr);
-                
-                for(i=0; result != NULL && i<=4; i++)
+                switch(i)
                 {
-                    switch(i)
-                    {
-                        case 0: // col0 = major
-                            snprintf(tmpdev.major, sizeof(tmpdev.major), "%s", result);
-                            break;
-                        case 1: // col1 = minor
-                            snprintf(tmpdev.minor, sizeof(tmpdev.minor), "%s", result);
-                            break;
-                        case 3: // col3 = devname
-                            snprintf(tmpdev.devname, sizeof(tmpdev.devname), "/dev/%s", result);
-                            break;
-                    }
-                    result = strtok_r(NULL, delims, &saveptr);
+                    case 0: // col0 = major
+                        snprintf(tmpdev.major, sizeof(tmpdev.major), "%s", result);
+                        break;
+                    case 1: // col1 = minor
+                        snprintf(tmpdev.minor, sizeof(tmpdev.minor), "%s", result);
+                        break;
+                    case 3: // col3 = devname
+                        snprintf(tmpdev.devname, sizeof(tmpdev.devname), "%s", result);
+                        break;
                 }
-                
-                // remove empty names
-                if (strlen(tmpdev.devname)==0)
-                    continue; // to to the next part
-                
-                // remove invalid entries from /proc/partitions
-                if (atoi(tmpdev.major)==0 && atoi(tmpdev.minor)==0)
-                    continue; // to to the next part
-                
-                // exclude whole disks (eg: "/dev/sda", "/dev/sdb", "/dev/cciss/c0d0", ...)
-                if (is_partition(tmpdev.devname)!=true)
-                    continue; // to to the next part
-                
-                if (partlist_probe(&tmpdev)==-1)
-                    continue; // to to the next part
-                
-                // check that this device is not already in the list
-                for (i=0; i < count; i++)
-                    if (blkdev1[i].rdev==tmpdev.rdev)
-                        continue; // to to the next part
-                
-                // add the device to list if it is a real device and it's not already in the list
-                blkdev1[count++]=tmpdev;
+                result = strtok_r(NULL, delims, &saveptr);
             }
+            
+            // remove empty names
+            if (strlen(tmpdev.devname)==0)
+                continue; // to to the next part
+            
+            // remove invalid entries from /proc/partitions
+            if (atoi(tmpdev.major)==0 && atoi(tmpdev.minor)==0)
+                continue; // to to the next part
+            
+            if ((partlist_getdevtype(&tmpdev))!=0)
+                continue; // skip invalid device
+            
+            if (partlist_probefs(&tmpdev)!=0)
+               continue; // to to the next part
+            
+            // check that this device is not already in the list
+            for (i=0; i < count; i++)
+                if (blkdev1[i].rdev==tmpdev.rdev)
+                    continue; // to to the next part
+            
+            // add the device to list if it is a real device and it's not already in the list
+            blkdev1[count++]=tmpdev;
         }
-        
-        fclose(fpart);
     }
+    
+    fclose(fpart);
     
     // ---- 2. sort the devices
     for (pos=0, i=0; i<count; i++)
@@ -257,25 +262,35 @@ int partlist_getlist(struct s_blkdev *blkdev, int maxblkdev)
         for (j=0; j<count; j++)
             if ((blkdev1[j].rdev > 0) && (blkdev1[j].rdev < blkdev1[best].rdev))
                 best=j;
+        // update counters
+        switch (blkdev1[best].devtype)
+        {
+            case BLKDEV_FILESYSDEV:
+                (*partcount)++;
+                break;
+            case BLKDEV_PHYSDISK:
+                (*diskcount)++;
+                break;                
+        }
         // move item to the new array
         blkdev[pos++]=blkdev1[best];
         blkdev1[best].rdev=0;
     }
-    
+
     return count;
 }
 
-struct s_diskinfo diskinfo[]=
+struct s_diskinfo partinfo[]=
 {
     {false,    "[%-16s] ",    "[=====DEVICE=====] "},
     {false,    "[%-11s] ",    "[==FILESYS==] "},
     {false,    "[%-15s] ",    "[=====LABEL=====] "},
-    {false,    "[%12s] ",    "[====SIZE====] "},
-    {false,    "[%3s] ",    "[MAJ] "},
-    {false,    "[%3s] ",    "[MIN] "},
-    {true,    "[%-36s] ",    "[==============LONGNAME==============] "},
-    {true,    "[%-40s] ",    "[==================UUID==================] "},
-    {false,    "",        ""}
+    {false,    "[%12s] ",     "[====SIZE====] "},
+    {false,    "[%3s] ",      "[MAJ] "},
+    {false,    "[%3s] ",      "[MIN] "},
+    {true,     "[%-36s] ",    "[==============LONGNAME==============] "},
+    {true,     "[%-40s] ",    "[==================UUID==================] "},
+    {false,    "",            ""}
 };
 
 char *partlist_getinfo(char *bufdat, int bufsize, struct s_blkdev *blkdev, int item)
@@ -298,30 +313,61 @@ char *partlist_getinfo(char *bufdat, int bufsize, struct s_blkdev *blkdev, int i
 int partlist_showlist(bool details)
 {
     struct s_blkdev blkdev[FSA_MAX_BLKDEVICES];
+    int diskcount;
+    int partcount;
     char temp[1024];
     int res;
     int i, j;
     
-    if ((res=partlist_getlist(blkdev, FSA_MAX_BLKDEVICES))<1)
-    {   msgprintf(MSG_FORCE, "No filesystem detected\n");
+    // ---- 0. get info from /proc/partitions + libblkid
+    if ((res=partlist_getlist(blkdev, FSA_MAX_BLKDEVICES, &diskcount, &partcount))<1)
+    {   msgprintf(MSG_FORCE, "Failed to detect disks and filesystems\n");
         return -1;
     }
     
-    for (j=0; diskinfo[j].title[0]; j++)
+    // ---- 1. show physical disks
+    if (diskcount>0)
     {
-        if (details==true || diskinfo[j].detailed==false)
-            msgprintf(MSG_FORCE, "%s", diskinfo[j].title);
+        msgprintf(MSG_FORCE, "[======DISK======] [============NAME=============] [====SIZE====] [MAJ] [MIN]\n");
+        for (i=0; i < res; i++)
+            if (blkdev[i].devtype==BLKDEV_PHYSDISK)
+                msgprintf(MSG_FORCE, "[%-16s] [%-29s] [%12s] [%3s] [%3s]\n", blkdev[i].devname, 
+                    blkdev[i].name, blkdev[i].txtsize, blkdev[i].major, blkdev[i].minor);
+        msgprintf(MSG_FORCE, "\n");
     }
-    msgprintf(MSG_FORCE, "\n");
-    
-    for (i=0; i < res; i++)
+    else
     {
-        for (j=0; diskinfo[j].title[0]; j++)
+        msgprintf(MSG_FORCE, "No physical disk found\n");
+    }
+    
+    // ---- 2. show filesystem information
+    if (partcount>0)
+    {
+        // show title for filesystems
+        for (j=0; partinfo[j].title[0]; j++)
         {
-            if (details==true || diskinfo[j].detailed==false)
-                msgprintf(MSG_FORCE, diskinfo[j].format, partlist_getinfo(temp, sizeof(temp), &blkdev[i], j));
+            if (details==true || partinfo[j].detailed==false)
+                msgprintf(MSG_FORCE, "%s", partinfo[j].title);
         }
         msgprintf(MSG_FORCE, "\n");
+        
+        // show filesystems data
+        for (i=0; i < res; i++)
+        {
+            if (blkdev[i].devtype==BLKDEV_FILESYSDEV)
+            {
+                for (j=0; partinfo[j].title[0]; j++)
+                {
+                    if (details==true || partinfo[j].detailed==false)
+                        msgprintf(MSG_FORCE, partinfo[j].format, partlist_getinfo(temp, sizeof(temp), &blkdev[i], j));
+                }
+                msgprintf(MSG_FORCE, "\n");
+            }
+        }
+    }
+    else
+    {
+        msgprintf(MSG_FORCE, "No filesystem found\n");
     }
     
     return 0;
