@@ -36,7 +36,7 @@ int crypto_init()
     gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
     
     // check that header files and library match
-    if (!gcry_check_version(GCRYPT_VERSION))
+    if (!gcry_check_version(FSA_GCRYPT_VERSION))
     {
         errprintf("libgcrypt version mismatch\n");
         return -1;
