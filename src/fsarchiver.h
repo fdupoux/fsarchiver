@@ -35,7 +35,7 @@
 #define FSA_RELDATE              PACKAGE_RELDATE
 #define FSA_FILEFORMAT           PACKAGE_FILEFMT
 
-#define FSA_GCRYPT_VERSION       "1.2.4"
+#define FSA_GCRYPT_VERSION       "1.2.3"
 
 #define FSA_MAX_FILEFMTLEN       32
 #define FSA_MAX_PROGVERLEN       32
