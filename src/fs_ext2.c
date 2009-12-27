@@ -39,7 +39,7 @@ struct mntopt
 
 struct s_features
 {
-    char    *name; // name of that feature
+    char   *name; // name of that feature
     int    mask; // identifier for that feature
     int    compat; // compat type for that feature (see e2p.h)
     int    firstfs; // type of the first filesystem to support it
@@ -49,17 +49,17 @@ struct s_features
 // TODO: check the real mke2fs version that supports the features
 struct s_features mkfeatures[] = // cf e2fsprogs-1.41.4/lib/e2p/feature.c
 {
-    {"has_journal",        FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL,        E2P_FEATURE_COMPAT,        EXTFSTYPE_EXT3,        PROGVER(1,39,0)},
-    {"resize_inode",    FSA_EXT2_FEATURE_COMPAT_RESIZE_INODE,        E2P_FEATURE_COMPAT,        EXTFSTYPE_EXT2,        PROGVER(1,39,0)},
-    {"dir_index",        FSA_EXT2_FEATURE_COMPAT_DIR_INDEX,        E2P_FEATURE_COMPAT,        EXTFSTYPE_EXT2,        PROGVER(1,33,0)},
-    {"filetype",        FSA_EXT2_FEATURE_INCOMPAT_FILETYPE,        E2P_FEATURE_INCOMPAT,        EXTFSTYPE_EXT2,        PROGVER(1,16,0)},
-    {"extent",        FSA_EXT4_FEATURE_INCOMPAT_EXTENTS,        E2P_FEATURE_INCOMPAT,        EXTFSTYPE_EXT4,        PROGVER(1,41,0)},
-    {"journal_dev",        FSA_EXT3_FEATURE_INCOMPAT_JOURNAL_DEV,        E2P_FEATURE_INCOMPAT,        EXTFSTYPE_EXT3,        PROGVER(1,39,0)},
-    {"flex_bg",        FSA_EXT4_FEATURE_INCOMPAT_FLEX_BG,        E2P_FEATURE_INCOMPAT,        EXTFSTYPE_EXT4,        PROGVER(1,41,0)},
-    {"large_file",        FSA_EXT2_FEATURE_RO_COMPAT_LARGE_FILE,        E2P_FEATURE_RO_INCOMPAT,    EXTFSTYPE_EXT2,        PROGVER(1,40,7)},
-    {"sparse_super",    FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER,    E2P_FEATURE_RO_INCOMPAT,    EXTFSTYPE_EXT2,        PROGVER(1,8,0)},
-    {"uninit_bg",        FSA_EXT4_FEATURE_RO_COMPAT_GDT_CSUM,        E2P_FEATURE_RO_INCOMPAT,    EXTFSTYPE_EXT4,        PROGVER(1,41,0)},
-    {NULL,            0,                        0,                0},
+    {"has_journal",  FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL,     E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT3, PROGVER(1,39,0)},
+    {"resize_inode", FSA_EXT2_FEATURE_COMPAT_RESIZE_INODE,    E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT2, PROGVER(1,39,0)},
+    {"dir_index",    FSA_EXT2_FEATURE_COMPAT_DIR_INDEX,       E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT2, PROGVER(1,33,0)},
+    {"filetype",     FSA_EXT2_FEATURE_INCOMPAT_FILETYPE,      E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT2, PROGVER(1,16,0)},
+    {"extent",       FSA_EXT4_FEATURE_INCOMPAT_EXTENTS,       E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT4, PROGVER(1,41,0)},
+    {"journal_dev",  FSA_EXT3_FEATURE_INCOMPAT_JOURNAL_DEV,   E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT3, PROGVER(1,39,0)},
+    {"flex_bg",      FSA_EXT4_FEATURE_INCOMPAT_FLEX_BG,       E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT4, PROGVER(1,41,0)},
+    {"large_file",   FSA_EXT2_FEATURE_RO_COMPAT_LARGE_FILE,   E2P_FEATURE_RO_INCOMPAT, EXTFSTYPE_EXT2, PROGVER(1,40,7)},
+    {"sparse_super", FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER, E2P_FEATURE_RO_INCOMPAT, EXTFSTYPE_EXT2, PROGVER(1,8,0)},
+    {"uninit_bg",    FSA_EXT4_FEATURE_RO_COMPAT_GDT_CSUM,     E2P_FEATURE_RO_INCOMPAT, EXTFSTYPE_EXT4, PROGVER(1,41,0)},
+    {NULL,           0,                                       0,                       0,              0},
 };
 
 char *format_fstype(int fstype)
