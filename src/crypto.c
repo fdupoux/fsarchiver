@@ -17,6 +17,7 @@
 
 #include <pthread.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "fsarchiver.h"
 #include "common.h"
