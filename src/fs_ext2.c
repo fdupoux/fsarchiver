@@ -256,6 +256,12 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
         goto extfs_mkfs_cleanup;
     }
     
+    // ---- extended options
+    if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE, &temp64)==0)
+        strlcatf(options, sizeof(options), " -E stride=%ld ", (long)temp64);
+    if ((dico_get_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, &temp64)==0) && e2fstoolsver>=PROGVER(1,40,7))
+        strlcatf(options, sizeof(options), " -E stripe-width=%ld ", (long)temp64);
+    
     // ---- execute mke2fs
     msgprintf(MSG_VERB2, "exec: %s\n", command);
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "%s %s %s", progname, partition, options)!=0 || exitst!=0)
@@ -271,6 +277,12 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
     
     if (dico_get_string(d, 0, FSYSHEADKEY_FSEXTDEFMNTOPT, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -o %s ", buffer);
+    
+    if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFSCKMAXMNTCOUNT, &temp64)==0)
+        strlcatf(options, sizeof(options), " -c %ld ", (long)temp64);
+    
+    if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFSCKCHECKINTERVAL, &temp64)==0)
+        strlcatf(options, sizeof(options), " -i %ldd ", (long)(temp64/86400L));
     
     if (options[0])
     {
@@ -343,6 +355,22 @@ int extfs_getinfo(cdico *d, char *devname)
         dico_add_u64(d, 0, FSYSHEADKEY_FSINODESIZE, fs->super->s_inode_size);
     else
         dico_add_u64(d, 0, FSYSHEADKEY_FSINODESIZE, EXT2_GOOD_OLD_INODE_SIZE); // Good old rev
+    
+    // ---- extended options
+    if (fs->super->s_raid_stride > 0)
+    {   dico_add_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE, fs->super->s_raid_stride);
+        msgprintf(MSG_DEBUG1, "extfs_raid_stride: %u\n", fs->super->s_raid_stride);
+    }
+    if (fs->super->s_raid_stripe_width > 0)
+    {   dico_add_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, fs->super->s_raid_stripe_width);
+        msgprintf(MSG_DEBUG1, "extfs_raid_stripe_width: %u\n", fs->super->s_raid_stripe_width);
+    }
+    
+    // ---- fsck details: max_mount_count and check_interval
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFSCKMAXMNTCOUNT, max(fs->super->s_max_mnt_count,0));
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFSCKCHECKINTERVAL, fs->super->s_checkinterval);
+    msgprintf(MSG_DEBUG1, "extfs_max_mount_count: %ld\n", (long)max(fs->super->s_max_mnt_count,0));
+    msgprintf(MSG_DEBUG1, "extfs_check_interval: %ld\n", (long)fs->super->s_checkinterval);
     
     // ---- default mount options
     memset(mntopt, 0, sizeof(mntopt));
