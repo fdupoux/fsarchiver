@@ -111,4 +111,93 @@ u64 check_prog_version(char *prog);
 #define EXT2_FLAG_SOFTSUPP_FEATURES     0x8000
 #endif 
 
+// this struct is incomplete in e2fsprogs-1.39.x/ext2fs.h
+struct fsa_ext2_sb
+{
+    u32   s_inodes_count;         /* Inodes count */
+    u32   s_blocks_count;         /* Blocks count */
+    u32   s_r_blocks_count;       /* Reserved blocks count */
+    u32   s_free_blocks_count;    /* Free blocks count */
+    u32   s_free_inodes_count;    /* Free inodes count */
+    u32   s_first_data_block;     /* First Data Block */
+    u32   s_log_block_size;       /* Block size */
+    s32   s_log_frag_size;        /* Fragment size */
+    u32   s_blocks_per_group;     /* # Blocks per group */
+    u32   s_frags_per_group;      /* # Fragments per group */
+    u32   s_inodes_per_group;     /* # Inodes per group */
+    u32   s_mtime;                /* Mount time */
+    u32   s_wtime;                /* Write time */
+    u16   s_mnt_count;            /* Mount count */
+    s16   s_max_mnt_count;        /* Maximal mount count */
+    u16   s_magic;                /* Magic signature */
+    u16   s_state;                /* File system state */
+    u16   s_errors;               /* Behaviour when detecting errors */
+    u16   s_minor_rev_level;      /* minor revision level */
+    u32   s_lastcheck;            /* time of last check */
+    u32   s_checkinterval;        /* max. time between checks */
+    u32   s_creator_os;           /* OS */
+    u32   s_rev_level;            /* Revision level */
+    u16   s_def_resuid;           /* Default uid for reserved blocks */
+    u16   s_def_resgid;           /* Default gid for reserved blocks */
+    /*
+     * These fields are for EXT2_DYNAMIC_REV superblocks only.
+     *
+     * Note: the difference between the compatible feature set and
+     * the incompatible feature set is that if there is a bit set
+     * in the incompatible feature set that the kernel doesn't
+     * know about, it should refuse to mount the filesystem.
+     *
+     * e2fsck's requirements are more strict; if it doesn't know
+     * about a feature in either the compatible or incompatible
+     * feature set, it must abort and not try to meddle with
+     * things it doesn't understand...
+     */
+    u32   s_first_ino;            /* First non-reserved inode */
+    u16   s_inode_size;           /* size of inode structure */
+    u16   s_block_group_nr;       /* block group # of this superblock */
+    u32   s_feature_compat;       /* compatible feature set */
+    u32   s_feature_incompat;     /* incompatible feature set */
+    u32   s_feature_ro_compat;    /* readonly-compatible feature set */
+    u8    s_uuid[16];             /* 128-bit uuid for volume */
+    char  s_volume_name[16];      /* volume name */
+    char  s_last_mounted[64];     /* directory where last mounted */
+    u32   s_algorithm_usage_bitmap; /* For compression */
+    /*
+     * Performance hints.  Directory preallocation should only
+     * happen if the EXT2_FEATURE_COMPAT_DIR_PREALLOC flag is on.
+     */
+    u8    s_prealloc_blocks;      /* Nr of blocks to try to preallocate*/
+    u8    s_prealloc_dir_blocks;  /* Nr to preallocate for dirs */
+    u16   s_reserved_gdt_blocks;  /* Per group table for online growth */
+    /*
+     * Journaling support valid if EXT2_FEATURE_COMPAT_HAS_JOURNAL set.
+     */
+    u8    s_journal_uuid[16];     /* uuid of journal superblock */
+    u32   s_journal_inum;         /* inode number of journal file */
+    u32   s_journal_dev;          /* device number of journal file */
+    u32   s_last_orphan;          /* start of list of inodes to delete */
+    u32   s_hash_seed[4];         /* HTREE hash seed */
+    u8    s_def_hash_version;     /* Default hash version to use */
+    u8    s_jnl_backup_type;      /* Default type of journal backup */
+    u16   s_desc_size;            /* Group desc. size: INCOMPAT_64BIT */
+    u32   s_default_mount_opts;
+    u32   s_first_meta_bg;        /* First metablock group */
+    u32   s_mkfs_time;            /* When the filesystem was created */
+    u32   s_jnl_blocks[17];       /* Backup of the journal inode */
+    u32   s_blocks_count_hi;      /* Blocks count high 32bits */
+    u32   s_r_blocks_count_hi;    /* Reserved blocks count high 32 bits*/
+    u32   s_free_blocks_hi;       /* Free blocks count */
+    u16   s_min_extra_isize;      /* All inodes have at least # bytes */
+    u16   s_want_extra_isize;     /* New inodes should reserve # bytes */
+    u32   s_flags;                /* Miscellaneous flags */
+    u16   s_raid_stride;          /* RAID stride */
+    u16   s_mmp_interval;         /* # seconds to wait in MMP checking */
+    u64   s_mmp_block;            /* Block for multi-mount protection */
+    u32   s_raid_stripe_width;    /* blocks on all data disks (N*stride)*/
+    u8    s_log_groups_per_flex;  /* FLEX_BG group size */
+    u8    s_reserved_char_pad;
+    u16   s_reserved_pad;         /* Padding to next 32bits */
+    u32   s_reserved[162];        /* Padding to the end of the block */
+};
+
 #endif // __FS_EXT2_H__

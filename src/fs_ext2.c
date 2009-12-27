@@ -311,6 +311,7 @@ extfs_mkfs_cleanup:
 
 int extfs_getinfo(cdico *d, char *devname)
 {
+    struct fsa_ext2_sb *super;
     blk_t use_superblock=0;
     int use_blocksize=0;
     char uuid[512];
@@ -327,55 +328,56 @@ int extfs_getinfo(cdico *d, char *devname)
     {   errprintf("ext2fs_open(%s) failed\n", devname);
         return -1;
     }
+    super=(struct fsa_ext2_sb *)fs->super;
     
     // --- label
     memset(label, 0, sizeof(label));
-    if (fs->super->s_volume_name[0])
+    if (super->s_volume_name[0])
     {   memset(label, 0, sizeof(label));
-        strncpy(label, fs->super->s_volume_name, sizeof(fs->super->s_volume_name));
+        strncpy(label, super->s_volume_name, sizeof(super->s_volume_name));
     }
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, label);
     
     // ---- uuid
-    /*if ((str=e2p_uuid2str(fs->super->s_uuid))!=NULL)
+    /*if ((str=e2p_uuid2str(super->s_uuid))!=NULL)
         dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);*/
     memset(uuid, 0, sizeof(uuid));
-    uuid_unparse_lower((u8*)fs->super->s_uuid, uuid);
+    uuid_unparse_lower((u8*)super->s_uuid, uuid);
     dico_add_string(d, 0, FSYSHEADKEY_FSUUID, uuid);
     msgprintf(MSG_DEBUG1, "extfs_uuid=[%s]\n", uuid); 
     
     // ---- block size
-    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTBLOCKSIZE, EXT2_BLOCK_SIZE(fs->super));
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTBLOCKSIZE, EXT2_BLOCK_SIZE(super));
     
     // ---- filesystem revision (good-old-rev or dynamic)
-    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTREVISION, fs->super->s_rev_level);
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTREVISION, super->s_rev_level);
     
     // ---- inode size
-    if (fs->super->s_rev_level >= EXT2_DYNAMIC_REV)
-        dico_add_u64(d, 0, FSYSHEADKEY_FSINODESIZE, fs->super->s_inode_size);
+    if (super->s_rev_level >= EXT2_DYNAMIC_REV)
+        dico_add_u64(d, 0, FSYSHEADKEY_FSINODESIZE, super->s_inode_size);
     else
         dico_add_u64(d, 0, FSYSHEADKEY_FSINODESIZE, EXT2_GOOD_OLD_INODE_SIZE); // Good old rev
     
     // ---- extended options
-    if (fs->super->s_raid_stride > 0)
-    {   dico_add_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE, fs->super->s_raid_stride);
-        msgprintf(MSG_DEBUG1, "extfs_raid_stride: %u\n", fs->super->s_raid_stride);
+    if (super->s_raid_stride > 0)
+    {   dico_add_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE, super->s_raid_stride);
+        msgprintf(MSG_DEBUG1, "extfs_raid_stride: %u\n", super->s_raid_stride);
     }
-    if (fs->super->s_raid_stripe_width > 0)
-    {   dico_add_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, fs->super->s_raid_stripe_width);
-        msgprintf(MSG_DEBUG1, "extfs_raid_stripe_width: %u\n", fs->super->s_raid_stripe_width);
+    if (super->s_raid_stripe_width > 0)
+    {   dico_add_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, super->s_raid_stripe_width);
+        msgprintf(MSG_DEBUG1, "extfs_raid_stripe_width: %u\n", super->s_raid_stripe_width);
     }
     
     // ---- fsck details: max_mount_count and check_interval
-    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFSCKMAXMNTCOUNT, max(fs->super->s_max_mnt_count,0));
-    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFSCKCHECKINTERVAL, fs->super->s_checkinterval);
-    msgprintf(MSG_DEBUG1, "extfs_max_mount_count: %ld\n", (long)max(fs->super->s_max_mnt_count,0));
-    msgprintf(MSG_DEBUG1, "extfs_check_interval: %ld\n", (long)fs->super->s_checkinterval);
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFSCKMAXMNTCOUNT, max(super->s_max_mnt_count,0));
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFSCKCHECKINTERVAL, super->s_checkinterval);
+    msgprintf(MSG_DEBUG1, "extfs_max_mount_count: %ld\n", (long)max(super->s_max_mnt_count,0));
+    msgprintf(MSG_DEBUG1, "extfs_check_interval: %ld\n", (long)super->s_checkinterval);
     
     // ---- default mount options
     memset(mntopt, 0, sizeof(mntopt));
     count=0;
-    mask=fs->super->s_default_mount_opts;
+    mask=super->s_default_mount_opts;
     if (mask & EXT3_DEFM_JMODE)
     {   strlcatf(mntopt, sizeof(mntopt), "%s", e2p_mntopt2string(mask & EXT3_DEFM_JMODE));
         count++;
@@ -394,15 +396,15 @@ int extfs_getinfo(cdico *d, char *devname)
     msgprintf(MSG_DEBUG1, "default mount options: [%s]\n", mntopt);
     
     // ---- filesystem features
-    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATURECOMPAT, (u64)fs->super->s_feature_compat);
-    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREINCOMPAT, (u64)fs->super->s_feature_incompat);
-    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREROCOMPAT, (u64)fs->super->s_feature_ro_compat);
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATURECOMPAT, (u64)super->s_feature_compat);
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREINCOMPAT, (u64)super->s_feature_incompat);
+    dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREROCOMPAT, (u64)super->s_feature_ro_compat);
     
-    origextfstype=extfs_get_fstype_from_compat_flags((u64)fs->super->s_feature_compat, (u64)fs->super->s_feature_incompat, (u64)fs->super->s_feature_ro_compat);
+    origextfstype=extfs_get_fstype_from_compat_flags((u64)super->s_feature_compat, (u64)super->s_feature_incompat, (u64)super->s_feature_ro_compat);
     msgprintf(MSG_DEBUG1, "the filesystem type determined by the features is [%s]\n", format_fstype(origextfstype));
     
     // ---- check that fsarchiver is aware of all the filesystem features used on that filesystem
-    if (extfs_check_compatibility((u64)fs->super->s_feature_compat, (u64)fs->super->s_feature_incompat, (u64)fs->super->s_feature_ro_compat)!=0)
+    if (extfs_check_compatibility((u64)super->s_feature_compat, (u64)super->s_feature_incompat, (u64)super->s_feature_ro_compat)!=0)
     {   errprintf("this filesystem has ext{2,3,4} features which are not supported by this fsarchiver version.\n");
         return -1;
     }
