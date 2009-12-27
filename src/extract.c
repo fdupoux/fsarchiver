@@ -389,14 +389,15 @@ int extractar_restore_obj_symlink(cextractar *exar, char *fullpath, char *relpat
     
     // check the list of excluded files/dirs
     if (is_filedir_excluded(relpath)==true)
-    {
-        //msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
         goto extractar_restore_obj_symlink_err;
-    }
     
     // update progress bar
     extractar_listing_print_file(exar, objtype, relpath);
 
+    // create parent directory first
+    extract_dirpath(fullpath, parentdir, sizeof(parentdir));
+    mkdir_recursive(parentdir);
+    
     // backup parent dir atime/mtime
     get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
@@ -476,16 +477,17 @@ int extractar_restore_obj_hardlink(cextractar *exar, char *fullpath, char *relpa
     
     // check the list of excluded files/dirs
     if (is_filedir_excluded(relpath)==true)
-    {
-        msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
         goto extractar_restore_obj_hardlink_err;
-    }
+    
+    // create parent directory first
+    extract_dirpath(fullpath, parentdir, sizeof(parentdir));
+    mkdir_recursive(parentdir);
+    
+    // backup parent dir atime/mtime
+    get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
     // update progress bar
     extractar_listing_print_file(exar, objtype, relpath);
-
-    // backup parent dir atime/mtime
-    get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
     if (dico_get_string(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_HARDLINK, buffer, PATH_MAX)<0)
     {   msgprintf(MSG_STACK, "dico_get_string(DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_HARDLINK) failed\n");
@@ -532,17 +534,18 @@ int extractar_restore_obj_devfile(cextractar *exar, char *fullpath, char *relpat
     
     // check the list of excluded files/dirs
     if (is_filedir_excluded(relpath)==true)
-    {
-        msgprintf(MSG_VERB2, "file/dir=[%s] excluded\n", relpath);
         goto extractar_restore_obj_devfile_err;
-    }
+    
+    // create parent directory first
+    extract_dirpath(fullpath, parentdir, sizeof(parentdir));
+    mkdir_recursive(parentdir);
+    
+    // backup parent dir atime/mtime
+    get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
     // update progress bar
     extractar_listing_print_file(exar, objtype, relpath);
 
-    // backup parent dir atime/mtime
-    get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
-    
     if (dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_RDEV, &dev)!=0)
         goto extractar_restore_obj_devfile_err;
     if (dico_get_u32(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_MODE, &mode)!=0)
@@ -584,12 +587,16 @@ int extractar_restore_obj_directory(cextractar *exar, char *fullpath, char *relp
     if (is_filedir_excluded(relpath)==true)
         goto extractar_restore_obj_directory_err;
     
-    // update progress bar
-    extractar_listing_print_file(exar, objtype, relpath);
+    // create parent directory first
+    extract_dirpath(fullpath, parentdir, sizeof(parentdir));
+    mkdir_recursive(parentdir);
 
     // backup parent dir atime/mtime
     get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
     
+    // update progress bar
+    extractar_listing_print_file(exar, objtype, relpath);
+
     mkdir_recursive(fullpath);
     
     if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, d)!=0)
@@ -711,10 +718,14 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
         // check the list of excluded files/dirs
         if (is_filedir_excluded(relpath)!=true)
         {
-            extractar_listing_print_file(exar, tmpobjtype, relpath);
+            // create parent directory if necessary
+            extract_dirpath(fullpath, parentdir, sizeof(parentdir));
+            mkdir_recursive(parentdir);
             
             // backup parent dir atime/mtime
             get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
+            
+            extractar_listing_print_file(exar, tmpobjtype, relpath);
             
             if (dico_get_data(filehead, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_MD5SUM, md5sumorig, 16, NULL))
             {   errprintf("cannot get md5sum from file footer for file=[%s]\n", relpath);
@@ -813,9 +824,6 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     memset(magic, 0, sizeof(magic));
     md5_init_ctx(&md5ctx);
     
-    // backup parent dir atime/mtime
-    get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
-    
     if (dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SIZE, &filesize)!=0)
     {   errprintf("Cannot read filesize DISKITEMKEY_SIZE from archive for file=[%s]\n", relpath);
         goto restore_obj_regfile_unique_error;
@@ -833,6 +841,13 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     else // file not excluded
     {
         excluded=false;
+        
+        // create parent directory first
+        extract_dirpath(fullpath, parentdir, sizeof(parentdir));
+        mkdir_recursive(parentdir);
+        
+        // backup parent dir atime/mtime
+        get_parent_dir_time_attrib(fullpath, parentdir, sizeof(parentdir), tv);
         
         // show progress bar
         extractar_listing_print_file(exar, objtype, relpath);
@@ -973,7 +988,6 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
 {
     char relpath[PATH_MAX];
     char fullpath[PATH_MAX];
-    char parentdir[PATH_MAX];
     u64 filesize;
     u32 objtype;
     int res;
@@ -988,10 +1002,6 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
     if (dico_get_u64(dicoattr, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SIZE, &filesize)!=0)
         return -3;
     concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
-    
-    // ---- create parent directory first
-    extract_dirpath(fullpath, parentdir, sizeof(parentdir));
-    mkdir_recursive(parentdir);
     
     // ---- recreate specific object on the filesystem
     switch (objtype)
