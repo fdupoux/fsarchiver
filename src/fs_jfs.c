@@ -21,12 +21,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <uuid/uuid.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
 #include "fs_jfs.h"
-#include "uuid.h"
 #include "filesys.h"
 #include "strlist.h"
 #include "error.h"
@@ -73,7 +73,7 @@ int jfs_mkfs(cdico *d, char *partition)
 int jfs_getinfo(cdico *d, char *devname)
 {
     struct jfs_superblock sb;
-    const char *str;
+    char uuid[512];
     int ret=0;
     int fd;
     
@@ -107,9 +107,12 @@ int jfs_getinfo(cdico *d, char *devname)
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, (char*)sb.s_label);
     
     // ---- uuid
-    if ((str=e2p_uuid2str(sb.s_uuid))!=NULL)
-        dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);
-    msgprintf(MSG_DEBUG1, "jfs_uuid=[%s]\n", str);
+    /*if ((str=e2p_uuid2str(sb.s_uuid))!=NULL)
+        dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);*/
+    memset(uuid, 0, sizeof(uuid));
+    uuid_unparse_lower((u8*)sb.s_uuid, uuid);
+    dico_add_string(d, 0, FSYSHEADKEY_FSUUID, uuid);
+    msgprintf(MSG_DEBUG1, "jfs_uuid=[%s]\n", uuid);
     
     // ---- minimum fsarchiver version required to restore
     dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 5, 9, 0));

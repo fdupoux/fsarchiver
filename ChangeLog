@@ -9,6 +9,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
   - Added support for long options (--option) using getopt_long
   - Removed the dependency on "which" to find the path to a program
   - Accept all libgcrypt versions >= 1.2.4 at runtime in gcry_check_version
+  - Using functions from libuuid instead of duplicating code in uuid.[ch]
 * 0.6.2 (2009-12-08):
   - Dynamic memory allocation for ntfs specific extended-attributes in create.c
   - Fix related the the ntfs attributes when lgetxattr returns a negative size

@@ -93,9 +93,9 @@ dnl check e2fsprogs and its libs
 AC_CHECKING([for e2fsprogs-1.39 or newer])
 AC_CHECK_LIB([ext2fs], [ext2fs_open], [LIBS="$LIBS -lext2fs -lcom_err -lpthread"], AC_MSG_ERROR([*** ext2/ext3/ext4 library (libext2fs) not found]))
 AC_CHECK_LIB([blkid], [blkid_dev_iterate_begin], [LIBS="$LIBS -lblkid"], AC_MSG_ERROR([*** libblkid not found (it comes with e2fsprogs sources but the package name may be different)]))
-AC_CHECK_LIB([uuid], [uuid_generate], [LIBS="$LIBS -luuid"], AC_MSG_ERROR([*** libuuid not found (it comes with e2fsprogs sources but the package name may be different)]))
 AC_CHECK_LIB([e2p], [e2p_mntopt2string], [LIBS="$LIBS -le2p"], AC_MSG_ERROR([*** libe2p not found (it comes with e2fsprogs sources but the package name may be different)]))
-AC_CHECK_HEADERS(ext2fs/ext2fs.h blkid/blkid.h e2p/e2p.h)
+AC_CHECK_LIB([uuid], [uuid_unparse_lower], [LIBS="$LIBS -luuid"], AC_MSG_ERROR([*** libuuid not found]))
+AC_CHECK_HEADERS(ext2fs/ext2fs.h blkid/blkid.h e2p/e2p.h uuid/uuid.h)
 
 dnl PKG_CHECK_MODULES([e2fsprogs], [ext2fs >= 1.39])
 

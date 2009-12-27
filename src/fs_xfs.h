@@ -75,7 +75,7 @@ typedef char *          xfs_caddr_t;    /* <core address> type */
 typedef __u32           xfs_dev_t;
 typedef __u32           xfs_nlink_t;
 
-typedef struct { unsigned char   __u_bits[16]; } uuid_t;
+typedef struct { unsigned char   __u_bits[16]; } xfs_uuid_t;
 
 
 /*
@@ -89,7 +89,7 @@ struct xfs_sb
         xfs_drfsbno_t   sb_dblocks;     /* number of data blocks */
         xfs_drfsbno_t   sb_rblocks;     /* number of realtime blocks */
         xfs_drtbno_t    sb_rextents;    /* number of realtime extents */
-        uuid_t          sb_uuid;        /* file system unique id */
+        xfs_uuid_t      sb_uuid;        /* file system unique id */
         xfs_dfsbno_t    sb_logstart;    /* starting block of log if internal */
         xfs_ino_t       sb_rootino;     /* root inode number */
         xfs_ino_t       sb_rbmino;      /* bitmap inode for realtime extents */

@@ -21,11 +21,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <uuid/uuid.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
-#include "uuid.h"
 #include "fs_reiser4.h"
 #include "filesys.h"
 #include "strlist.h"
@@ -67,7 +67,7 @@ int reiser4_mkfs(cdico *d, char *partition)
 int reiser4_getinfo(cdico *d, char *devname)
 {
     struct reiser4_master_sb sb;
-    const char *str;
+    char uuid[512];
     u16 temp16;
     int ret=0;
     int fd;
@@ -108,9 +108,12 @@ int reiser4_getinfo(cdico *d, char *devname)
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, (char*)sb.label);
     
     // ---- uuid
-    if ((str=e2p_uuid2str(sb.uuid))!=NULL)
-        dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);
-    msgprintf(MSG_DEBUG1, "reiser4_uuid=[%s]\n", str);
+    /*if ((str=e2p_uuid2str(sb.uuid))!=NULL)
+        dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);*/
+    memset(uuid, 0, sizeof(uuid));
+    uuid_unparse_lower((u8*)sb.uuid, uuid);
+    dico_add_string(d, 0, FSYSHEADKEY_FSUUID, uuid);
+    msgprintf(MSG_DEBUG1, "reiser4_uuid=[%s]\n", uuid);
     
     // ---- block size
     temp16=le16_to_cpu(sb.blocksize);

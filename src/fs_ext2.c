@@ -19,12 +19,12 @@
 #include <ext2fs/ext2fs.h>
 #include <blkid/blkid.h>
 #include <e2p/e2p.h>
+#include <uuid/uuid.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
 #include "strlist.h"
-#include "uuid.h"
 #include "filesys.h"
 #include "fs_ext2.h"
 #include "error.h"
@@ -301,7 +301,7 @@ int extfs_getinfo(cdico *d, char *devname)
 {
     blk_t use_superblock=0;
     int use_blocksize=0;
-    const char *str;
+    char uuid[512];
     ext2_filsys fs;
     int origextfstype;
     char mntopt[1024];
@@ -325,8 +325,12 @@ int extfs_getinfo(cdico *d, char *devname)
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, label);
     
     // ---- uuid
-    if ((str=e2p_uuid2str(fs->super->s_uuid))!=NULL)
-        dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);
+    /*if ((str=e2p_uuid2str(fs->super->s_uuid))!=NULL)
+        dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);*/
+    memset(uuid, 0, sizeof(uuid));
+    uuid_unparse_lower((u8*)fs->super->s_uuid, uuid);
+    dico_add_string(d, 0, FSYSHEADKEY_FSUUID, uuid);
+    msgprintf(MSG_DEBUG1, "extfs_uuid=[%s]\n", uuid); 
     
     // ---- block size
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTBLOCKSIZE, EXT2_BLOCK_SIZE(fs->super));

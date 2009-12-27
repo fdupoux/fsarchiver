@@ -20,12 +20,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <uuid/uuid.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
 #include "fs_xfs.h"
-#include "uuid.h"
 #include "filesys.h"
 #include "strlist.h"
 #include "error.h"
@@ -74,7 +74,7 @@ int xfs_mkfs(cdico *d, char *partition)
 int xfs_getinfo(cdico *d, char *devname)
 {
     struct xfs_sb sb;
-    const char *str;
+    char uuid[512];
     u32 temp32;
     int ret=0;
     int fd;
@@ -103,9 +103,12 @@ int xfs_getinfo(cdico *d, char *devname)
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, (char*)sb.sb_fname);
     
     // ---- uuid
-    if ((str=e2p_uuid2str(&sb.sb_uuid))!=NULL)
-        dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);
-    msgprintf(MSG_DEBUG1, "xfs_uuid=[%s]\n", str);
+    /*if ((str=e2p_uuid2str(&sb.sb_uuid))!=NULL)
+        dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);*/
+    memset(uuid, 0, sizeof(uuid));
+    uuid_unparse_lower((u8*)&sb.sb_uuid, uuid);
+    dico_add_string(d, 0, FSYSHEADKEY_FSUUID, uuid);
+    msgprintf(MSG_DEBUG1, "xfs_uuid=[%s]\n", uuid);
     
     // ---- block size
     temp32=be32_to_cpu(sb.sb_blocksize);
