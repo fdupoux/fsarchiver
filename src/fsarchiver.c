@@ -105,6 +105,12 @@ void usage(char *progname, bool examples)
         msgprintf(MSG_FORCE, "   fsarchiver savedir /data/linux-sources.fsa /usr/src/linux\n");
         msgprintf(MSG_FORCE, " * save a filesystem (/dev/sda1) to an archive split into volumes of 680MB:\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -s 680 /data/myarchive1.fsa /dev/sda1\n");
+        msgprintf(MSG_FORCE, " * save a filesystem and exclude all files/dirs called 'pagefile.*'\n");
+        msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive.fsa /dev/sda1 --exclude='pagefile.*'\n");
+        msgprintf(MSG_FORCE, " * generic exclude for 'share' such as '/usr/share' and '/usr/local/share':\n");
+        msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive.fsa --exclude=share\n");
+        msgprintf(MSG_FORCE, " * absolute exclude valid for '/usr/share' but not for '/usr/local/share'\n");
+        msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive.fsa --exclude=/usr/share\n");
         msgprintf(MSG_FORCE, " * save a filesystem (/dev/sda1) to an encrypted archive:\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -c mypassword /data/myarchive1.fsa /dev/sda1\n");
         msgprintf(MSG_FORCE, " * extract an archive made of simple files to /tmp/extract:\n");
