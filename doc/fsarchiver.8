@@ -1,6 +1,7 @@
 .TH FSARCHIVER 8 "12 December 2009"
 .SH NAME
 fsarchiver \- filesystem archiver
+
 .SH SYNOPSIS
 .B fsarchiver [
 .I options
@@ -36,6 +37,7 @@ fsarchiver \- filesystem archiver
 .B fsarchiver [
 .I options
 .B ] probe simple | detailed
+
 .SH COMMANDS
 .TP
 .B savefs
@@ -75,6 +77,7 @@ file and its contents.
 .TP
 .B probe
 Show list of filesystems detected on the disks.
+
 .SH OPTIONS
 .TP
 .B -o
@@ -147,9 +150,42 @@ Show help and information about how to use fsarchiver with examples.
 .TP
 .B -V
 Show program version and exit.
+
+.SH EXAMPLES
+
+.SS save only one filesystem (/dev/sda1) to an archive:
+fsarchiver savefs /data/myarchive1.fsa /dev/sda1
+.SS save two filesystems (/dev/sda1 and /dev/sdb1) to an archive:
+fsarchiver savefs /data/myarchive2.fsa /dev/sda1 /dev/sdb1
+.SS restore the first filesystem from an archive (first = number 0):
+fsarchiver restfs /data/myarchive2.fsa id=0,dest=/dev/sda1
+.SS restore the second filesystem from an archive (second = number 1):
+fsarchiver restfs /data/myarchive2.fsa id=1,dest=/dev/sdb1
+.SS restore two filesystems from an archive (number 0 and 1):
+fsarchiver restfs /data/arch2.fsa id=0,dest=/dev/sda1 id=1,dest=/dev/sdb1
+.SS restore a filesystem from an archive and convert it to reiserfs:
+fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs
+.SS save the contents of /usr/src/linux to an archive (similar to tar):
+fsarchiver savedir /data/linux-sources.fsa /usr/src/linux
+.SS save a /dev/sda1 to an archive split into volumes of 680MB:
+fsarchiver savefs -s 680 /data/myarchive1.fsa /dev/sda1
+.SS save a filesystem and exclude all files/dirs called 'pagefile.*'
+fsarchiver savefs /data/myarchive.fsa /dev/sda1 --exclude='pagefile.*'
+.SS exclude 'share' in both '/usr/share' and '/usr/local/share':
+fsarchiver savefs /data/myarchive.fsa --exclude=share
+.SS absolute exclude valid for '/usr/share' but not '/usr/local/share'
+fsarchiver savefs /data/myarchive.fsa --exclude=/usr/share
+.SS save a filesystem (/dev/sda1) to an encrypted archive:
+fsarchiver savefs -c mypassword /data/myarchive1.fsa /dev/sda1
+.SS extract an archive made of simple files to /tmp/extract:
+fsarchiver restdir /data/linux-sources.fsa /tmp/extract   
+.SS show information about an archive and its file systems:
+fsarchiver archinfo /data/myarchive2.fsa
+   
 .SH WARNING
 .B fsarchiver
 is still in development, don't use it for critical data yet.
+
 .SH AUTHOR
 .B fsarchiver
 was written by Francois Dupoux.
