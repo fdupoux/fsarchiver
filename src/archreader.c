@@ -331,6 +331,7 @@ int archreader_read_volheader(carchreader *ai)
     int ret=0;
     
     // init
+    assert(ai);
     memset(magic, 0, sizeof(magic));
 
     // ---- a. read header from archive file
@@ -415,6 +416,11 @@ int archreader_read_block(carchreader *ai, cdico *blkdico, int *sumok, struct s_
     u8 *buffer;
     
     // init
+    assert(ai);
+    assert(sumok);
+    assert(blkdico);
+    assert(blkinfo);
+    
     memset(blkinfo, 0, sizeof(blkinfo));
     *sumok=-1;
     

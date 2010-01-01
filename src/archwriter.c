@@ -218,10 +218,7 @@ int archwriter_write_volheader(carchwriter *ai)
     struct s_writebuf *wb=NULL;
     cdico *voldico;
     
-    if (ai==NULL)
-    {   errprintf("ai is NULL\n");
-        return -1;
-    }
+    assert(ai);
     
     if ((wb=writebuf_alloc())==NULL)
     {   msgprintf(MSG_STACK, "writebuf_alloc() failed\n");
@@ -262,10 +259,7 @@ int archwriter_write_volfooter(carchwriter *ai, bool lastvol)
     struct s_writebuf *wb=NULL;
     cdico *voldico;
     
-    if (ai==NULL)
-    {   errprintf("ai is NULL\n");
-        return -1;
-    }
+    assert(ai);
     
     if ((wb=writebuf_alloc())==NULL)
     {   errprintf("writebuf_alloc() failed\n");
@@ -304,6 +298,8 @@ int archwriter_split_check(carchwriter *ai, struct s_writebuf *wb)
 {
     s64 cursize;
     
+    assert(ai);
+
     if (((cursize=archwriter_get_currentpos(ai))>=0) && (g_options.splitsize>0 && cursize+wb->size > g_options.splitsize))
     {
         msgprintf(MSG_DEBUG4, "splitchk: YES --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
@@ -320,6 +316,8 @@ int archwriter_split_check(carchwriter *ai, struct s_writebuf *wb)
 
 int archwriter_split_if_necessary(carchwriter *ai, struct s_writebuf *wb)
 {
+    assert(ai);
+
     if (archwriter_split_check(ai, wb)==true)
     {
         if (archwriter_write_volfooter(ai, false)!=0)
@@ -345,6 +343,8 @@ int archwriter_dowrite_block(carchwriter *ai, struct s_blockinfo *blkinfo)
 {
     struct s_writebuf *wb=NULL;
     
+    assert(ai);
+
     if ((wb=writebuf_alloc())==NULL)
     {   errprintf("writebuf_alloc() failed\n");
         return -1;
@@ -373,6 +373,8 @@ int archwriter_dowrite_header(carchwriter *ai, struct s_headinfo *headinfo)
 {
     struct s_writebuf *wb=NULL;
     
+    assert(ai);
+
     if ((wb=writebuf_alloc())==NULL)
     {   errprintf("writebuf_alloc() failed\n");
         return -1;
