@@ -438,3 +438,187 @@ int archive_incvolume(carchive *ai, bool waitkeypress)
     ai->curvol++;
     return archive_volpath(ai);
 }
+
+int archive_write_volheader(carchive *ai)
+{
+    struct s_writebuf *wb=NULL;
+    cdico *voldico;
+    
+    if (ai==NULL)
+    {   errprintf("ai is NULL\n");
+        return -1;
+    }
+    
+    if ((wb=writebuf_alloc())==NULL)
+    {   msgprintf(MSG_STACK, "writebuf_alloc() failed\n");
+        return -1;
+    }
+    
+    if ((voldico=dico_alloc())==NULL)
+    {   msgprintf(MSG_STACK, "voldico=dico_alloc() failed\n");
+        return -1;
+    }
+    
+    // prepare header
+    dico_add_u32(voldico, 0, VOLUMEHEADKEY_VOLNUM, ai->curvol);
+    dico_add_u32(voldico, 0, VOLUMEHEADKEY_ARCHID, ai->archid);
+    dico_add_string(voldico, 0, VOLUMEHEADKEY_FILEFORMATVER, FSA_FILEFORMAT);
+    dico_add_string(voldico, 0, VOLUMEHEADKEY_PROGVERCREAT, FSA_VERSION);
+    
+    // write header to buffer
+    if (writebuf_add_header(wb, voldico, FSA_MAGIC_VOLH, ai->archid, FSA_FILESYSID_NULL)!=0)
+    {   errprintf("archio_write_header() failed\n");
+        return -1;
+    }
+    
+    // write header to file
+    if (archive_write_buffer(ai, wb)!=0)
+    {   errprintf("archive_write_buffer() failed\n");
+        return -1;
+    }
+    
+    dico_destroy(voldico);
+    writebuf_destroy(wb);
+    
+    return 0;
+}
+
+int archive_write_volfooter(carchive *ai, bool lastvol)
+{
+    struct s_writebuf *wb=NULL;
+    cdico *voldico;
+    
+    if (ai==NULL)
+    {   errprintf("ai is NULL\n");
+        return -1;
+    }
+    
+    if ((wb=writebuf_alloc())==NULL)
+    {   errprintf("writebuf_alloc() failed\n");
+        return -1;
+    }
+    
+    if ((voldico=dico_alloc())==NULL)
+    {   errprintf("voldico=dico_alloc() failed\n");
+        return -1;
+    }
+    
+    // prepare header
+    dico_add_u32(voldico, 0, VOLUMEFOOTKEY_VOLNUM, ai->curvol);
+    dico_add_u32(voldico, 0, VOLUMEFOOTKEY_ARCHID, ai->archid);
+    dico_add_u32(voldico, 0, VOLUMEFOOTKEY_LASTVOL, lastvol);
+    
+    // write header to buffer
+    if (writebuf_add_header(wb, voldico, FSA_MAGIC_VOLF, ai->archid, FSA_FILESYSID_NULL)!=0)
+    {   msgprintf(MSG_STACK, "archio_write_header() failed\n");
+        return -1;
+    }
+    
+    // write header to file
+    if (archive_write_buffer(ai, wb)!=0)
+    {   msgprintf(MSG_STACK, "archive_write_data(size=%ld) failed\n", (long)wb->size);
+        return -1;
+    }
+    
+    dico_destroy(voldico);
+    writebuf_destroy(wb);
+    
+    return 0;
+}
+
+int archive_split_check(carchive *ai, struct s_writebuf *wb)
+{
+    s64 cursize;
+    
+    if (((cursize=archive_get_currentpos(ai))>=0) && (g_options.splitsize>0 && cursize+wb->size > g_options.splitsize))
+    {
+        msgprintf(MSG_DEBUG4, "splitchk: YES --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
+            (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
+        return true;
+    }
+    else
+    {
+        msgprintf(MSG_DEBUG4, "splitchk: NO --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
+            (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
+        return false;
+    }
+}
+
+int archive_split_if_necessary(carchive *ai, struct s_writebuf *wb)
+{
+    if (archive_split_check(ai, wb)==true)
+    {
+        if (archive_write_volfooter(ai, false)!=0)
+        {   msgprintf(MSG_STACK, "cannot write volume footer: archio_write_volfooter() failed\n");
+            return -1;
+        }
+        archive_close(ai);
+        archive_incvolume(ai, false);
+        msgprintf(MSG_VERB2, "Creating new volume: [%s]\n", ai->volpath);
+        if (archive_create(ai)!=0)
+        {   msgprintf(MSG_STACK, "archive_create() failed\n");
+            return -1;
+        }
+        if (archive_write_volheader(ai)!=0)
+        {   msgprintf(MSG_STACK, "cannot write volume header: archio_write_volheader() failed\n");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int archive_dowrite_block(carchive *ai, struct s_blockinfo *blkinfo)
+{
+    struct s_writebuf *wb=NULL;
+    
+    if ((wb=writebuf_alloc())==NULL)
+    {   errprintf("writebuf_alloc() failed\n");
+        return -1;
+    }
+    
+    if (writebuf_add_block(wb, blkinfo, ai->archid, blkinfo->blkfsid)!=0)
+    {   msgprintf(MSG_STACK, "archio_write_block() failed\n");
+        return -1;
+    }
+    
+    if (archive_split_if_necessary(ai, wb)!=0)
+    {   msgprintf(MSG_STACK, "archive_split_if_necessary() failed\n");
+        return -1;
+    }
+    
+    if (archive_write_buffer(ai, wb)!=0)
+    {   msgprintf(MSG_STACK, "archive_write_buffer() failed\n");
+        return -1;
+    }
+
+    writebuf_destroy(wb);
+    return 0;
+}
+
+int archive_dowrite_header(carchive *ai, struct s_headinfo *headinfo)
+{
+    struct s_writebuf *wb=NULL;
+    
+    if ((wb=writebuf_alloc())==NULL)
+    {   errprintf("writebuf_alloc() failed\n");
+        return -1;
+    }
+    
+    if (writebuf_add_header(wb, headinfo->dico, headinfo->magic, ai->archid, headinfo->fsid)!=0)
+    {   msgprintf(MSG_STACK, "archio_write_block() failed\n");
+        return -1;
+    }
+    
+    if (archive_split_if_necessary(ai, wb)!=0)
+    {   msgprintf(MSG_STACK, "archive_split_if_necessary() failed\n");
+        return -1;
+    }
+    
+    if (archive_write_buffer(ai, wb)!=0)
+    {   msgprintf(MSG_STACK, "archive_write_buffer() failed\n");
+        return -1;
+    }
+    
+    writebuf_destroy(wb);
+    return 0;
+}

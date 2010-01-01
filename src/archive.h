@@ -24,6 +24,8 @@
 #include "dico.h"
 
 struct s_writebuf;
+struct s_blockinfo;
+struct s_headinfo;
 
 typedef struct s_archive
 {
@@ -62,5 +64,12 @@ int archive_read_header(carchive *ai, char *magic, cdico **d, bool allowseek, u1
 int archive_write_buffer(carchive *ai, struct s_writebuf *wb);
 int archive_incvolume(carchive *ai, bool waitkeypress);
 int archive_volpath(carchive *ai);
+
+int archive_write_volheader(carchive *ai);
+int archive_write_volfooter(carchive *ai, bool lastvol);
+int archive_split_check(carchive *ai, struct s_writebuf *wb);
+int archive_split_if_necessary(carchive *ai, struct s_writebuf *wb);
+int archive_dowrite_block(carchive *ai, struct s_blockinfo *blkinfo);
+int archive_dowrite_header(carchive *ai, struct s_headinfo *headinfo);
 
 #endif // __ARCHIVE_H__

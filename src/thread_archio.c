@@ -23,7 +23,6 @@
 #include <time.h>
 
 #include "fsarchiver.h"
-#include "writebuf.h"
 #include "archive.h"
 #include "common.h"
 #include "options.h"
@@ -31,100 +30,11 @@
 #include "error.h"
 #include "syncthread.h"
 
-int archio_write_volheader(carchive *ai)
-{
-    struct s_writebuf *wb=NULL;
-    cdico *voldico;
-    
-    if (ai==NULL)
-    {   errprintf("ai is NULL\n");
-        return -1;
-    }
-    
-    if ((wb=writebuf_alloc())==NULL)
-    {   msgprintf(MSG_STACK, "writebuf_alloc() failed\n");
-        return -1;
-    }
-    
-    if ((voldico=dico_alloc())==NULL)
-    {   msgprintf(MSG_STACK, "voldico=dico_alloc() failed\n");
-        return -1;
-    }
-    
-    // prepare header
-    dico_add_u32(voldico, 0, VOLUMEHEADKEY_VOLNUM, ai->curvol);
-    dico_add_u32(voldico, 0, VOLUMEHEADKEY_ARCHID, ai->archid);
-    dico_add_string(voldico, 0, VOLUMEHEADKEY_FILEFORMATVER, FSA_FILEFORMAT);
-    dico_add_string(voldico, 0, VOLUMEHEADKEY_PROGVERCREAT, FSA_VERSION);
-    
-    // write header to buffer
-    if (writebuf_add_header(wb, voldico, FSA_MAGIC_VOLH, ai->archid, FSA_FILESYSID_NULL)!=0)
-    {   errprintf("archio_write_header() failed\n");
-        return -1;
-    }
-    
-    // write header to file
-    if (archive_write_buffer(ai, wb)!=0)
-    {   errprintf("archive_write_buffer() failed\n");
-        return -1;
-    }
-    
-    dico_destroy(voldico);
-    writebuf_destroy(wb);
-    
-    return 0;
-}
-
-int archio_write_volfooter(carchive *ai, bool lastvol)
-{
-    struct s_writebuf *wb=NULL;
-    cdico *voldico;
-    
-    if (ai==NULL)
-    {   errprintf("ai is NULL\n");
-        return -1;
-    }
-    
-    if ((wb=writebuf_alloc())==NULL)
-    {   errprintf("writebuf_alloc() failed\n");
-        return -1;
-    }
-    
-    if ((voldico=dico_alloc())==NULL)
-    {   errprintf("voldico=dico_alloc() failed\n");
-        return -1;
-    }
-    
-    // prepare header
-    dico_add_u32(voldico, 0, VOLUMEFOOTKEY_VOLNUM, ai->curvol);
-    dico_add_u32(voldico, 0, VOLUMEFOOTKEY_ARCHID, ai->archid);
-    dico_add_u32(voldico, 0, VOLUMEFOOTKEY_LASTVOL, lastvol);
-    
-    // write header to buffer
-    if (writebuf_add_header(wb, voldico, FSA_MAGIC_VOLF, ai->archid, FSA_FILESYSID_NULL)!=0)
-    {   msgprintf(MSG_STACK, "archio_write_header() failed\n");
-        return -1;
-    }
-    
-    // write header to file
-    if (archive_write_buffer(ai, wb)!=0)
-    {   msgprintf(MSG_STACK, "archive_write_data(size=%ld) failed\n", (long)wb->size);
-        return -1;
-    }
-    
-    dico_destroy(voldico);
-    writebuf_destroy(wb);
-    
-    return 0;
-}
-
 void *thread_writer_fct(void *args)
 {
     struct s_headinfo headinfo;
     struct s_blockinfo blkinfo;
-    struct s_writebuf *wb=NULL;
     carchive *ai=NULL;
-    s64 cursize;
     s64 blknum;
     int type;
     
@@ -143,7 +53,7 @@ void *thread_writer_fct(void *args)
     {   msgprintf(MSG_STACK, "archive_create(%s) failed\n", ai->basepath);
         goto thread_writer_fct_error;
     }
-    if (archio_write_volheader(ai)!=0)
+    if (archive_write_volheader(ai)!=0)
     {   msgprintf(MSG_STACK, "cannot write volume header: archio_write_volheader() failed\n");
         goto thread_writer_fct_error;
     }
@@ -156,24 +66,17 @@ void *thread_writer_fct(void *args)
         }
         else if (blknum>0) // block or header found
         {
-            // a. allocate a writebuffer
-            if ((wb=writebuf_alloc())==NULL)
-            {   errprintf("writebuf_alloc() failed\n");
-                goto thread_writer_fct_error;
-            }
-            
-            // b. write header/block to s_writebuf
             switch (type)
             {
                 case QITEM_TYPE_BLOCK:
-                    if (writebuf_add_block(wb, &blkinfo, ai->archid, blkinfo.blkfsid)!=0)
-                    {   msgprintf(MSG_STACK, "archio_write_block() failed\n");
+                    if (archive_dowrite_block(ai, &blkinfo)!=0)
+                    {   msgprintf(MSG_STACK, "archive_dowrite_block() failed\n");
                         goto thread_writer_fct_error;
                     }
                     free(blkinfo.blkdata);
                     break;
                 case QITEM_TYPE_HEADER:
-                    if (writebuf_add_header(wb, headinfo.dico, headinfo.magic, ai->archid, headinfo.fsid)!=0)
+                    if (archive_dowrite_header(ai, &headinfo)!=0)
                     {   msgprintf(MSG_STACK, "archive_write_header() failed\n");
                         goto thread_writer_fct_error;
                     }
@@ -183,48 +86,12 @@ void *thread_writer_fct(void *args)
                     errprintf("unexpected item type from queue: type=%d\n", type);
                     break;
             }
-            
-            // c. check for splitting
-            if (((cursize=archive_get_currentpos(ai))>=0) && (g_options.splitsize>0 && cursize+wb->size > g_options.splitsize))
-            {
-                msgprintf(MSG_DEBUG4, "splitchk: YES --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
-                    (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
-                if (archio_write_volfooter(ai, false)!=0)
-                {   msgprintf(MSG_STACK, "cannot write volume footer: archio_write_volfooter() failed\n");
-                    goto thread_writer_fct_error;
-                }
-                archive_close(ai);
-                archive_incvolume(ai, false);
-                msgprintf(MSG_VERB2, "Creating new volume: [%s]\n", ai->volpath);
-                if (archive_create(ai)!=0)
-                {   msgprintf(MSG_STACK, "archive_create() failed\n");
-                    goto thread_writer_fct_error;
-                }
-                if (archio_write_volheader(ai)!=0)
-                {      msgprintf(MSG_STACK, "cannot write volume header: archio_write_volheader() failed\n");
-                    goto thread_writer_fct_error;
-                }
-            }
-            else // don't split now
-            {
-                msgprintf(MSG_DEBUG4, "splitchk: NO --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
-                    (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
-            }
-            
-            // d. write s_writebuf to disk
-            if (archive_write_buffer(ai, wb)!=0)
-            {   msgprintf(MSG_STACK, "archive_write_buffer() failed\n");
-                goto thread_writer_fct_error;
-            }
-            
-            // e. free memory
-            writebuf_destroy(wb);
         }
     }
     
     // write last volume footer
-    if (archio_write_volfooter(ai, true)!=0)
-    {      msgprintf(MSG_STACK, "cannot write volume footer: archio_write_volfooter() failed\n");
+    if (archive_write_volfooter(ai, true)!=0)
+    {   msgprintf(MSG_STACK, "cannot write volume footer: archio_write_volfooter() failed\n");
         goto thread_writer_fct_error;
     }
     archive_close(ai);
