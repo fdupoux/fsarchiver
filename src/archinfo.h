@@ -18,10 +18,10 @@
 #ifndef __ARCHINFO_H__
 #define __ARCHINFO_H__
 
-#include "archive.h"
+#include "archreader.h"
 #include "dico.h"
 
-int archinfo_show_mainhead(carchive *ai, cdico *dicomainhead);
+int archinfo_show_mainhead(carchreader *ai, cdico *dicomainhead);
 int archinfo_show_fshead(cdico *dicofshead, int fsid);
 char *compalgostr(int algo);
 char *cryptalgostr(int algo);

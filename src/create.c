@@ -30,7 +30,7 @@
 #include "fsarchiver.h"
 #include "dico.h"
 #include "dichl.h"
-#include "archive.h"
+#include "archwriter.h"
 #include "options.h"
 #include "common.h"
 #include "create.h"
@@ -52,15 +52,15 @@
 #include "error.h"
 
 typedef struct
-{   carchive   ai;
-    cregmulti  regmulti;
-    cdichl     *dichardlinks;
-    cstats     stats;
-    int        fstype;
-    int        fsid;
-    u64        objectid;
-    u64        cost_global;
-    u64        cost_current;
+{   carchwriter ai;
+    cregmulti   regmulti;
+    cdichl      *dichardlinks;
+    cstats      stats;
+    int         fstype;
+    int         fsid;
+    u64         objectid;
+    u64         cost_global;
+    u64         cost_current;
 } csavear;
 
 int createar_obj_regfile_multi(csavear *save, cdico *header, char *relpath, char *fullpath, u64 filesize)
@@ -267,11 +267,11 @@ int createar_item_xattr(csavear *save, char *root, char *relpath, struct stat64 
         valsize=lgetxattr(fullpath, buffer+pos, value, sizeof(value));
         if (valsize>=0)
         {
-            msgprintf(MSG_VERB2, "            xattr:lgetxattr(%s,%s)=%d: [%s]\n", relpath, buffer+pos, valsize, buffer+pos);
+            msgprintf(MSG_VERB2,  "            xattr:lgetxattr(%s,%s)=%d: [%s]\n", relpath, buffer+pos, valsize, buffer+pos);
             msgprintf(MSG_DEBUG2, "            xattr:lgetxattr(%s)=%d: [%s]=[%s]\n", relpath, valsize, buffer+pos, value);
             msgprintf(MSG_DEBUG2, "            xattr:dico_add_string(%s, xattr): key=%d, name=[%s]\n", relpath, (int)(2*attrcnt)+0, buffer+pos);
             dico_add_string(d, DICO_OBJ_SECTION_XATTR, (2*attrcnt)+0, buffer+pos);
-            msgprintf(MSG_DEBUG2, "            xattr:dico_add_string(%s, xattr): key=%d, data (size=[%d])\n", relpath, (int)(2*attrcnt)+1, valsize);
+            msgprintf(MSG_DEBUG2, "            xattr:dico_add_data(%s, xattr): key=%d, data (size=[%d])\n", relpath, (int)(2*attrcnt)+1, valsize);
             dico_add_data(d, DICO_OBJ_SECTION_XATTR, (2*attrcnt)+1, value, valsize);
             attrcnt++;
         }
@@ -341,7 +341,7 @@ int createar_item_winattr(csavear *save, char *root, char *relpath, struct stat6
         {
             msgprintf(MSG_VERB2, "            winattr:dico_add_string(%s, winattr): key=%d, name=[%s]\n", relpath, (int)(2*attrcnt)+0, winattr[i]);
             dico_add_string(d, DICO_OBJ_SECTION_WINATTR, (2*attrcnt)+0, winattr[i]);
-            msgprintf(MSG_VERB2, "            winattr:dico_add_string(%s, winattr): key=%d, data (size=[%d])\n", relpath, (int)(2*attrcnt)+1, valsize);
+            msgprintf(MSG_VERB2, "            winattr:dico_add_data(%s, winattr): key=%d, data (size=[%d])\n", relpath, (int)(2*attrcnt)+1, valsize);
             dico_add_data(d, DICO_OBJ_SECTION_WINATTR, (2*attrcnt)+1, valbuf, valsize);
             free(valbuf);
             attrcnt++;
@@ -523,7 +523,7 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
     concatenate_paths(fullpath, sizeof(fullpath), root, relpath);
     
     // don't backup the archive file itself
-    if (archive_is_path_to_curvol(&save->ai, fullpath)==true)
+    if (archwriter_is_path_to_curvol(&save->ai, fullpath)==true)
     {   errprintf("file [%s] ignored: it's the current archive file\n", fullpath);
         save->stats.err_regfile++;
         return 0; // not a fatal error, oper must continue
@@ -815,7 +815,7 @@ int createar_save_directory_wrapper(csavear *save, char *root, char *path, u64 d
     return ret;
 }
 
-int createar_write_mainhead(csavear *save, char *label)
+int createar_write_mainhead(csavear *save, int archtype, int fscount)
 {
     struct timeval now;
     cdico *d;
@@ -827,7 +827,6 @@ int createar_write_mainhead(csavear *save, char *label)
     
     // init
     gettimeofday(&now, NULL);
-    save->ai.creattime=now.tv_sec;
     if ((d=dico_alloc())==NULL)
     {   errprintf("dico_alloc() failed\n");
         return -1;
@@ -835,18 +834,18 @@ int createar_write_mainhead(csavear *save, char *label)
     
     dico_add_string(d, 0, MAINHEADKEY_FILEFORMATVER, FSA_FILEFORMAT);
     dico_add_string(d, 0, MAINHEADKEY_PROGVERCREAT, FSA_VERSION);
-    dico_add_string(d, 0, MAINHEADKEY_ARCHLABEL, label);
-    dico_add_u64(d, 0, MAINHEADKEY_CREATTIME, save->ai.creattime);
+    dico_add_string(d, 0, MAINHEADKEY_ARCHLABEL, g_options.archlabel);
+    dico_add_u64(d, 0, MAINHEADKEY_CREATTIME, now.tv_sec);
     dico_add_u32(d, 0, MAINHEADKEY_ARCHIVEID, save->ai.archid);
-    dico_add_u32(d, 0, MAINHEADKEY_ARCHTYPE, save->ai.archtype);
-    dico_add_u32(d, 0, MAINHEADKEY_COMPRESSALGO, save->ai.compalgo);
-    dico_add_u32(d, 0, MAINHEADKEY_COMPRESSLEVEL, save->ai.complevel);
-    dico_add_u32(d, 0, MAINHEADKEY_ENCRYPTALGO, save->ai.cryptalgo);
-    dico_add_u32(d, 0, MAINHEADKEY_FSACOMPLEVEL, save->ai.fsacomp);
+    dico_add_u32(d, 0, MAINHEADKEY_ARCHTYPE, archtype);
+    dico_add_u32(d, 0, MAINHEADKEY_COMPRESSALGO, g_options.compressalgo);
+    dico_add_u32(d, 0, MAINHEADKEY_COMPRESSLEVEL, g_options.compresslevel);
+    dico_add_u32(d, 0, MAINHEADKEY_ENCRYPTALGO, g_options.encryptalgo);
+    dico_add_u32(d, 0, MAINHEADKEY_FSACOMPLEVEL, g_options.fsacomplevel);
     
-    if (save->ai.archtype==ARCHTYPE_FILESYSTEMS)
+    if (archtype==ARCHTYPE_FILESYSTEMS)
     {   
-        dico_add_u64(d, 0, MAINHEADKEY_FSCOUNT, save->ai.fscount);
+        dico_add_u64(d, 0, MAINHEADKEY_FSCOUNT, fscount);
     }
     
     // if encryption is enabled, save the md5sum of a random buffer to check the password
@@ -856,7 +855,7 @@ int createar_write_mainhead(csavear *save, char *label)
     u64 cryptsize;
     struct md5_ctx md5ctx;
     u8 md5sum[16];
-    if (save->ai.cryptalgo!=ENCRYPT_NONE)
+    if (g_options.encryptalgo!=ENCRYPT_NONE)
     {
         memset(md5sum, 0, sizeof(md5sum));
         crypto_random(bufcheckclear, FSA_CHECKPASSBUF_SIZE);
@@ -1132,17 +1131,11 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     save.cost_global=0;
     
     // init archive
-    archive_init(&save.ai);
-    archive_generate_id(&save.ai);
+    archwriter_init(&save.ai);
+    archwriter_generate_id(&save.ai);
     
     // pass options to archive
     path_force_extension(save.ai.basepath, PATH_MAX, archive, ".fsa");
-    save.ai.cryptalgo=g_options.encryptalgo;
-    save.ai.compalgo=g_options.compressalgo;
-    save.ai.complevel=g_options.compresslevel;
-    save.ai.fsacomp=g_options.fsacomplevel;
-    save.ai.fscount=fscount;
-    save.ai.archtype=archtype;
     
     // init misc data struct to zero
     thread_writer=0;
@@ -1178,7 +1171,7 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     // create compression threads
     for (i=0; (i<g_options.compressjobs) && (i<FSA_MAX_COMPJOBS); i++)
     {
-        if (pthread_create(&thread_comp[i], NULL, thread_comp_fct, (void*)&save.ai) != 0)
+        if (pthread_create(&thread_comp[i], NULL, thread_comp_fct, NULL) != 0)
         {     errprintf("pthread_create(thread_comp_fct) failed\n");
             ret=-1;
             goto do_create_error;
@@ -1193,7 +1186,7 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     }
     
     // write archive main header
-    if (createar_write_mainhead(&save, g_options.archlabel)!=0)
+    if (createar_write_mainhead(&save, archtype, fscount)!=0)
     {   errprintf("archive_write_mainhead(%s) failed\n", archive);
         ret=-1;
         goto do_create_error;
@@ -1333,12 +1326,12 @@ do_create_success:
         errprintf("pthread_join(thread_writer) failed\n");
     
     if (ret!=0)
-        archive_remove(&save.ai);
+        archwriter_remove(&save.ai);
     
     // change the status if there were non-fatal errors
     if (totalerr>0)
         ret=-1;
     
-    archive_destroy(&save.ai);
+    archwriter_destroy(&save.ai);
     return ret;
 }

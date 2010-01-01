@@ -28,7 +28,7 @@
 #include "common.h"
 #include "options.h"
 #include "extract.h"
-#include "archive.h"
+#include "archreader.h"
 #include "archinfo.h"
 #include "md5.h"
 #include "filesys.h"
@@ -47,11 +47,11 @@
 #include "error.h"
 
 typedef struct s_extractar
-{   carchive   ai;
-    int        fsid;
-    cstats     stats;
-    u64        cost_global;
-    u64        cost_current;
+{   carchreader ai;
+    int         fsid;
+    cstats      stats;
+    u64         cost_global;
+    u64         cost_current;
 } cextractar;
 
 // returns true if this file of a parent directory has been excluded
@@ -1430,7 +1430,7 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     memset(&exar, 0, sizeof(exar));
     exar.cost_global=0;
     exar.cost_current=0;
-    archive_init(&exar.ai);
+    archreader_init(&exar.ai);
 
     // init misc data struct to zero
     for (i=0; i<FSA_MAX_FSPERARCH; i++)
@@ -1468,7 +1468,7 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     // create decompression threads
     for (i=0; (i<g_options.compressjobs) && (i<FSA_MAX_COMPJOBS); i++)
     {
-        if (pthread_create(&thread_decomp[i], NULL, thread_decomp_fct, (void*)&exar.ai) != 0)
+        if (pthread_create(&thread_decomp[i], NULL, thread_decomp_fct, NULL) != 0)
         {     errprintf("pthread_create(thread_decomp_fct) failed\n");
             goto do_extract_error;
         }
@@ -1659,6 +1659,6 @@ do_extract_success:
         ret=-1;
     
     dico_destroy(dicomainhead);
-    archive_destroy(&exar.ai);
+    archreader_destroy(&exar.ai);
     return ret;
 }

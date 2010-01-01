@@ -24,7 +24,6 @@
 #include <pthread.h>
 
 #include "fsarchiver.h"
-#include "archive.h"
 #include "common.h"
 #include "options.h"
 #include "comp_gzip.h"
@@ -235,16 +234,11 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
     return 0;
 }
 
-int compression_function(carchive *ai, int oper)
+int compression_function(int oper)
 {
     struct s_blockinfo blkinfo;
     s64 blknum;
     int res;
-    
-    if (ai==NULL)
-    {   errprintf("ai is NULL\n");
-        goto thread_comp_fct_error;
-    }
     
     while (queue_get_end_of_queue(&g_queue)==false)
     {
@@ -293,7 +287,7 @@ thread_comp_fct_error:
 void *thread_comp_fct(void *args)
 {
     inc_secthreads();
-    compression_function((carchive *)args, COMPTHR_COMPRESS);
+    compression_function(COMPTHR_COMPRESS);
     dec_secthreads();
     return NULL;
 }
@@ -301,7 +295,7 @@ void *thread_comp_fct(void *args)
 void *thread_decomp_fct(void *args)
 {
     inc_secthreads();
-    compression_function((carchive *)args, COMPTHR_DECOMPRESS);
+    compression_function(COMPTHR_DECOMPRESS);
     dec_secthreads();
     return NULL;
 }

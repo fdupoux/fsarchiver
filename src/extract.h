@@ -19,7 +19,6 @@
 #define __EXTRACT_H__
 
 #include "dico.h"
-#include "archive.h"
 
 int do_extract(char *archive, char *cmdargv[], int fscount, int oper);
 

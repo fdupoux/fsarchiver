@@ -21,7 +21,7 @@
 #include "dico.h"
 #include "common.h"
 #include "archinfo.h"
-#include "archive.h"
+#include "archreader.h"
 #include "error.h"
 
 char *compalgostr(int algo)
@@ -47,7 +47,7 @@ char *cryptalgostr(int algo)
     }
 }
 
-int archinfo_show_mainhead(carchive *ai, cdico *dicomainhead)
+int archinfo_show_mainhead(carchreader *ai, cdico *dicomainhead)
 {
     char buffer[256];
     
