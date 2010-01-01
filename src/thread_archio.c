@@ -31,9 +31,10 @@
 #include "error.h"
 #include "syncthread.h"
 
-int archio_write_dico(struct s_writebuf *wb, cdico *d)
+int archio_write_dico(struct s_writebuf *wb, cdico *d, char *magic)
 {
     struct s_dicoitem *item;
+    int itemnum;
     u16 headerlen;
     u32 checksum;
     u8 *buffer;
@@ -47,8 +48,15 @@ int archio_write_dico(struct s_writebuf *wb, cdico *d)
         return -1;
     }
     
+    // 0. debugging
+    msgprintf(MSG_DEBUG2, "archio_write_dico(wb=%p, dico=%p, magic=[%c%c%c%c])\n", wb, d, magic[0], magic[1], magic[2], magic[3]);
+    for (item=d->head; item!=NULL; item=item->next)
+        if ((item->section==DICO_OBJ_SECTION_STDATTR) && (item->key==DISKITEMKEY_PATH) && (memcmp(magic, "ObJt", 4)==0))
+            msgprintf(MSG_DEBUG2, "filepath=[%s]\n", item->data);
+    
     // 1. how many valid items there are
     count=dico_count_all_sections(d);
+    msgprintf(MSG_DEBUG2, "dico_count_all_sections(dico=%p)=%d\n", d, (int)count);
     
     // 2. calculate len of header
     headerlen=sizeof(u16); // count
@@ -60,6 +68,7 @@ int archio_write_dico(struct s_writebuf *wb, cdico *d)
         headerlen+=sizeof(u16); // data size
         headerlen+=item->size; // data
     }
+    msgprintf(MSG_DEBUG2, "calculated headerlen for that dico: headerlen=%d\n", (int)headerlen);
     
     // 3. allocate memory for header
     bufpos=buffer=malloc(headerlen);
@@ -70,11 +79,15 @@ int archio_write_dico(struct s_writebuf *wb, cdico *d)
     
     // 4. write items count in buffer
     temp16=cpu_to_le16(count);
+    msgprintf(MSG_DEBUG2, "mempcpy items count to buffer: u16 count=%d\n", (int)count);
     bufpos=mempcpy(bufpos, &temp16, sizeof(temp16));
     
     // 5. write all items in buffer
-    for (item=d->head; item!=NULL; item=item->next)
+    for (item=d->head, itemnum=0; item!=NULL; item=item->next, itemnum++)
     {
+        msgprintf(MSG_DEBUG2, "itemnum=%d (type=%d, section=%d, key=%d, size=%d)\n", 
+            (int)itemnum++, (int)item->type, (int)item->section, (int)item->key, (int)item->size);
+        
         // a. write data type buffer
         bufpos=mempcpy(bufpos, &item->type, sizeof(item->type));
         
@@ -93,6 +106,7 @@ int archio_write_dico(struct s_writebuf *wb, cdico *d)
         if (item->size>0)
             bufpos=mempcpy(bufpos, item->data, item->size);
     }
+    msgprintf(MSG_DEBUG2, "all %d items mempcopied to buffer\n", (int)itemnum);
     
     // 6. write header-len, header-data, header-checksum
     temp16=cpu_to_le16(headerlen);
@@ -114,6 +128,8 @@ int archio_write_dico(struct s_writebuf *wb, cdico *d)
     }
     
     free(buffer);
+    msgprintf(MSG_DEBUG2, "end of archio_write_dico(wb=%p, dico=%p, magic=[%c%c%c%c])\n", wb, d, magic[0], magic[1], magic[2], magic[3]);
+    
     return 0;
 }
 
@@ -148,7 +164,7 @@ int archio_write_header(struct s_writebuf *wb, cdico *d, char *magic, u32 archid
     }
     
     // D. write the dico of the header
-    if (archio_write_dico(wb, d) != 0)
+    if (archio_write_dico(wb, d, magic) != 0)
     {   errprintf("archio_write_dico() failed to write the header dico\n");
         return -4;
     }
@@ -358,7 +374,7 @@ void *thread_writer_fct(void *args)
             // c. check for splitting
             if (((cursize=archive_get_currentpos(ai))>=0) && (g_options.splitsize>0 && cursize+wb->size > g_options.splitsize))
             {
-                msgprintf(MSG_DEBUG2, "splitchk: YES --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
+                msgprintf(MSG_DEBUG4, "splitchk: YES --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
                     (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
                 if (archio_write_volfooter(ai, false)!=0)
                 {   msgprintf(MSG_STACK, "cannot write volume footer: archio_write_volfooter() failed\n");
@@ -378,7 +394,7 @@ void *thread_writer_fct(void *args)
             }
             else // don't split now
             {
-                msgprintf(MSG_DEBUG2, "splitchk: NO --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
+                msgprintf(MSG_DEBUG4, "splitchk: NO --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
                     (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
             }
             
