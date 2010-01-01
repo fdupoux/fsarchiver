@@ -232,7 +232,7 @@ int process_cmdline(int argc, char **argv)
                     return -1;
                 if (g_options.fsacomplevel>=8)
                     msgprintf(MSG_FORCE, "High compression levels may require a huge amount of memory\n"
-                        "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.");
+                        "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
                 break;
             case 'c': // encryption
 #ifdef OPTION_CRYPTO_SUPPORT
