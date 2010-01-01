@@ -28,6 +28,7 @@
 #include "options.h"
 #include "archive.h"
 #include "queue.h"
+#include "writebuf.h"
 #include "comp_gzip.h"
 #include "comp_bzip2.h"
 #include "error.h"
@@ -351,20 +352,24 @@ int archive_read_header(carchive *ai, char *magic, cdico **d, bool allowseek, u1
     return ERR_SUCCESS;
 }
 
-int archive_write_data(carchive *ai, void *data, u64 size)
+int archive_write_buffer(carchive *ai, struct s_writebuf *wb)
 {
     struct statvfs64 statvfsbuf;
     char textbuf[128];
     long lres;
     
     assert(ai);
-    assert(data);
-    assert(size>0);
+    assert(wb);
     
-    if ((lres=write(ai->archfd, (char*)data, (long)size))!=(long)size)
+    if (wb->size <=0)
+    {   errprintf("wb->size=%ld\n", (long)wb->size);
+        return -1;
+    }
+    
+    if ((lres=write(ai->archfd, (char*)wb->data, (long)wb->size))!=(long)wb->size)
     {
-        errprintf("write(size=%ld) returned %ld\n", (long)size, (long)lres);
-        if ((lres>0) && (lres < (long)size)) // probably "no space left"
+        errprintf("write(size=%ld) returned %ld\n", (long)wb->size, (long)lres);
+        if ((lres>0) && (lres < (long)wb->size)) // probably "no space left"
         {
             if (fstatvfs64(ai->archfd, &statvfsbuf)!=0)
             {   sysprintf("fstatvfs(fd=%d) failed\n", ai->archfd);
@@ -380,7 +385,7 @@ int archive_write_data(carchive *ai, void *data, u64 size)
         }
         else // another error
         {
-            sysprintf("write(size=%ld) failed\n", (long)size);
+            sysprintf("write(size=%ld) failed\n", (long)wb->size);
             return -1;
         }
     }
