@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2009 Francois Dupoux
+# Copyright (C) 2008-2010 Francois Dupoux
 # Distributed under the GPL-2 license (GNU General Public License version 2)
 
 AC_PREREQ(2.59)
