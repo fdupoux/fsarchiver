@@ -1172,7 +1172,7 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     for (i=0; (i<g_options.compressjobs) && (i<FSA_MAX_COMPJOBS); i++)
     {
         if (pthread_create(&thread_comp[i], NULL, thread_comp_fct, NULL) != 0)
-        {     errprintf("pthread_create(thread_comp_fct) failed\n");
+        {   errprintf("pthread_create(thread_comp_fct) failed\n");
             ret=-1;
             goto do_create_error;
         }
@@ -1197,7 +1197,7 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     {
         if ((dicofsinfo[i]=dico_alloc())==NULL)
         {   errprintf("dico_alloc() failed\n");
-            return -1;
+            goto do_create_error;
         }
         
         // mount partition and get partition info

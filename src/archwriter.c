@@ -104,7 +104,7 @@ int archwriter_close(carchwriter *ai)
     fsync(ai->archfd); // just in case the user reboots after it exits
     close(ai->archfd);
     ai->archfd=-1;
-
+    
     return 0;
 }
 
@@ -113,11 +113,10 @@ int archwriter_remove(carchwriter *ai)
     assert(ai);
     
     if (ai->archfd >= 0)
-    {   archwriter_close(ai);
-        unlink(ai->basepath);
-        msgprintf(MSG_FORCE, "removing %s\n", ai->basepath);
-    }
+        archwriter_close(ai);
     
+    unlink(ai->basepath);
+    msgprintf(MSG_FORCE, "removing %s\n", ai->basepath);
     return 0;
 }
 
