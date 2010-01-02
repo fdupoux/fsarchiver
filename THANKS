@@ -5,3 +5,10 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 Special thanks to Clive Wagenaar who helped a lot by testing 
 fsarchiver-0.3.x and found several important bugs and help in
 their resolutions.
+
+Special thanks to Leon Bene who reported a crash and who executed
+many tests using debugging version to identify the cause of the
+crash. It permitted to fix a critical integer overflow bug with
+the "u64 headerlen" when the total size of the attributes is more
+than 65535 bytes in the header. It has been fixed in fsarchiver-0.6.4.
+
