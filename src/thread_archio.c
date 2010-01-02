@@ -105,14 +105,133 @@ thread_writer_fct_error:
     return NULL;
 }
 
+// ================================================================================================================
+// ================================================================================================================
+// ================================================================================================================
+
+int read_and_copy_block(carchreader *ai, cdico *blkdico, int *sumok, bool skip)
+{
+    struct s_blockinfo blkinfo;
+    u32 arblockcsumorig;
+    u32 arblockcsumcalc;
+    u32 curblocksize; // data size
+    u64 blockoffset; // offset of the block in the file
+    u16 compalgo; // compression algo used
+    u16 cryptalgo; // encryption algo used
+    u32 finalsize; // compressed  block size
+    u32 compsize;
+    u8 *buffer;
+    s64 lres;
+    
+    // init
+    *sumok=-1;
+    
+    if (dico_get_u64(blkdico, 0, BLOCKHEADITEMKEY_BLOCKOFFSET, &blockoffset)!=0)
+    {   msgprintf(3, "cannot get blockoffset from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u32(blkdico, 0, BLOCKHEADITEMKEY_REALSIZE, &curblocksize)!=0 || curblocksize>FSA_MAX_BLKSIZE)
+    {   msgprintf(3, "cannot get blocksize from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u16(blkdico, 0, BLOCKHEADITEMKEY_COMPRESSALGO, &compalgo)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_COMPRESSALGO from block-header\n");
+        return -1;
+    }
+
+    if (dico_get_u16(blkdico, 0, BLOCKHEADITEMKEY_ENCRYPTALGO, &cryptalgo)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_ENCRYPTALGO from block-header\n");
+        return -1;
+    }
+
+    if (dico_get_u32(blkdico, 0, BLOCKHEADITEMKEY_ARSIZE, &finalsize)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_ARSIZE from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u32(blkdico, 0, BLOCKHEADITEMKEY_COMPSIZE, &compsize)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_COMPSIZE from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u32(blkdico, 0, BLOCKHEADITEMKEY_ARCSUM, &arblockcsumorig)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_ARCSUM from block-header\n");
+        return -1;
+    }
+    
+    if (skip==true) // the main thread does not need that block (block belongs to a filesys we want to skip)
+    {
+        if (lseek64(ai->archfd, (long)finalsize, SEEK_CUR)<0)
+        {   sysprintf("cannot skip block (finalsize=%ld) failed\n", (long)finalsize);
+            return -1;
+        }
+        return 0;
+    }
+    
+    // ---- allocate memory
+    if ((buffer=malloc(finalsize))==NULL)
+    {   errprintf("cannot allocate block: malloc(%d) failed\n", finalsize);
+        return -1;
+    }
+    
+    if (read(ai->archfd, buffer, (long)finalsize)!=(long)finalsize)
+    {   sysprintf("cannot read block (finalsize=%ld) failed\n", (long)finalsize);
+        free(buffer);
+        return -1;
+    }
+    
+    // prepare blkinfo for the queue
+    memset(&blkinfo, 0, sizeof(blkinfo));
+    blkinfo.blkdata=(char*)buffer;
+    blkinfo.blkrealsize=curblocksize;
+    blkinfo.blkoffset=blockoffset;
+    blkinfo.blkarcsum=arblockcsumorig;
+    blkinfo.blkcompalgo=compalgo;
+    blkinfo.blkcryptalgo=cryptalgo;
+    blkinfo.blkarsize=finalsize;
+    blkinfo.blkcompsize=compsize;
+    
+    // ---- checksum
+    arblockcsumcalc=fletcher32(buffer, finalsize);
+    if (arblockcsumcalc!=arblockcsumorig) // bad checksum
+    {
+        errprintf("block is corrupt at offset=%ld, blksize=%ld\n", (long)blockoffset, (long)curblocksize);
+        free(blkinfo.blkdata);
+        if ((blkinfo.blkdata=malloc(curblocksize))==NULL)
+        {   errprintf("cannot allocate block: malloc(%d) failed\n", curblocksize);
+            return -1;
+        }
+        memset(blkinfo.blkdata, 0, curblocksize);
+        *sumok=false;
+        if ((lres=queue_add_block(&g_queue, &blkinfo, QITEM_STATUS_DONE))!=QERR_SUCCESS)
+        {   errprintf("queue_add_block()=%ld=%s failed\n", (long)lres, qerr(lres));
+            return -1;
+        }
+        // go to the beginning of the corrupted contents so that the next header is searched here
+        if (lseek64(ai->archfd, -(long long)finalsize, SEEK_CUR)<0)
+        {   errprintf("lseek64() failed\n");
+        }
+    }
+    else // no corruption detected
+    {   *sumok=true;
+        if ((lres=queue_add_block(&g_queue, &blkinfo, QITEM_STATUS_TODO))!=QERR_SUCCESS)
+        {   if (lres!=QERR_CLOSED)
+                errprintf("queue_add_block()=%ld=%s failed\n", (long)lres, qerr(lres));
+            return -1;
+        }
+    }
+    
+    return 0;
+}
+
 void *thread_reader_fct(void *args)
 {
     char magic[FSA_SIZEOF_MAGIC];
-    struct s_blockinfo blkinfo;
     u32 endofarchive=false;
     carchreader *ai=NULL;
     cdico *dico=NULL;
-    int status;
     u16 fsid;
     int sumok;
     u64 errors;
@@ -221,17 +340,11 @@ void *thread_reader_fct(void *args)
         {
             if (strncmp(magic, FSA_MAGIC_BLKH, FSA_SIZEOF_MAGIC)==0) // header starts a data block
             {
-                if (archreader_read_block(ai, dico, &sumok, &blkinfo, g_fsbitmap[fsid]==0)!=0)
-                {   msgprintf(MSG_STACK, "archreader_doread_block() failed\n");
+                if (read_and_copy_block(ai, dico, &sumok, g_fsbitmap[fsid]==0)!=0)
+                {   msgprintf(MSG_STACK, "read_and_copy_blocks() failed\n");
                     goto thread_reader_fct_error;
                 }
                 
-                status=((sumok==true) ? QITEM_STATUS_TODO : QITEM_STATUS_DONE);
-                if ((lres=queue_add_block(&g_queue, &blkinfo, status))!=QERR_SUCCESS)
-                {   if (lres!=QERR_CLOSED)
-                        errprintf("queue_add_block(status=%d)=%ld=%s failed\n", status, (long)lres, qerr(lres));
-                    goto thread_reader_fct_error;
-                }
                 if (sumok==false) errors++;
                 dico_destroy(dico);
             }

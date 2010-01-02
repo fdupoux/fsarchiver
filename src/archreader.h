@@ -55,6 +55,5 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
 int archreader_incvolume(carchreader *ai, bool waitkeypress);
 int archreader_volpath(carchreader *ai);
 int archreader_read_volheader(carchreader *ai);
-int archreader_read_block(carchreader *ai, cdico *blkdico, int *sumok, struct s_blockinfo *blkinfo, bool skip);
 
 #endif // __ARCHREADER_H__
