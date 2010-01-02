@@ -43,6 +43,7 @@ int archreader_init(carchreader *ai)
     ai->archfd=-1;
     ai->archid=0;
     ai->curvol=0;
+    ai->filefmtver=0;
     return 0;
 }
 
@@ -55,25 +56,59 @@ int archreader_destroy(carchreader *ai)
 int archreader_open(carchreader *ai)
 {   
     struct stat64 st;
+    char volhead[4096];
+    int magiclen;
     
     assert(ai);
-
+    
+    // on the archive volume
     ai->archfd=open64(ai->volpath, O_RDONLY|O_LARGEFILE);
     if (ai->archfd<0)
-    {      sysprintf ("cannot open archive %s\n", ai->volpath);
+    {   sysprintf ("cannot open archive %s\n", ai->volpath);
         return -1;
     }
     
+    // check the archive volume is a regular file
     if (fstat64(ai->archfd, &st)!=0)
     {   sysprintf("fstat64(%s) failed\n", ai->volpath);
         return -1;
     }
-    
     if (!S_ISREG(st.st_mode))
     {   errprintf("%s is not a regular file, cannot continue\n", ai->volpath);
         close(ai->archfd);
         return -1;
     }
+    
+    // read file format version and rewind to beginning of the volume
+    if (read(ai->archfd, volhead, sizeof(volhead))!=sizeof(volhead))
+    {   sysprintf("cannot read magic from %s\n", ai->volpath);
+        close(ai->archfd);
+        return -1;
+    }
+    if (lseek64(ai->archfd, 0, SEEK_SET)!=0)
+    {   sysprintf("cannot rewind volume %s\n", ai->volpath);
+        close(ai->archfd);
+        return -1;
+    }
+    
+    // interpret magic an get file format version
+    magiclen=strlen(FSA_FILEFORMAT);
+    if ((memcmp(volhead+40, "FsArCh_001", magiclen)==0) || (memcmp(volhead+40, "FsArCh_00Y", magiclen)==0))
+    {
+        ai->filefmtver=1;
+    }
+    else if (memcmp(volhead+42, "FsArCh_002", magiclen)==0)
+    {
+        ai->filefmtver=2;
+    }
+    else
+    {
+        errprintf("%s is not a supported fsarchiver file format\n", ai->volpath);
+        close(ai->archfd);
+        return -1;
+    }
+    
+    msgprintf(MSG_VERB2, "Detected fileformat=%d in archive %s\n", (int)ai->filefmtver, ai->volpath);
     
     return 0;
 }
@@ -111,7 +146,7 @@ int archreader_read_data(carchreader *ai, void *data, u64 size)
 int archreader_read_dico(carchreader *ai, cdico *d)
 {
     u16 size;
-    u16 headerlen;
+    u32 headerlen;
     u32 origsum;
     u32 newsum;
     u8 *buffer;
@@ -128,11 +163,26 @@ int archreader_read_dico(carchreader *ai, cdico *d)
     assert(d);
     
     // header-len, header-data, header-checksum
-    if (archreader_read_data(ai, &temp16, sizeof(temp16))!=0)
-    {   errprintf("imgdisk_read_data() failed\n");
-        return ERR_FATAL;
+    switch (ai->filefmtver)
+    {
+        case 1:
+            if (archreader_read_data(ai, &temp16, sizeof(temp16))!=0)
+            {   errprintf("imgdisk_read_data() failed\n");
+                return ERR_FATAL;
+            }
+            headerlen=le16_to_cpu(temp16);
+            break;
+        case 2:
+            if (archreader_read_data(ai, &temp32, sizeof(temp32))!=0)
+            {   errprintf("imgdisk_read_data() failed\n");
+                return ERR_FATAL;
+            }
+            headerlen=le32_to_cpu(temp32);
+            break;
+        default:
+            errprintf("Fatal error: invalid file format version: ai->filefmtver=%d\n", ai->filefmtver);
+            return ERR_FATAL;
     }
-    headerlen=le16_to_cpu(temp16);
     
     bufpos=buffer=malloc(headerlen);
     if (!buffer)

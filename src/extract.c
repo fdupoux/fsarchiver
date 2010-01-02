@@ -1201,8 +1201,8 @@ int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
         return -1;
     }
     
-    // check the file format. The final format "FsArCh_001" is the same as "FsArCh_00Y" so we also accept it
-    if (strcmp(exar->ai.filefmt, FSA_FILEFORMAT)!=0 && strcmp(exar->ai.filefmt, "FsArCh_00Y")!=0)
+    // check the file format. New versions based on "FsArCh_002" also understand "FsArCh_001" which is very close (and "FsArCh_00Y"=="FsArCh_001")
+    if (strcmp(exar->ai.filefmt, FSA_FILEFORMAT)!=0 && strcmp(exar->ai.filefmt, "FsArCh_00Y")!=0 && strcmp(exar->ai.filefmt, "FsArCh_001")!=0)
     {
         errprintf("This archive is based on a different file format: [%s]. Cannot continue.\n", exar->ai.filefmt);
         errprintf("It has been created with fsarchiver [%s], you should extrat the archive using that version.\n", exar->ai.creatver);
@@ -1293,7 +1293,7 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cdico *dicocmd
     
     // check that the minimum fsarchiver version required is ok
     if (dico_get_u64(dicofs, 0, FSYSHEADKEY_MINFSAVERSION, &minver)!=0)
-        minver=FSA_VERSION_BUILD(0, 5, 9, 0); // fsarchiver-0.5.9 is the first fsa version having FSYSHEADKEY_MINFSAVERSION
+        minver=FSA_VERSION_BUILD(0, 6, 4, 0); // fsarchiver-0.6.4 is the first fsa version having fileformat="FsArCh_002"
     curver=FSA_VERSION_BUILD(PACKAGE_VERSION_A, PACKAGE_VERSION_B, PACKAGE_VERSION_C, PACKAGE_VERSION_D);
     msgprintf(MSG_VERB1, "Current fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(curver), 
         (int)FSA_VERSION_GET_B(curver), (int)FSA_VERSION_GET_C(curver), (int)FSA_VERSION_GET_D(curver));

@@ -115,7 +115,7 @@ int jfs_getinfo(cdico *d, char *devname)
     msgprintf(MSG_DEBUG1, "jfs_uuid=[%s]\n", uuid);
     
     // ---- minimum fsarchiver version required to restore
-    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 5, 9, 0));
+    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
     
 jfs_getinfo_close:
     close(fd);

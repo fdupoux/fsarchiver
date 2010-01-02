@@ -121,7 +121,7 @@ int xfs_getinfo(cdico *d, char *devname)
     msgprintf(MSG_DEBUG1, "xfs_blksize=[%ld]\n", (long)temp32);
     
     // ---- minimum fsarchiver version required to restore
-    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 5, 9, 0));
+    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
     
 xfs_read_sb_close:
     close(fd);

@@ -5,7 +5,7 @@ AC_PREREQ(2.59)
 
 AC_INIT([fsarchiver], 0.6.4-svn)
 AC_DEFINE([PACKAGE_RELDATE], "YYYY-MM-DD", [Define the date of the release])
-AC_DEFINE([PACKAGE_FILEFMT], "FsArCh_001", [Define the version of the file format])
+AC_DEFINE([PACKAGE_FILEFMT], "FsArCh_002", [Define the version of the file format])
 AC_DEFINE([PACKAGE_VERSION_A], 0, [Major version number])
 AC_DEFINE([PACKAGE_VERSION_B], 6, [Medium version number])
 AC_DEFINE([PACKAGE_VERSION_C], 4, [Minor version number])

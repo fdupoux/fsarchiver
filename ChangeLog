@@ -3,6 +3,8 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 * 0.6.4:
   - Improved the manpage: documented the long options, added examples, links, ...
   - Reorganized code of the archive-io thread (split archive into archreader and archwriter)
+  - Fixed critical bug: integer overflow for "u16 headerlen" when sum of attributes size > 65535
+  - Introduced new fileformat: "FsArCh_002", but old format "FsArCh_001" is also supported
 * 0.6.3 (2009-12-28):
   - Dont fail when e2fsck returns 1 in extfs_mkfs() since it means the filesystem has been fixed
   - Extended options (stride and stripe_width), max_mount_count, check_interval are now preserved for ext{2,3,4}

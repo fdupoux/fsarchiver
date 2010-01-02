@@ -85,7 +85,7 @@ int writebuf_add_dico(struct s_writebuf *wb, cdico *d, char *magic)
 {
     struct s_dicoitem *item;
     int itemnum;
-    u16 headerlen;
+    u32 headerlen;
     u32 checksum;
     u8 *buffer;
     u8 *bufpos;
@@ -159,8 +159,8 @@ int writebuf_add_dico(struct s_writebuf *wb, cdico *d, char *magic)
     msgprintf(MSG_DEBUG2, "all %d items mempcopied to buffer\n", (int)itemnum);
     
     // 6. write header-len, header-data, header-checksum
-    temp16=cpu_to_le16(headerlen);
-    if (writebuf_add_data(wb, &temp16, sizeof(temp16))!=0)
+    temp32=cpu_to_le32(headerlen);
+    if (writebuf_add_data(wb, &temp32, sizeof(temp32))!=0)
     {   free(buffer);
         return -1;
     }

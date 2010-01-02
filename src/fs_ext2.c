@@ -410,7 +410,7 @@ int extfs_getinfo(cdico *d, char *devname)
     }
     
     // ---- minimum fsarchiver version required to restore
-    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 5, 9, 0));
+    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
             
     ext2fs_close(fs);
     

@@ -187,7 +187,7 @@ int ntfs_getinfo(cdico *d, char *devname)
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, label);
     
     // ---- minimum fsarchiver version required to restore
-    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 5, 9, 0));
+    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
     
     // ---- save mount options used at savefs so that restfs can use consistent mount options
     dico_add_string(d, 0, FSYSHEADKEY_MOUNTINFO, "streams_interface=xattr"); // may change in the future

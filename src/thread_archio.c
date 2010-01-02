@@ -135,13 +135,13 @@ void *thread_reader_fct(void *args)
     }
     
     if (archreader_open(ai)!=0)
-    {      errprintf("archreader_open(%s) failed\n", ai->basepath);
+    {   errprintf("archreader_open(%s) failed\n", ai->basepath);
         goto thread_reader_fct_error;
     }
     
     // read volume header
     if (archreader_read_volheader(ai)!=0)
-    {      errprintf("archio_read_volheader() failed\n");
+    {   errprintf("archio_read_volheader() failed\n");
         goto thread_reader_fct_error;
     }
     
