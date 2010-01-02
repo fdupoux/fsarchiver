@@ -1,6 +1,6 @@
 SUBDIRS = src doc
 
-EXTRA_DIST = AUTHORS COPYING ChangeLog INSTALL NEWS README
+EXTRA_DIST = AUTHORS COPYING ChangeLog INSTALL NEWS README distrib internals
 
 static:
 	rm -f src/fsarchiver
