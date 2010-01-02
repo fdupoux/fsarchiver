@@ -22,7 +22,7 @@
 #include <sys/mount.h>
 
 #include "fsarchiver.h"
-#include "fsarchiver.h"
+#include "devinfo.h"
 #include "dico.h"
 #include "common.h"
 #include "fs_ntfs.h"
@@ -69,133 +69,57 @@ int ntfs_mkfs(cdico *d, char *partition)
     return 0;
 }
 
-int ntfs_read_label(int fd, char *labelbuf, int bufsize, struct s_ntfsinfo *info)
+int ntfs_getinfo(cdico *d, char *devname)
 {
-    u8 cFileRecord[4096]; // 1024 in most cases
-    u64 offset;
-    u16 nOffsetSequenceAttribute;
-    u8 *cData;
-    u32 dwAttribType;
-    u32 dwAttribLen;
-    bool bAttribResident;    
-    u8 *cDataResident;
-    u32 nAttrSize;
-    u64 i;
+    struct s_devinfo devinfo;
+    struct s_ntfsinfo info;
+    char bootsect[512];
+    int fd=-1;
     
-    // init
-    memset(labelbuf, 0, bufsize);
-    
-    // 1. read $Volume record
-    offset = ((u64) info->lcn_of_mft_data_attrib * info->bytes_per_cluster) + ((u64) (3 * info->file_record_size));
-    
-    if (lseek(fd, offset, SEEK_SET)!=offset)
-    {   errprintf("lseek(fd, offset=%lld, SEEK_SET) failed\n", (long long)offset);
+    if (((fd=open64(devname, O_RDONLY|O_LARGEFILE))<0) ||
+        (read(fd, bootsect, sizeof(bootsect))!=sizeof(bootsect)) ||
+        (close(fd)<0))
+    {   sysprintf("cannot open device or read bootsector on %s\n", devname);
         return -1;
     }
     
-    if ((read(fd, cFileRecord, info->file_record_size))!=info->file_record_size)
-    {   errprintf("cannot read file record\n");
-        return -2;
-    }
-    
-    // -------- decode the MFT File record
-    nOffsetSequenceAttribute = le16_to_cpu(*((u16*)(cFileRecord+0x14)));
-    cData = cFileRecord + nOffsetSequenceAttribute;
-    
-    do
-    {   // szData points to the beginning of an attribute
-        dwAttribType = le32_to_cpu(*((u32*)(cData)));
-        dwAttribLen = le32_to_cpu(*((u32*)(cData+4)));
-        bAttribResident = le8_to_cpu(*((u8*)(cData+8)))==0;
-        
-        if(dwAttribType == 0x60) // "volume_name"
-        {
-            if (bAttribResident == false)
-            {   errprintf("$volume_name attribute is not resident\n");
-                return -3;
-            }
-            
-            nAttrSize = le16_to_cpu(*((u16*)(cData+0x10)));
-            cDataResident = cData+le16_to_cpu(*((u16*)(cData+0x14)));
-            
-            for (i=0; (i < nAttrSize/2) && (i<bufsize-1); i++)
-                labelbuf[i] = cDataResident[2*i];
-        }
-        cData += dwAttribLen;
-    } while (dwAttribType != (u32)-1); // attribute list ends with type -1
-    
-    return 0;
-}
-
-int ntfs_getinfo(cdico *d, char *devname)
-{
-    struct s_ntfsinfo info;
-    char bootsect[16384];
-    char label[256];
-    int ret=0;
-    int fd=-1;
-    
-    if ((fd=open64(devname, O_RDONLY|O_LARGEFILE))<0)
-    {   ret=-1;
-        errprintf("cannot open(%s, O_RDONLY)\n", devname);
-        goto ntfs_getinfo_return;
-    }
-    
-    if (read(fd, bootsect, sizeof(bootsect))!=sizeof(bootsect))
-    {   ret=-1;
-        errprintf("cannot read the boot sector on %s\n", devname);
-        goto ntfs_getinfo_close;
-    }
-    
+    // check signature in the boot sector
     if (memcmp(bootsect+3, "NTFS", 4) != 0)
-    {   ret=-1;
-        errprintf("cannot find the ntfs signature on %s\n", devname);
-        goto ntfs_getinfo_close;
+    {   errprintf("cannot find the ntfs signature on %s\n", devname);
+        return -1;
+    }
+    
+    // get device label from common code in libbklid
+    if (get_devinfo(&devinfo, devname)!=0)
+    {   errprintf("get_devinfo(%s) failed\n", devname);
+        return -1;
     }
     
     info.bytes_per_sector = le16_to_cpu(*((u16*)(bootsect+0xB)));
     info.sectors_per_clusters = le8_to_cpu(*((u8*)(bootsect+0xD)));
-    info.total_sector_count = le64_to_cpu(*((u64*)(bootsect+0x28)));
-    info.lcn_of_mft_data_attrib = le64_to_cpu(*((u64*)(bootsect+0x30)));
     info.bytes_per_cluster = info.bytes_per_sector * info.sectors_per_clusters;
-    info.clusters_per_mft_record = *((s8*)(bootsect+0x40));
     info.uuid = le64_to_cpu(*((u64*)(bootsect+0x48)));
     
-    if (info.clusters_per_mft_record > 0)
-        info.file_record_size = info.clusters_per_mft_record * info.bytes_per_cluster;
-    else
-        info.file_record_size = 1 << (-info.clusters_per_mft_record);
-    
-    msgprintf(MSG_DEBUG1, "bytes_per_sector=[%lld]\n", (long long)info.bytes_per_sector);
-    msgprintf(MSG_DEBUG1, "sectors_per_clusters=[%lld]\n", (long long)info.sectors_per_clusters);
-    msgprintf(MSG_DEBUG1, "total_sector_count=[%lld]\n", (long long)info.total_sector_count);
-    msgprintf(MSG_DEBUG1, "clusters_per_mft_record=[%lld]\n", (long long)info.clusters_per_mft_record);
-    msgprintf(MSG_DEBUG1, "lcn_of_mft_data_attrib=[%lld]\n", (long long)info.lcn_of_mft_data_attrib);
-    msgprintf(MSG_DEBUG1, "bytes_per_cluster=[%lld]\n", (long long)info.bytes_per_cluster);
-    msgprintf(MSG_DEBUG1, "lcn_of_mft_data_attrib=[%lld]\n", (long long)info.lcn_of_mft_data_attrib);
-    msgprintf(MSG_DEBUG1, "file_record_size=[%lld]\n", (long long)info.file_record_size);
-    msgprintf(MSG_DEBUG1, "uuid=[%016llX]\n", (long long unsigned int)info.uuid);
+    msgprintf(MSG_VERB2, "bytes_per_sector=[%lld]\n", (long long)info.bytes_per_sector);
+    msgprintf(MSG_VERB2, "sectors_per_clusters=[%lld]\n", (long long)info.sectors_per_clusters);
+    msgprintf(MSG_VERB2, "bytes_per_cluster=[%lld]\n", (long long)info.bytes_per_cluster);
+    msgprintf(MSG_VERB2, "uuid=[%016llX]\n", (long long unsigned int)info.uuid);
     
     dico_add_u16(d, 0, FSYSHEADKEY_NTFSSECTORSIZE, info.bytes_per_sector);
     dico_add_u32(d, 0, FSYSHEADKEY_NTFSCLUSTERSIZE, info.bytes_per_cluster);
     dico_add_u64(d, 0, FSYSHEADKEY_NTFSUUID, info.uuid);
     
-    if (ntfs_read_label(fd, label, sizeof(label), &info)!=0)
-        snprintf(label, sizeof(label), "<unknonw>");
+    // get label from library
+    dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, devinfo.label);
+    msgprintf(MSG_VERB2, "ntfs_label=[%s]\n", devinfo.label);
     
-    msgprintf(MSG_DEBUG1, "ntfs_label=[%s]\n", label);
-    dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, label);
-    
-    // ---- minimum fsarchiver version required to restore
+    // minimum fsarchiver version required to restore
     dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
     
-    // ---- save mount options used at savefs so that restfs can use consistent mount options
+    // save mount options used at savefs so that restfs can use consistent mount options
     dico_add_string(d, 0, FSYSHEADKEY_MOUNTINFO, "streams_interface=xattr"); // may change in the future
     
-ntfs_getinfo_close:
-    close(fd);
-ntfs_getinfo_return:
-    return ret;
+    return 0;
 }
 
 int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo)

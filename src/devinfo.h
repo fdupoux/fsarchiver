@@ -15,9 +15,27 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#ifndef __SHOWPART_H__
-#define __SHOWPART_H__
+#ifndef __DEVINFO_H__
+#define __DEVINFO_H__
 
-int partlist_showlist(bool details);
+enum {BLKDEV_INVALID=-1, BLKDEV_PHYSDISK=0, BLKDEV_FILESYSDEV=1};
 
-#endif // __SHOWPART_H__
+struct s_devinfo
+{
+    int  devtype;
+    char devname[FSA_MAX_DEVLEN];
+    char longname[FSA_MAX_DEVLEN];
+    char label[FSA_MAX_LABELLEN];
+    char uuid[FSA_MAX_UUIDLEN];
+    char fsname[FSA_MAX_FSNAMELEN];
+    char name[512];
+    char txtsize[64];
+    u64  devsize;
+    int  minor;
+    int  major;
+    u64  rdev;
+};
+
+int get_devinfo(struct s_devinfo *outdev, char *indevname);
+
+#endif // __DEVINFO_H__

@@ -29,11 +29,7 @@
 struct s_ntfsinfo
 {   u32 bytes_per_sector;
     u32 sectors_per_clusters;
-    u64 total_sector_count;
-    u64 lcn_of_mft_data_attrib;
     u32 bytes_per_cluster;
-    u32 file_record_size;
-    s32 clusters_per_mft_record;
     u64 uuid;
 };
 
