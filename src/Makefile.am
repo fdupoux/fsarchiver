@@ -1,18 +1,18 @@
 sbin_PROGRAMS		= fsarchiver
 
-fsarchiver_SOURCES	= fsarchiver.c dico.c common.c create.c extract.c md5.c \
-	filesys.c archreader.c archinfo.c fs_ext2.c fs_reiserfs.c fs_reiser4.c \
-	fs_btrfs.c fs_xfs.c fs_jfs.c comp_gzip.c comp_bzip2.c comp_lzma.c comp_lzo.c \
-	thread_comp.c thread_archio.c queue.c writebuf.c error.c syncthread.c \
-	crypto.c dichl.c fs_ntfs.c showpart.c strlist.c regmulti.c options.c logfile.c \
-	archwriter.c
+fsarchiver_SOURCES	= fsarchiver.c create.c extract.c showpart.c filesys.c \
+	thread_archio.c archreader.c archwriter.c writebuf.c archinfo.c \
+	thread_comp.c comp_gzip.c comp_bzip2.c comp_lzma.c comp_lzo.c crypto.c \
+	fs_ntfs.c fs_ext2.c fs_reiserfs.c fs_reiser4.c fs_btrfs.c fs_xfs.c fs_jfs.c \
+	common.c dico.c dichl.c queue.c error.c syncthread.c md5.c \
+	strlist.c regmulti.c options.c logfile.c
 
-noinst_HEADERS		= queue.h common.h comp_gzip.h dico.h fsarchiver.h \
-	fs_ext2.h fs_reiser4.h fs_xfs.h filesys.h thread_archio.h archreader.h \
-	comp_bzip2.h create.h extract.h  fs_btrfs.h fs_jfs.h fs_reiserfs.h md5.h \
-	thread_comp.h types.h archinfo.h writebuf.h error.h syncthread.h \
-	crypto.h  dichl.h  fs_ntfs.h showpart.h strlist.h regmulti.h comp_lzma.h \
-	comp_lzo.h options.h logfile.h archwriter.h
+noinst_HEADERS		= fsarchiver.h create.h extract.h showpart.h filesys.h \
+	thread_archio.h archreader.h archwriter.h writebuf.h archinfo.h \
+	thread_comp.h comp_gzip.h comp_bzip2.h comp_lzma.h comp_lzo.h crypto.h \
+	fs_ntfs.h fs_ext2.h fs_reiserfs.h fs_reiser4.h fs_btrfs.h fs_xfs.h fs_jfs.h \
+	common.h dico.h dichl.h queue.h error.h syncthread.h md5.h \
+	strlist.h regmulti.h options.h logfile.h types.h
 
 fsarchiver_LDADD	= -lpthread -lrt
 fsarchiver_CFLAGS	= @CFLAGS@ -Wall -std=gnu99 -rdynamic -ggdb
