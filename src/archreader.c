@@ -329,36 +329,11 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
     return ERR_SUCCESS;
 }
 
-// calculates the volpath using basepath and curvol
 int archreader_volpath(carchreader *ai)
 {
-    char temp[PATH_MAX];
-    int pathlen;
-    
-    assert(ai);
-    
-    if ((pathlen=strlen(ai->basepath))<4) // all archives terminates with ".fsa"
-    {   errprintf("archive has an invalid basepath: [%s]\n", ai->basepath);
-        return -1;
-    }
-    
-    memset(ai->volpath, 0, PATH_MAX);
-    memcpy(ai->volpath, ai->basepath, pathlen-2);
-    if (ai->curvol==0) // first volume
-    {
-        if (realpath(ai->basepath, ai->volpath)!=ai->volpath)
-            snprintf(ai->volpath, PATH_MAX, "%s", ai->basepath);
-    }
-    else // not the first volume
-    {
-        if (ai->curvol<100) // 1..99
-            snprintf(temp, sizeof(temp), "%.2ld", (long)ai->curvol);
-        else // >=100
-            snprintf(temp, sizeof(temp), "%ld", (long)ai->curvol);
-        strlcat(ai->volpath, temp, PATH_MAX);
-    }
-    
-    return 0;
+    int res;
+    res=get_path_to_volume(ai->volpath, PATH_MAX, ai->basepath, ai->curvol);
+    return res;
 }
 
 int archreader_incvolume(carchreader *ai, bool waitkeypress)

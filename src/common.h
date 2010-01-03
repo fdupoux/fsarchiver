@@ -51,5 +51,6 @@ int format_stacktrace(char *buffer, int bufsize);
 int stats_show(cstats stats, int fsid);
 u64 stats_errcount(cstats stats);
 int exclude_check(cstrlist *patlist, char *string);
+int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol);
 
 #endif // __COMMON_H__
