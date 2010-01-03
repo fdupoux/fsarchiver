@@ -56,10 +56,7 @@ AC_ARG_ENABLE([lzma],
 if test "x$enable_lzma" = "xyes"
 then
     AC_DEFINE([OPTION_LZMA_SUPPORT], 1, [Define to 1 to enable the support for lzma compression])
-    AC_CHECKING([for liblzma (library and header files)])
-    AC_CHECK_LIB([lzma], [lzma_easy_encoder], [LIBS="$LIBS -llzma"],
-        AC_MSG_ERROR([*** lzma library (liblzma) not found: you can either install xz-4.999.9beta.tar.gz (or newer) or disable lzma support using --disable-lzma]))
-    AC_CHECK_HEADERS(lzma.h)
+    PKG_CHECK_MODULES(LZMA, [liblzma])
 fi
 
 dnl option to disable lzo support (for people who don't have liblzo2 installed)
@@ -91,14 +88,10 @@ then
 fi
 
 dnl check e2fsprogs and its libs
-AC_CHECKING([for e2fsprogs-1.39 or newer])
-AC_CHECK_LIB([ext2fs], [ext2fs_open], [LIBS="$LIBS -lext2fs -lcom_err -lpthread"], AC_MSG_ERROR([*** ext2/ext3/ext4 library (libext2fs) not found]))
-AC_CHECK_LIB([blkid], [blkid_dev_iterate_begin], [LIBS="$LIBS -lblkid"], AC_MSG_ERROR([*** libblkid not found (it comes with e2fsprogs sources but the package name may be different)]))
-AC_CHECK_LIB([e2p], [e2p_mntopt2string], [LIBS="$LIBS -le2p"], AC_MSG_ERROR([*** libe2p not found (it comes with e2fsprogs sources but the package name may be different)]))
-AC_CHECK_LIB([uuid], [uuid_unparse_lower], [LIBS="$LIBS -luuid"], AC_MSG_ERROR([*** libuuid not found]))
-AC_CHECK_HEADERS(ext2fs/ext2fs.h blkid/blkid.h e2p/e2p.h uuid/uuid.h)
-
-dnl PKG_CHECK_MODULES([e2fsprogs], [ext2fs >= 1.39])
+PKG_CHECK_MODULES(EXT2FS, [ext2fs])
+PKG_CHECK_MODULES(E2P, [e2p])
+PKG_CHECK_MODULES(BLKID, [blkid])
+PKG_CHECK_MODULES(UUID, [uuid])
 
 dnl Check for header files installed with a library
 AC_CHECK_HEADER([attr/xattr.h],, [AC_MSG_ERROR([attr/xattr.h not found. you may have to install a package called attr, libattr, libattr-devel])])
