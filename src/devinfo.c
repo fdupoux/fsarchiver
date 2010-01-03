@@ -127,6 +127,7 @@ int get_devinfo(struct s_devinfo *outdev, char *indevname)
     blkid_put_cache(cache); // free memory allocated by blkid_get_cache
     
     // get long name if there is one (eg: LVM / devmapper)
+    snprintf(outdev->longname, sizeof(outdev->longname), "%s", indevname);
     if ((dirdesc=opendir("/dev/mapper"))!=NULL)
     {
         found=false;
