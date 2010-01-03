@@ -17,12 +17,14 @@ noinst_HEADERS		= fsarchiver.h create.h extract.h showpart.h filesys.h devinfo.h
 fsarchiver_LDADD	= -lpthread -lrt \
                           $(LZMA_LIBS) \
                           $(EXT2FS_LIBS) \
+                          $(COM_ERR_LIBS) \
                           $(E2P_LIBS) \
                           $(BLKID_LIBS) \
                           $(UUID_LIBS)
 fsarchiver_CFLAGS	= @CFLAGS@ -Wall -std=gnu99 -rdynamic -ggdb \
                           $(LZMA_CFLAGS) \
                           $(EXT2FS_CFLAGS) \
+                          $(COM_ERR_LIBS) \
                           $(E2P_CFLAGS) \
                           $(BLKID_CFLAGS) \
                           $(UUID_CFLAGS)
@@ -31,3 +33,4 @@ fsarchiver_LDFLAGS	= @FSARCHIVER_LDFLAGS@
 DEFS=@DEFS@ -D_REENTRANT -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_GNU_SOURCE
 
 MAINTAINERCLEANFILES	= Makefile.in
+

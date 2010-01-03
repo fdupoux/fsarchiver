@@ -89,6 +89,7 @@ fi
 
 dnl check e2fsprogs and its libs
 PKG_CHECK_MODULES(EXT2FS, [ext2fs])
+PKG_CHECK_MODULES(COM_ERR, [com_err])
 PKG_CHECK_MODULES(E2P, [e2p])
 PKG_CHECK_MODULES(BLKID, [blkid])
 PKG_CHECK_MODULES(UUID, [uuid])
