@@ -1202,6 +1202,7 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
         
         // mount partition and get partition info
         generate_random_tmpdir(partmounts[i], PATH_MAX, i);
+        msgprintf(MSG_VERB2, "Mounting filesystem on %s...\n", partition[i]);
         if (filesystem_mount_partition(dicofsinfo[i], partition[i], partmounts[i], &fstype[i], i, &mountedbyfsa[i])!=0)
         {   msgprintf(MSG_STACK, "archive_filesystem(%s) failed\n", partition[i]);
             goto do_create_error;
@@ -1218,6 +1219,7 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
         }*/
         u64 cost_evalfs=0;
         //if (createar_save_directory(&save, partmounts[i], "/", (u64)statbuf.st_dev, &objectid, &cost_evalfs)!=0)
+        msgprintf(MSG_VERB1, "Analysing filesystem on %s...\n", partition[i]);
         if (createar_save_directory_wrapper(&save, partmounts[i], "/", (u64)statbuf.st_dev, &cost_evalfs)!=0)
         {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", partmounts[i]);
             goto do_create_error;
