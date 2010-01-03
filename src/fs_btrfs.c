@@ -21,7 +21,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <uuid/uuid.h>
+#include <uuid.h>
 
 #include "fsarchiver.h"
 #include "dico.h"

@@ -16,10 +16,10 @@
  */
 
 #include <stdio.h>
-#include <ext2fs/ext2fs.h>
-#include <blkid/blkid.h>
-#include <e2p/e2p.h>
-#include <uuid/uuid.h>
+#include <ext2fs.h>
+#include <blkid.h>
+#include <e2p.h>
+#include <uuid.h>
 
 #include "fsarchiver.h"
 #include "dico.h"

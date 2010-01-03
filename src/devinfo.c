@@ -22,7 +22,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <blkid/blkid.h>
+#include <blkid.h>
 
 #include "fsarchiver.h"
 #include "devinfo.h"
