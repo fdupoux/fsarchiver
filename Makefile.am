@@ -1,6 +1,6 @@
 SUBDIRS = src doc
 
-EXTRA_DIST = AUTHORS COPYING ChangeLog INSTALL NEWS README distrib internals
+EXTRA_DIST = AUTHORS COPYING ChangeLog INSTALL NEWS README distrib internals autogen.sh
 
 static:
 	rm -f src/fsarchiver
