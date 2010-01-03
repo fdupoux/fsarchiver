@@ -609,10 +609,7 @@ int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol
     {
         memset(prefix, 0, sizeof(prefix));
         memcpy(prefix, basepath, pathlen-2);
-        if (curvol<=99) // 1..99
-            snprintf(newvolbuf, bufsize, "%s%.2ld", prefix, (long)curvol);
-        else // >=100
-            snprintf(newvolbuf, bufsize, "%s%ld", prefix, (long)curvol);
+        snprintf(newvolbuf, bufsize, "%s%.2ld", prefix, (long)curvol);
     }
     
     return 0;

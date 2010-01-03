@@ -217,7 +217,7 @@ int process_cmdline(int argc, char **argv)
                 }
                 else // show the calculated size since it was probably incorrect before due to an integer overflow
                 {
-                    msgprintf(MSG_FORCE, "Archives will be split into volumes of the following size:\n%lld bytes (%s)\n",
+                    msgprintf(MSG_FORCE, "Archive will be split into volumes of %lld bytes (%s)\n",
                         (long long)g_options.splitsize, format_size(g_options.splitsize, tempbuf, sizeof(tempbuf), 'h'));
                 }
                 break;
