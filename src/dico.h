@@ -20,22 +20,21 @@
 
 #include "types.h"
 
-enum    {DICO_ESUCCESS=0, DICO_ENOENT, DICO_EINVAL, DICO_EBADSIZE, DICO_EFULL, DICO_EMEM, DICO_EDUPLICATE, DICO_EINVALCHAR};
-enum    {DICTYPE_NULL=0, DICTYPE_U8, DICTYPE_U16, DICTYPE_U32, DICTYPE_U64, DICTYPE_DATA, DICTYPE_STRING};
+enum {DICO_ESUCCESS=0, DICO_ENOENT, DICO_EINVAL, DICO_EBADSIZE, DICO_EFULL, DICO_EMEM, DICO_EDUPLICATE, DICO_EINVALCHAR};
+enum {DICTYPE_NULL=0, DICTYPE_U8, DICTYPE_U16, DICTYPE_U32, DICTYPE_U64, DICTYPE_DATA, DICTYPE_STRING};
 
 typedef struct s_dico { struct s_dicoitem *head; } cdico;
 
 struct s_dicoitem
-{
-    u8            type;
-    u8            section;
-    u16            key;
-    u16            size;
-    char            *data;
-    struct s_dicoitem    *next;
+{   u8                 type;
+    u8                 section;
+    u16                key;
+    u16                size;
+    char               *data;
+    struct s_dicoitem  *next;
 };
 
-cdico    *dico_alloc(); // dynamic memory allocation
+cdico  *dico_alloc(); // dynamic memory allocation
 int    dico_destroy(cdico *d);
 int    dico_show(cdico *d, u8 section, char *debugtxt);
 int    dico_count_all_sections(cdico *d);

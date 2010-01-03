@@ -1043,23 +1043,9 @@ int createar_oper_savefs(csavear *save, char *partition, char *partmount, int fs
     
     // init filesystem data struct
     save->fstype=fstype;
-    /*regmulti_init(&save->regmulti, g_options.datablocksize);
-    if ((save->dichardlinks=dichl_alloc())==NULL)
-    {   errprintf("dichardlinks=dichl_alloc() failed\n");
-        return -1;
-    }*/
     
+    // main task
     ret=createar_save_directory_wrapper(save, partmount, "/", (u64)statbuf.st_dev, NULL);
-    //ret=createar_save_directory(save, partmount, "/", (u64)statbuf.st_dev, &objectid, NULL);
-    
-    // put all small files that are in the last block to the queue
-    /*if (regmulti_save_enqueue(&save->regmulti, &g_queue, save->fsid)!=0)
-    {   errprintf("Cannot queue last block of small-files\n");
-        return -1;
-    }*/
-    
-    // dico for hard links not required anymore
-    //dichl_destroy(save->dichardlinks);
     
     // write "end of filesystem" header
     if ((dicoend=dico_alloc())==NULL)
@@ -1077,35 +1063,17 @@ int createar_oper_savedir(csavear *save, char *rootdir)
 {
     char fullpath[PATH_MAX];
     char currentdir[PATH_MAX];
-    //u64 objectid=0;
-    
-    // init filesystemdata struct
-    /*regmulti_init(&save->regmulti, g_options.datablocksize);
-    if ((save->dichardlinks=dichl_alloc())==NULL)
-    {   errprintf("dichardlinks=dichl_alloc() failed\n");
-        return -1;
-    }*/
     
     if (rootdir[0]=='/') // absolute path
     {
         snprintf(fullpath, sizeof(fullpath), "%s", rootdir);
         createar_save_directory_wrapper(save, "/", fullpath, (u64)0, NULL);
-        //createar_save_directory(save, "/", fullpath, (u64)0, &objectid, NULL);
     }
     else // relative path
     {
         concatenate_paths(fullpath, sizeof(fullpath), getcwd(currentdir, sizeof(currentdir)), rootdir);
         createar_save_directory_wrapper(save, ".", rootdir, (u64)0, NULL);
-        //createar_save_directory(save, ".", rootdir, (u64)0, &objectid, NULL);
     }
-    
-    // put all small files that are in the last block to the queue
-    /*if (regmulti_save_enqueue(&save->regmulti, &g_queue, 0)!=0)
-    {   errprintf("Cannot queue last block of small-files\n");
-        return -1;
-    }
-    // dico for hard links not required anymore
-    dichl_destroy(save->dichardlinks);*/
     
     return 0;
 }
@@ -1213,18 +1181,12 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
         {   sysprintf("cannot lstat64(%s)\n", partmounts[i]);
             goto do_create_error;
         }
-        /*if ((save.dichardlinks=dichl_alloc())==NULL)
-        {   errprintf("dichardlinks=dichl_alloc() failed\n");
-            goto do_create_error;
-        }*/
         u64 cost_evalfs=0;
-        //if (createar_save_directory(&save, partmounts[i], "/", (u64)statbuf.st_dev, &objectid, &cost_evalfs)!=0)
         msgprintf(MSG_VERB1, "Analysing filesystem on %s...\n", partition[i]);
         if (createar_save_directory_wrapper(&save, partmounts[i], "/", (u64)statbuf.st_dev, &cost_evalfs)!=0)
         {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", partmounts[i]);
             goto do_create_error;
         }
-        //dichl_destroy(save.dichardlinks);
         if (dico_add_u64(dicofsinfo[i], 0, FSYSHEADKEY_TOTALCOST, cost_evalfs)!=0)
         {   errprintf("dico_add_u64(FSYSHEADKEY_TOTALCOST) failed\n");
             goto do_create_error;
