@@ -8,5 +8,9 @@ static:
 
 distclean-local:
 	rm -rf autom4te.cache
+	rm -f config.h.in~
+	
+dist-hook:
+	rm -rf `find $(distdir) -name .svn`
 
 MAINTAINERCLEANFILES = Makefile.in configure aclocal.m4 install-sh missing depcomp
