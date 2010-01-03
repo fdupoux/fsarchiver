@@ -129,6 +129,20 @@ int archreader_close(carchreader *ai)
     return 0;
 }
 
+int archreader_volpath(carchreader *ai)
+{
+    int res;
+    res=get_path_to_volume(ai->volpath, PATH_MAX, ai->basepath, ai->curvol);
+    return res;
+}
+
+int archreader_incvolume(carchreader *ai, bool waitkeypress)
+{
+    assert(ai);
+    ai->curvol++;
+    return archreader_volpath(ai);
+}
+
 int archreader_read_data(carchreader *ai, void *data, u64 size)
 {
     long lres;
@@ -329,20 +343,6 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
     return ERR_SUCCESS;
 }
 
-int archreader_volpath(carchreader *ai)
-{
-    int res;
-    res=get_path_to_volume(ai->volpath, PATH_MAX, ai->basepath, ai->curvol);
-    return res;
-}
-
-int archreader_incvolume(carchreader *ai, bool waitkeypress)
-{
-    assert(ai);
-    ai->curvol++;
-    return archreader_volpath(ai);
-}
-
 int archreader_read_volheader(carchreader *ai)
 {
     char creatver[FSA_MAX_PROGVERLEN];
@@ -426,4 +426,116 @@ archio_read_volheader_error:
     dico_destroy(d);
     
     return ret;
+}
+
+int archreader_read_block(carchreader *ai, cdico *in_blkdico, int in_skipblock, int *out_sumok, struct s_blockinfo *out_blkinfo)
+{
+    u32 arblockcsumorig;
+    u32 arblockcsumcalc;
+    u32 curblocksize; // data size
+    u64 blockoffset; // offset of the block in the file
+    u16 compalgo; // compression algo used
+    u16 cryptalgo; // encryption algo used
+    u32 finalsize; // compressed  block size
+    u32 compsize;
+    u8 *buffer;
+    
+    assert(ai);
+    assert(out_sumok);
+    assert(in_blkdico);
+    assert(out_blkinfo);
+    
+    // init
+    memset(out_blkinfo, 0, sizeof(struct s_blockinfo));
+    *out_sumok=-1;
+    
+    if (dico_get_u64(in_blkdico, 0, BLOCKHEADITEMKEY_BLOCKOFFSET, &blockoffset)!=0)
+    {   msgprintf(3, "cannot get blockoffset from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u32(in_blkdico, 0, BLOCKHEADITEMKEY_REALSIZE, &curblocksize)!=0 || curblocksize>FSA_MAX_BLKSIZE)
+    {   msgprintf(3, "cannot get blocksize from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u16(in_blkdico, 0, BLOCKHEADITEMKEY_COMPRESSALGO, &compalgo)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_COMPRESSALGO from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u16(in_blkdico, 0, BLOCKHEADITEMKEY_ENCRYPTALGO, &cryptalgo)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_ENCRYPTALGO from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u32(in_blkdico, 0, BLOCKHEADITEMKEY_ARSIZE, &finalsize)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_ARSIZE from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u32(in_blkdico, 0, BLOCKHEADITEMKEY_COMPSIZE, &compsize)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_COMPSIZE from block-header\n");
+        return -1;
+    }
+    
+    if (dico_get_u32(in_blkdico, 0, BLOCKHEADITEMKEY_ARCSUM, &arblockcsumorig)!=0)
+    {   msgprintf(3, "cannot get BLOCKHEADITEMKEY_ARCSUM from block-header\n");
+        return -1;
+    }
+    
+    if (in_skipblock==true) // the main thread does not need that block (block belongs to a filesys we want to skip)
+    {
+        if (lseek64(ai->archfd, (long)finalsize, SEEK_CUR)<0)
+        {   sysprintf("cannot skip block (finalsize=%ld) failed\n", (long)finalsize);
+            return -1;
+        }
+        return 0;
+    }
+    
+    // ---- allocate memory
+    if ((buffer=malloc(finalsize))==NULL)
+    {   errprintf("cannot allocate block: malloc(%d) failed\n", finalsize);
+        return -1;
+    }
+    
+    if (read(ai->archfd, buffer, (long)finalsize)!=(long)finalsize)
+    {   sysprintf("cannot read block (finalsize=%ld) failed\n", (long)finalsize);
+        free(buffer);
+        return -1;
+    }
+    
+    // prepare blkinfo
+    out_blkinfo->blkdata=(char*)buffer;
+    out_blkinfo->blkrealsize=curblocksize;
+    out_blkinfo->blkoffset=blockoffset;
+    out_blkinfo->blkarcsum=arblockcsumorig;
+    out_blkinfo->blkcompalgo=compalgo;
+    out_blkinfo->blkcryptalgo=cryptalgo;
+    out_blkinfo->blkarsize=finalsize;
+    out_blkinfo->blkcompsize=compsize;
+    
+    // ---- checksum
+    arblockcsumcalc=fletcher32(buffer, finalsize);
+    if (arblockcsumcalc!=arblockcsumorig) // bad checksum
+    {
+        errprintf("block is corrupt at offset=%ld, blksize=%ld\n", (long)blockoffset, (long)curblocksize);
+        free(out_blkinfo->blkdata);
+        if ((out_blkinfo->blkdata=malloc(curblocksize))==NULL)
+        {   errprintf("cannot allocate block: malloc(%d) failed\n", curblocksize);
+            return -1;
+        }
+        memset(out_blkinfo->blkdata, 0, curblocksize);
+        *out_sumok=false;
+        // go to the beginning of the corrupted contents so that the next header is searched here
+        if (lseek64(ai->archfd, -(long long)finalsize, SEEK_CUR)<0)
+        {   errprintf("lseek64() failed\n");
+        }
+    }
+    else // no corruption detected
+    {
+        *out_sumok=true;
+    }
+    
+    return 0;
 }

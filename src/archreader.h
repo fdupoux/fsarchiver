@@ -49,11 +49,12 @@ int archreader_init(carchreader *ai);
 int archreader_destroy(carchreader *ai);
 int archreader_open(carchreader *ai);
 int archreader_close(carchreader *ai);
-int archreader_read_data(carchreader *ai, void *data, u64 size);
-int archreader_read_dico(carchreader *ai, cdico *d);
-int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowseek, u16 *fsid);
 int archreader_incvolume(carchreader *ai, bool waitkeypress);
 int archreader_volpath(carchreader *ai);
+int archreader_read_data(carchreader *ai, void *data, u64 size);
+int archreader_read_dico(carchreader *ai, cdico *d);
 int archreader_read_volheader(carchreader *ai);
+int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowseek, u16 *fsid);
+int archreader_read_block(carchreader *ai, cdico *in_blkdico, int in_skipblock, int *out_sumok, struct s_blockinfo *out_blkinfo);
 
 #endif // __ARCHREADER_H__
