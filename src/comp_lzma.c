@@ -40,31 +40,33 @@ int compress_block_lzma(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u
     {   switch (res)
         {
             case LZMA_MEM_ERROR:
-                errprintf("lzma_easy_encoder(%d, LZMA_CHECK_CRC32) failed with res=LZMA_MEM_ERROR (out of memory)\n", level);
-                break;
+                errprintf("lzma_easy_encoder(%d): LZMA compression failed "
+                    "with an out of memory error.\nYou should use a lower "
+                    "compression level to reduce the memory requirement.\n", level);
+                lzma_end(&lzma);
+                return FSAERR_ENOMEM;
             default:
-                errprintf("lzma_easy_encoder(%d, LZMA_CHECK_CRC32) failed with res=%d\n", level, res);
-                break;
+                errprintf("lzma_easy_encoder(%d) failed with res=%d\n", level, res);
+                lzma_end(&lzma);
+                return FSAERR_UNKNOWN;
         }
-        lzma_end(&lzma);
-        return 1;
     }
     
     if ((res=lzma_code(&lzma, LZMA_RUN))!=LZMA_OK)
-    {   errprintf("lzma_code(LZMA_RUN)  failed with res=%d\n", res);
+    {   errprintf("lzma_code(LZMA_RUN) failed with res=%d\n", res);
         lzma_end(&lzma);
-        return 1;
+        return FSAERR_UNKNOWN;
     }
     
     if ((res=lzma_code(&lzma, LZMA_FINISH))!=LZMA_STREAM_END && res!=LZMA_OK)
     {   errprintf("lzma_code(LZMA_FINISH) failed with res=%d\n", res);
         lzma_end(&lzma);
-        return 1;
+        return FSAERR_UNKNOWN;
     }
     
     *compsize=(u64)(lzma.total_out);
     lzma_end(&lzma);
-    return 0;
+    return FSAERR_SUCCESS;
 }
 
 int uncompress_block_lzma(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsize, u8 *compbuf)
@@ -84,31 +86,38 @@ int uncompress_block_lzma(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufs
     if ((res=lzma_auto_decoder(&lzma, memlimit, 0))!=LZMA_OK)
     {   errprintf("lzma_auto_decoder() failed with res=%d\n", res);
         lzma_end(&lzma);
-        return 1;
+        return FSAERR_UNKNOWN;
     }
     
     do // retry if lzma_code() returns LZMA_MEMLIMIT_ERROR (increase the memory limit)
     {   
-        if ((res=lzma_code(&lzma, LZMA_RUN))!=LZMA_STREAM_END) // if error
+        if ((res=lzma_code(&lzma, LZMA_RUN)) != LZMA_STREAM_END) // if error
         {
-            if (res==LZMA_MEMLIMIT_ERROR) // we have to raise the memory limit
-            {
-                memlimit+=64*1024*1024;
+            if (res == LZMA_MEMLIMIT_ERROR) // we have to raise the memory limit
+            {   memlimit+=64*1024*1024;
                 lzma_memlimit_set(&lzma, memlimit);
                 msgprintf(MSG_VERB2, "lzma_memlimit_set(%lld)\n", (long long)memlimit);
             }
             else // another error
             {   errprintf("lzma_code(LZMA_RUN) failed with res=%d\n", res);
                 lzma_end(&lzma);
-                return 1;
+                return FSAERR_UNKNOWN;
             }
         }
-    } while ((res==LZMA_MEMLIMIT_ERROR) && (memlimit < maxmemlimit));
-
+    } while ((res == LZMA_MEMLIMIT_ERROR) && (memlimit < maxmemlimit));
+    
     *origsize=(u64)(lzma.total_out);
     lzma_end(&lzma);
-    return (res==LZMA_STREAM_END)?(0):(-1);
+    
+    switch (res)
+    {
+        case LZMA_STREAM_END:
+            return FSAERR_SUCCESS;
+        case LZMA_MEMLIMIT_ERROR:
+            return FSAERR_ENOMEM;
+        default:
+            return FSAERR_UNKNOWN;
+    }
 }
 
 #endif // OPTION_LZMA_SUPPORT
-

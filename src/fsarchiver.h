@@ -30,71 +30,6 @@
 #    define max(a, b)            ((a) > (b) ? (a) : (b))
 #endif
 
-// ----------------------------- fsarchiver const ------------------------
-#define FSA_VERSION              PACKAGE_VERSION
-#define FSA_RELDATE              PACKAGE_RELDATE
-#define FSA_FILEFORMAT           PACKAGE_FILEFMT
-
-#define FSA_GCRYPT_VERSION       "1.2.3"
-
-#define FSA_MAX_FILEFMTLEN       32
-#define FSA_MAX_PROGVERLEN       32
-#define FSA_MAX_FSNAMELEN        128
-#define FSA_MAX_DEVLEN           256
-#define FSA_MAX_UUIDLEN          128
-#define FSA_MAX_BLKDEVICES       256
-
-#define FSA_MAX_FSPERARCH        128
-#define FSA_MAX_COMPJOBS         32
-#define FSA_MAX_QUEUESIZE        32
-#define FSA_MAX_BLKSIZE          921600
-#define FSA_DEF_BLKSIZE          262144
-#define FSA_MAX_SMALLFILECOUNT   512      // there can be up to FSA_MAX_SMALLFILECOUNT files copied in a single data block 
-#define FSA_MAX_SMALLFILESIZE    131072   // files smaller than that will be grouped with other small files in a single data block
-#define FSA_COST_PER_FILE        16384    // how much it cost to copy an empty file/dir/link: used to eval the progress bar
-
-#define FSA_MAX_LABELLEN         512
-#define FSA_MIN_PASSLEN          6
-#define FSA_MAX_PASSLEN          64
-
-#define FSA_FILESYSID_NULL       0xFFFF
-#define FSA_CHECKPASSBUF_SIZE    4096
-
-// ----------------------------- fsarchiver magics --------------------------------------------------
-#define FSA_SIZEOF_MAGIC         4
-#define FSA_MAGIC_VOLH           "FsA0" // volume header (one per volume at the very beginning)
-#define FSA_MAGIC_VOLF           "FsAE" // volume footer (one per volume at the very end)
-#define FSA_MAGIC_MAIN           "ArCh" // archive header (one per archive at the beginning of the first volume)
-#define FSA_MAGIC_FSIN           "FsIn" // filesys info (one per filesystem at the beginning of the archive)
-#define FSA_MAGIC_FSYB           "FsYs" // filesys begin (one per filesystem when the filesys contents start, or when the flatfiles start)
-#define FSA_MAGIC_OBJT           "ObJt" // object header (one per object: regfiles, dirs, symlinks, ...)
-#define FSA_MAGIC_BLKH           "BlKh" // datablk header (one per data block, each regfile may have [0-n])
-#define FSA_MAGIC_FILF           "FiLf" // filedat footer (one per regfile, after the list of data blocks)
-#define FSA_MAGIC_DATF           "DaEn" // data footer (one per file system, at the end of its contents, or after the contents of the flatfiles)
-
-typedef struct s_stats
-{   u64    cnt_regfile;
-    u64    cnt_dir;
-    u64    cnt_symlink;
-    u64    cnt_hardlink;
-    u64    cnt_special;
-    u64    err_regfile;
-    u64    err_dir;
-    u64    err_symlink;
-    u64    err_hardlink;
-    u64    err_special;
-} cstats;
-
-// ------------ global variables ---------------------------
-extern char *valid_magic[];
-
-// -------------------------------- version_number to u64 -------------------------------------------
-#define FSA_VERSION_BUILD(a, b, c, d)     ((u64)((((u64)a&0xFFFF)<<48)+(((u64)b&0xFFFF)<<32)+(((u64)c&0xFFFF)<<16)+(((u64)d&0xFFFF)<<0)))
-#define FSA_VERSION_GET_A(ver)            ((((u64)ver)>>48)&0xFFFF)
-#define FSA_VERSION_GET_B(ver)            ((((u64)ver)>>32)&0xFFFF)
-#define FSA_VERSION_GET_C(ver)            ((((u64)ver)>>16)&0xFFFF)
-#define FSA_VERSION_GET_D(ver)            ((((u64)ver)>>0)&0xFFFF)
-
 // -------------------------------- fsarchiver commands ---------------------------------------------
 enum {OPER_NULL=0, OPER_SAVEFS, OPER_RESTFS, OPER_SAVEDIR, OPER_RESTDIR, OPER_ARCHINFO, OPER_PROBE};
 
@@ -146,5 +81,78 @@ enum {FSYSHEADKEY_NULL=0, FSYSHEADKEY_FILESYSTEM, FSYSHEADKEY_MNTPATH, FSYSHEADK
       FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE};
 
 enum {FSINFOKEY_NULL=0, FSINFOKEY_FSID, FSINFOKEY_DEST, FSINFOKEY_MKFS};
+
+// -------------------------------- fsarchiver errors ---------------------------------------------
+enum {FSAERR_SUCCESS=0,           // success
+      FSAERR_UNKNOWN=-1,          // uknown error (default code that means error)
+      FSAERR_ENOMEM=-2,           // out of memory error
+};
+
+// ----------------------------- fsarchiver const ------------------------
+#define FSA_VERSION              PACKAGE_VERSION
+#define FSA_RELDATE              PACKAGE_RELDATE
+#define FSA_FILEFORMAT           PACKAGE_FILEFMT
+
+#define FSA_GCRYPT_VERSION       "1.2.3"
+
+#define FSA_MAX_FILEFMTLEN       32
+#define FSA_MAX_PROGVERLEN       32
+#define FSA_MAX_FSNAMELEN        128
+#define FSA_MAX_DEVLEN           256
+#define FSA_MAX_UUIDLEN          128
+#define FSA_MAX_BLKDEVICES       256
+
+#define FSA_MAX_FSPERARCH        128
+#define FSA_MAX_COMPJOBS         32
+#define FSA_MAX_QUEUESIZE        32
+#define FSA_MAX_BLKSIZE          921600
+#define FSA_DEF_BLKSIZE          262144
+#define FSA_DEF_COMPRESS_ALGO    COMPRESS_GZIP // compress using gzip by default
+#define FSA_DEF_COMPRESS_LEVEL   6             // compress with "gzip -6" by default
+#define FSA_MAX_SMALLFILECOUNT   512      // there can be up to FSA_MAX_SMALLFILECOUNT files copied in a single data block 
+#define FSA_MAX_SMALLFILESIZE    131072   // files smaller than that will be grouped with other small files in a single data block
+#define FSA_COST_PER_FILE        16384    // how much it cost to copy an empty file/dir/link: used to eval the progress bar
+
+#define FSA_MAX_LABELLEN         512
+#define FSA_MIN_PASSLEN          6
+#define FSA_MAX_PASSLEN          64
+
+#define FSA_FILESYSID_NULL       0xFFFF
+#define FSA_CHECKPASSBUF_SIZE    4096
+
+// ----------------------------- fsarchiver magics --------------------------------------------------
+#define FSA_SIZEOF_MAGIC         4
+#define FSA_MAGIC_VOLH           "FsA0" // volume header (one per volume at the very beginning)
+#define FSA_MAGIC_VOLF           "FsAE" // volume footer (one per volume at the very end)
+#define FSA_MAGIC_MAIN           "ArCh" // archive header (one per archive at the beginning of the first volume)
+#define FSA_MAGIC_FSIN           "FsIn" // filesys info (one per filesystem at the beginning of the archive)
+#define FSA_MAGIC_FSYB           "FsYs" // filesys begin (one per filesystem when the filesys contents start, or when the flatfiles start)
+#define FSA_MAGIC_OBJT           "ObJt" // object header (one per object: regfiles, dirs, symlinks, ...)
+#define FSA_MAGIC_BLKH           "BlKh" // datablk header (one per data block, each regfile may have [0-n])
+#define FSA_MAGIC_FILF           "FiLf" // filedat footer (one per regfile, after the list of data blocks)
+#define FSA_MAGIC_DATF           "DaEn" // data footer (one per file system, at the end of its contents, or after the contents of the flatfiles)
+
+typedef struct s_stats
+{   u64    cnt_regfile;
+    u64    cnt_dir;
+    u64    cnt_symlink;
+    u64    cnt_hardlink;
+    u64    cnt_special;
+    u64    err_regfile;
+    u64    err_dir;
+    u64    err_symlink;
+    u64    err_hardlink;
+    u64    err_special;
+} cstats;
+
+// ------------ global variables ---------------------------
+extern char *valid_magic[];
+
+// -------------------------------- version_number to u64 -------------------------------------------
+#define FSA_VERSION_BUILD(a, b, c, d)     ((u64)((((u64)a&0xFFFF)<<48)+(((u64)b&0xFFFF)<<32)+(((u64)c&0xFFFF)<<16)+(((u64)d&0xFFFF)<<0)))
+#define FSA_VERSION_GET_A(ver)            ((((u64)ver)>>48)&0xFFFF)
+#define FSA_VERSION_GET_B(ver)            ((((u64)ver)>>32)&0xFFFF)
+#define FSA_VERSION_GET_C(ver)            ((((u64)ver)>>16)&0xFFFF)
+#define FSA_VERSION_GET_D(ver)            ((((u64)ver)>>0)&0xFFFF)
 
 #endif // __FSARCHIVER_H__

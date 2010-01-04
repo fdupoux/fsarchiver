@@ -166,8 +166,8 @@ int process_cmdline(int argc, char **argv)
     g_options.debuglevel=0;
     g_options.compressjobs=1;
     g_options.fsacomplevel=3; // fsa level 3 = "gzip -6"
-    g_options.compressalgo=COMPRESS_GZIP;
-    g_options.compresslevel=6; // default level for gzip
+    g_options.compressalgo=FSA_DEF_COMPRESS_ALGO;
+    g_options.compresslevel=FSA_DEF_COMPRESS_LEVEL; // default level for gzip
     g_options.datablocksize=FSA_DEF_BLKSIZE;
     g_options.encryptalgo=ENCRYPT_NONE;
     snprintf(g_options.archlabel, sizeof(g_options.archlabel), "<none>");

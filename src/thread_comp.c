@@ -38,6 +38,9 @@
 int compress_block_generic(struct s_blockinfo *blkinfo)
 {
     char *bufcomp=NULL;
+    int attempt=0;
+    int compalgo;
+    int complevel;
     u64 compsize;
     u64 bufsize;
     int res;
@@ -48,49 +51,67 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
         return -1;
     }
     
-    // -------------- compress the block
-    switch (g_options.compressalgo)
+    // compression level/algo to use for the first attempt
+    compalgo=g_options.compressalgo;
+    complevel=g_options.compresslevel;
+    
+    // compress the block
+    do
     {
+        switch (compalgo)
+        {
 #ifdef OPTION_LZO_SUPPORT
-        case COMPRESS_LZO:
-            res=compress_block_lzo(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, g_options.compresslevel);
-            blkinfo->blkcompalgo=COMPRESS_LZO;
-            break;
+            case COMPRESS_LZO:
+                res=compress_block_lzo(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, complevel);
+                blkinfo->blkcompalgo=COMPRESS_LZO;
+                break;
 #endif // OPTION_LZO_SUPPORT
-        case COMPRESS_GZIP:
-            res=compress_block_gzip(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, g_options.compresslevel);
-            blkinfo->blkcompalgo=COMPRESS_GZIP;
-            break;
-        case COMPRESS_BZIP2:
-            res=compress_block_bzip2(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, g_options.compresslevel);
-            blkinfo->blkcompalgo=COMPRESS_BZIP2;
-            break;
+            case COMPRESS_GZIP:
+                res=compress_block_gzip(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, complevel);
+                blkinfo->blkcompalgo=COMPRESS_GZIP;
+                break;
+            case COMPRESS_BZIP2:
+                res=compress_block_bzip2(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, complevel);
+                blkinfo->blkcompalgo=COMPRESS_BZIP2;
+                break;
 #ifdef OPTION_LZMA_SUPPORT
-        case COMPRESS_LZMA:
-            res=compress_block_lzma(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, g_options.compresslevel);
-            blkinfo->blkcompalgo=COMPRESS_LZMA;
-            break;
+            case COMPRESS_LZMA:
+                res=compress_block_lzma(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, complevel);
+                blkinfo->blkcompalgo=COMPRESS_LZMA;
+                break;
 #endif // OPTION_LZMA_SUPPORT
-        default:
-            free(bufcomp);
-            msgprintf(2, "invalid compression level: %d\n", (int)g_options.compressalgo);
-            return -1;
-    }
+            default:
+                free(bufcomp);
+                msgprintf(2, "invalid compression level: %d\n", (int)compalgo);
+                return -1;
+        }
+        
+        // retry if high compression was used and compression failed because of FSAERR_ENOMEM
+        if ((res == FSAERR_ENOMEM) && (compalgo > FSA_DEF_COMPRESS_ALGO))
+        {
+            errprintf("attempt to compress the current block using an alternative algorithm (\"-z%d\")\n", FSA_DEF_COMPRESS_ALGO);
+            compalgo = FSA_DEF_COMPRESS_ALGO;
+            complevel = FSA_DEF_COMPRESS_LEVEL;
+        }
+        
+    } while ((res == FSAERR_ENOMEM) && (attempt++ == 0));
     
     // check compression status and efficiency
-    if ((res==0) && (compsize < blkinfo->blkrealsize)) // compression worked and saved space
+    if ((res==FSAERR_SUCCESS) && (compsize < blkinfo->blkrealsize)) // compression worked and saved space
     {   free(blkinfo->blkdata); // free old buffer (with uncompressed data)
         blkinfo->blkdata=bufcomp; // new buffer (with compressed data)
         blkinfo->blkcompsize=compsize; // size after compression and before encryption
         blkinfo->blkarsize=compsize; // in case there is no encryption to set this
+        //errprintf ("COMP_DBG: block successfully compressed using %s\n", compress_algo_int_to_string(compalgo));
     }
-    else // compressed version is bigger: keep the original block
+    else // compressed version is bigger or compression failed: keep the original block
     {   memcpy(bufcomp, blkinfo->blkdata, blkinfo->blkrealsize);
         free(blkinfo->blkdata); // free old buffer
         blkinfo->blkdata=bufcomp; // new buffer
         blkinfo->blkcompsize=blkinfo->blkrealsize; // size after compression and before encryption
         blkinfo->blkarsize=blkinfo->blkrealsize;  // in case there is no encryption to set this
         blkinfo->blkcompalgo=COMPRESS_NONE;
+        //errprintf ("COMP_DBG: block copied uncompressed, attempted using %s\n", compress_algo_int_to_string(compalgo));
     }
     
 #ifdef OPTION_CRYPTO_SUPPORT
@@ -122,7 +143,7 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
     
     // calculates the final block checksum (block as it will be stored in the archive)
     blkinfo->blkarcsum=fletcher32((void*)blkinfo->blkdata, blkinfo->blkarsize);
-
+    
     return 0;
 }
 
@@ -132,7 +153,7 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
     char *bufcomp=NULL;
     int res;
     
-    // ---- allocate memory for uncompressed data
+    // allocate memory for uncompressed data
     if ((bufcomp=malloc(blkinfo->blkrealsize))==NULL)
     {   errprintf("malloc(%ld) failed: cannot allocate memory for compressed block\n", (long)blkinfo->blkrealsize);
         return -1;
@@ -264,16 +285,6 @@ int compression_function(int oper)
             queue_replace_block(&g_queue, blknum, &blkinfo, QITEM_STATUS_DONE);
         }
     }
-    
-    /*struct timespec t1, t2, t3, t4, t5, t6;
-    u64 delaya, delayb, delayc;
-    clock_gettime(CLOCK_REALTIME, &t1);
-    clock_gettime(CLOCK_REALTIME, &t2);
-    errprintf("comp-thread=%ld: =====================================\n", threadid);
-    errprintf("comp-thread=%ld: TOTAL time in queue_get_first_block_todo()=%ld\n", threadid, tota);
-    errprintf("comp-thread=%ld: TOTAL time in compress_block_generic()=%ld\n", threadid, totb);
-    errprintf("comp-thread=%ld: TOTAL time in queue_replace_block()=%ld\n", threadid, totc);
-    errprintf("comp-thread=%ld: =====================================\n", threadid);*/
     
     msgprintf(MSG_DEBUG1, "THREAD-COMP: exit success\n");
     return 0;
