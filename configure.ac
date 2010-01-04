@@ -23,6 +23,7 @@ AC_HEADER_STDC
 AC_PROG_INSTALL
 AM_PROG_CC_C_O
 AC_SYS_LARGEFILE
+PKG_PROG_PKG_CONFIG
 
 dnl =======================================================================================
 dnl checks for os/architecture specificities.
