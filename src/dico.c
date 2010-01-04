@@ -139,7 +139,7 @@ int dico_get_generic(cdico *d, u8 section, u16 key, void *data, u16 maxsize, u16
     }
     
     if (maxsize<1)
-    {   msgprintf(MSG_DEBUG1, "error3: maxsize=%d\n", maxsize);
+    {   msgprintf(MSG_DEBUG1, "case1: maxsize=%d\n", maxsize);
         return -3;
     }
     
@@ -148,7 +148,7 @@ int dico_get_generic(cdico *d, u8 section, u16 key, void *data, u16 maxsize, u16
         if ((item!=NULL) && (item->key==key && item->section==section))
         {
             if (item->size > maxsize) // item is too big
-            {   msgprintf(MSG_DEBUG1, "error4: (item->size > maxsize): item->size =%d, maxsize=%d\n", item->size, maxsize);
+            {   msgprintf(MSG_DEBUG1, "case2: (item->size > maxsize): item->size =%d, maxsize=%d\n", item->size, maxsize);
                 return -4;
             }
             if ((item->size>0) && (item->data!=NULL)) // there may be no data (size==0)
@@ -159,7 +159,7 @@ int dico_get_generic(cdico *d, u8 section, u16 key, void *data, u16 maxsize, u16
         }
     }
     
-    msgprintf(MSG_DEBUG1, "error5: not found\n");
+    msgprintf(MSG_DEBUG1, "case3: not found\n");
     return -5; // not found
 }
 
