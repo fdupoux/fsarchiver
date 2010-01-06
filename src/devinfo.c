@@ -62,12 +62,6 @@ int get_devinfo(struct s_devinfo *outdev, char *indevname)
     // get short name ("/dev/sda1" -> "sda1")
     snprintf(outdev->devname, sizeof(outdev->devname), "%s", indevname+5); // skip "/dev/"
     
-    // devname shown in /sys/block (eg for HP-cciss: "/dev/cciss/c0d0" -> "/sys/block/cciss!c0d0")
-    snprintf(sysblkdevname, sizeof(sysblkdevname), "%s", outdev->devname);
-    for (i=0; (sysblkdevname[i]!=0) && (i<sizeof(sysblkdevname)); i++)
-        if (sysblkdevname[i]=='/')
-            sysblkdevname[i]='!';
-    
     // get device basic info (size, major, minor)
     if (((fd=open64(indevname, O_RDONLY|O_LARGEFILE))<0) ||
         ((outdev->devsize=lseek64(fd, 0, SEEK_END))<0) ||
@@ -82,8 +76,14 @@ int get_devinfo(struct s_devinfo *outdev, char *indevname)
     if (outdev->devsize==1024) // ignore extended partitions
         return -1;
     
+    // devname shown in /sys/block (eg for HP-cciss: "cciss/c0d0" -> "cciss!c0d0")
+    snprintf(sysblkdevname, sizeof(sysblkdevname), "%s", outdev->devname);
+    for (i=0; (sysblkdevname[i]!=0) && (i<sizeof(sysblkdevname)); i++)
+        if (sysblkdevname[i]=='/')
+            sysblkdevname[i]='!';
+    
     // check if it's a physical disk (there is a "/sys/block/${devname}/device")
-    snprintf(sysblkinfo, sizeof(sysblkinfo), "/sys/block/%s/device", outdev->devname);
+    snprintf(sysblkinfo, sizeof(sysblkinfo), "/sys/block/%s/device", sysblkdevname);
     if (stat64(sysblkinfo, &statbuf)==0)
     {
         outdev->devtype=BLKDEV_PHYSDISK;
