@@ -57,7 +57,7 @@ AC_ARG_ENABLE([lzma],
 if test "x$enable_lzma" = "xyes"
 then
     AC_DEFINE([OPTION_LZMA_SUPPORT], 1, [Define to 1 to enable the support for lzma compression])
-    PKG_CHECK_MODULES(LZMA, [liblzma])
+    PKG_CHECK_MODULES([LZMA], [liblzma])
 fi
 
 dnl option to disable lzo support (for people who don't have liblzo2 installed)
@@ -89,11 +89,11 @@ then
 fi
 
 dnl check e2fsprogs and its libs
-PKG_CHECK_MODULES(EXT2FS, [ext2fs])
-PKG_CHECK_MODULES(COM_ERR, [com_err])
-PKG_CHECK_MODULES(E2P, [e2p])
-PKG_CHECK_MODULES(BLKID, [blkid])
-PKG_CHECK_MODULES(UUID, [uuid])
+PKG_CHECK_MODULES([EXT2FS], [ext2fs])
+PKG_CHECK_MODULES([COM_ERR], [com_err])
+PKG_CHECK_MODULES([E2P], [e2p])
+PKG_CHECK_MODULES([BLKID], [blkid])
+PKG_CHECK_MODULES([UUID], [uuid])
 
 dnl Check for header files installed with a library
 AC_CHECK_HEADER([attr/xattr.h],, [AC_MSG_ERROR([attr/xattr.h not found. you may have to install a package called attr, libattr, libattr-devel])])
