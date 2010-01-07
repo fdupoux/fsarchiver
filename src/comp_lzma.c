@@ -15,6 +15,10 @@
  * Homepage: http://www.fsarchiver.org
  */
 
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include "fsarchiver.h"
 #include "common.h"
 #include "comp_lzma.h"
