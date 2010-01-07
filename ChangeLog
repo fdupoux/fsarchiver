@@ -1,6 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.6.5:
+  - Fixed compilation issues (pkg-config problems especially on systems with e2fsprogs < 1.41.2)
   - Retry with the default level (gzip -6) when compression of a data block lacks memory with bzip2/lzma
 * 0.6.4 (2010-01-03):
   - Improved the manpage: documented the long options, added examples, links, ...

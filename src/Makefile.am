@@ -22,8 +22,6 @@ fsarchiver_LDADD	= -lpthread -lrt \
                           $(BLKID_LIBS) \
                           $(UUID_LIBS)
 fsarchiver_CFLAGS	= @CFLAGS@ -Wall -std=gnu99 -rdynamic -ggdb \
-                          -I /usr/include/blkid -I /usr/include/ext2fs \
-                          -I /usr/include/uuid -I /usr/include/e2p \
                           $(LZMA_CFLAGS) \
                           $(EXT2FS_CFLAGS) \
                           $(COM_ERR_LIBS) \

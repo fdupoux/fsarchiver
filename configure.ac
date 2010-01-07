@@ -89,6 +89,7 @@ then
 fi
 
 dnl check e2fsprogs and its libs
+PKG_CHECK_EXISTS([ext2fs < 1.41.2], [CFLAGS="$CFLAGS -I /usr/include/blkid -I /usr/include/ext2fs -I /usr/include/uuid -I /usr/include/e2p"], 1, [Set if we have an old version of e2fsprogs])
 PKG_CHECK_MODULES([EXT2FS], [ext2fs])
 PKG_CHECK_MODULES([COM_ERR], [com_err])
 PKG_CHECK_MODULES([E2P], [e2p])
