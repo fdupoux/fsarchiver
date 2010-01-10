@@ -49,6 +49,7 @@
 #include "regmulti.h"
 #include "crypto.h"
 #include "error.h"
+#include "datafile.h"
 
 typedef struct s_extractar
 {   carchreader ai;
@@ -626,6 +627,7 @@ extractar_restore_obj_directory_err:
 
 int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *dicofirstfile, int objtype, int fstype) // d = obj-header of first small file
 {
+    cdatafile *datafile=NULL;
     char databuf[FSA_MAX_SMALLFILESIZE];
     char basename[PATH_MAX];
     cdico *filehead=NULL;
@@ -636,7 +638,6 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
     struct timeval tv[2];
     struct s_blockinfo blkinfo;
     cregmulti regmulti;
-    struct md5_ctx md5ctx;
     u8 md5sumcalc[16];
     u8 md5sumorig[16];
     int errors;
@@ -645,13 +646,13 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
     u64 datsize;
     s64 lres;
     int res;
-    int fd;
     int i;
     
     // init
     errors=0;
     memset(&blkinfo, 0, sizeof(blkinfo));
     regmulti_init(&regmulti, FSA_MAX_BLKSIZE);
+    datafile=datafile_alloc();
     
     // ---- dequeue header for each small file which is part of that group
     if (dico_get_u32(dicofirstfile, 0, DISKITEMKEY_MULTIFILESCOUNT, &filescount)!=0)
@@ -680,7 +681,7 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
         }
     }
     
-    // ---- dequeue the block which contains data for several the small files
+    // ---- dequeue the block which contains data for several small files
     if ((lres=queue_dequeue_block(&g_queue, &blkinfo))<=0)
     {   errprintf("queue_dequeue_block()=%ld=%s failed\n", (long)lres, qerr(lres));
         return -1;
@@ -737,47 +738,21 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
                 goto extractar_restore_obj_regfile_multi_err;
             }
             
-            errno=0;
-            if ((fd=open64(fullpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))<0)
-            {   if (errno==ENOSPC)
-                {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
-                    close(fd);
-                    return -1; // fatal error
-                }
-                else // another error
-                {   sysprintf("Cannot open %s for writing\n", relpath);
-                    goto extractar_restore_obj_regfile_multi_err;
-                }
-            }
+            if (datafile_open_write(datafile, fullpath, false)<0)
+                goto extractar_restore_obj_regfile_multi_err;
             
-            md5_init_ctx(&md5ctx);
-            md5_process_bytes(databuf, (long)datsize, &md5ctx);
-            md5_finish_ctx(&md5ctx, md5sumcalc);
+            if (datafile_write(datafile, databuf, datsize)!=0)
+                goto extractar_restore_obj_regfile_multi_err;
             
-            errno=0;
-            if ((lres=write(fd, databuf, datsize))!=datsize) // error
-            {
-                if ((errno==ENOSPC) || ((lres>0) && (lres < datsize)))
-                {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
-                    close(fd);
-                    return -1; // fatal error
-                }
-                else // another error
-                {   sysprintf("cannot extract %s, curblocksize=%ld\n", relpath, (long)datsize);
-                    close(fd);
-                    goto extractar_restore_obj_regfile_multi_err;
-                }
-            }
+            if (datafile_close(datafile, md5sumcalc, sizeof(md5sumcalc))!=0)
+                goto extractar_restore_obj_regfile_multi_err;
             
             if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
             {   errprintf("cannot restore file %s, the data block (which is shared by multiple files) is corrupt\n", relpath);
-                res=ftruncate(fd, 0); // don't leave corrupt data in the file
-                close(fd);
+                res=truncate(fullpath, 0); // don't leave corrupt data in the file
                 goto extractar_restore_obj_regfile_multi_err;
             }
-            
-            close(fd);
-            
+                      
             if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, filehead)!=0)
             {   msgprintf(MSG_STACK, "cannot restore file attributes for file [%s]\n", relpath);
                 goto extractar_restore_obj_regfile_multi_err;
@@ -800,33 +775,31 @@ extractar_restore_obj_regfile_multi_err:
         continue;
     }
     
+    datafile_destroy(datafile);
     return 0;
 }
 
 int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char *relpath, char *destdir, cdico *d, int objtype, int fstype) // large or empty files
 {
-    cdico *footerdico=NULL;
     char magic[FSA_SIZEOF_MAGIC+1];
     struct s_blockinfo blkinfo;
     char parentdir[PATH_MAX];
+    cdatafile *datafile=NULL;
+    cdico *footerdico=NULL;
     struct timeval tv[2];
-    struct md5_ctx md5ctx;
     u8 md5sumcalc[16];
     u8 md5sumorig[16];
     char text[256];
     int excluded;
     u64 filesize;
     u64 filepos;
-    int errors;
     s64 lres;
     int res;
-    int fd=-1;
     
     // init
-    errors=0;
     memset(&blkinfo, 0, sizeof(blkinfo));
     memset(magic, 0, sizeof(magic));
-    md5_init_ctx(&md5ctx);
+    datafile=datafile_alloc();
     
     if (dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SIZE, &filesize)!=0)
     {   errprintf("Cannot read filesize DISKITEMKEY_SIZE from archive for file=[%s]\n", relpath);
@@ -855,23 +828,10 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
         
         // show progress bar
         extractar_listing_print_file(exar, objtype, relpath);
-        
-        // open file to restore
-        errno=0;
-        if ((fd=open64(fullpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))<0)
-        {   if (errno==ENOSPC)
-            {   sysprintf("can't write file [%s]: no space left on device\n", relpath);
-                exar->stats.err_regfile++;
-                dico_destroy(footerdico);
-                close(fd);
-                return -1; // fatal error
-            }
-            else
-            {   sysprintf("Cannot open %s for writing\n", relpath);
-                goto restore_obj_regfile_unique_error;
-            }
-        }
     }
+    
+    if (datafile_open_write(datafile, fullpath, excluded)<0)
+        goto restore_obj_regfile_unique_error;
     
     msgprintf(MSG_DEBUG2, "restore_obj_regfile_unique(file=%s, size=%lld)\n", relpath, (long long)filesize);
     for (filepos=0; (filesize>0) && (filepos < filesize) && (get_interrupted()==false); filepos+=blkinfo.blkrealsize)
@@ -890,41 +850,20 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
             goto restore_obj_regfile_unique_error;
         }
         
-        md5_process_bytes(blkinfo.blkdata, blkinfo.blkrealsize, &md5ctx);
+        if (datafile_write(datafile, blkinfo.blkdata, blkinfo.blkrealsize)!=0)
+            goto restore_obj_regfile_unique_error;
         
-        if (excluded!=true) // don't write data if file is excluded
-        {
-            errno=0;
-            if ((lres=write(fd, blkinfo.blkdata, blkinfo.blkrealsize))!=blkinfo.blkrealsize) // error
-            {
-                if ((errno==ENOSPC) || ((lres>0) && (lres < blkinfo.blkrealsize)))
-                {
-                    sysprintf("Can't write file [%s]: no space left on device\n", relpath);
-                    exar->stats.err_regfile++;
-                    dico_destroy(footerdico);
-                    close(fd);
-                    return -1; // fatal error
-                }
-                else // another error
-                {
-                    sysprintf("cannot extract %s, curblocksize=%ld\n", relpath, (long)blkinfo.blkrealsize);
-                    goto restore_obj_regfile_unique_error;
-                }
-            }
-        }
         free(blkinfo.blkdata);
     }
     
-    if (get_interrupted()==true)
-    {   errprintf("operation has been interrupted\n");
+    if (datafile_close(datafile, md5sumcalc, sizeof(md5sumcalc))!=0)
         goto restore_obj_regfile_unique_error;
-    } 
+    
+    msgprintf(MSG_DEBUG2, "--> finished loop for file=%s, size=%lld, md5sumcalc=[%s]\n", relpath, 
+        (long long)filesize, format_md5(text, sizeof(text), md5sumcalc));
     
     if (excluded!=true)
     {
-        close(fd);
-        fd=-1;
-        
         if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, d)!=0)
         {   msgprintf(MSG_STACK, "cannot restore file attributes for file [%s]\n", relpath);
             goto restore_obj_regfile_unique_error;
@@ -935,19 +874,13 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
         {   sysprintf("utimes(%s) failed\n", parentdir);
             goto restore_obj_regfile_unique_error;
         }
-        
-        // check the whole file md5 checksum
-        md5_finish_ctx(&md5ctx, md5sumcalc);
-        msgprintf(MSG_DEBUG2, "--> finished loop for file=%s, size=%lld, md5sumcalc=[%s]\n", relpath, 
-            (long long)filesize, format_md5(text, sizeof(text), md5sumcalc));
     }
     
-    // empty file have no footer (no need for a checksum)
+    // empty files have no footer (no need for a checksum)
     if (filesize>0)
     {
         if (queue_dequeue_header(&g_queue, &footerdico, magic, NULL)<=0)
         {   errprintf("queue_dequeue_header() failed: cannot read footer dico\n");
-            errors++; // not a fatal error
             goto restore_obj_regfile_unique_error;
         }
         
@@ -966,25 +899,28 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
             
             if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
             {   errprintf("cannot restore file %s, file is corrupt\n", relpath);
-                res=ftruncate(fd, 0); // don't leave corrupt data in the file
+                res=truncate(fullpath, 0); // don't leave corrupt data in the file
                 goto restore_obj_regfile_unique_error;
             }
         }
     }
     
+    if (get_interrupted()==true)
+    {   errprintf("operation has been interrupted\n");
+        goto restore_obj_regfile_unique_error;
+    } 
+    
     if (excluded!=true)
         exar->stats.cnt_regfile++;
     
-    dico_destroy(footerdico);
-    if (fd>=0) close(fd);
-    dico_destroy(d);
-    return 0; // success
+    goto restore_obj_regfile_cleanup;
     
 restore_obj_regfile_unique_error:
     exar->stats.err_regfile++;
+restore_obj_regfile_cleanup:
     dico_destroy(footerdico);
-    if (fd>=0) close(fd);
     dico_destroy(d);
+    datafile_destroy(datafile);
     return 0; // error is not fatal
 }
 
