@@ -86,6 +86,8 @@ enum {FSINFOKEY_NULL=0, FSINFOKEY_FSID, FSINFOKEY_DEST, FSINFOKEY_MKFS};
 enum {FSAERR_SUCCESS=0,           // success
       FSAERR_UNKNOWN=-1,          // uknown error (default code that means error)
       FSAERR_ENOMEM=-2,           // out of memory error
+      FSAERR_EINVAL=-3,           // invalid parameter
+      FSAERR_ENOENT=-4,           // entry not found
 };
 
 // ----------------------------- fsarchiver const ------------------------

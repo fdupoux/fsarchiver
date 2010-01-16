@@ -1,0 +1,50 @@
+/*
+ * fsarchiver: Filesystem Archiver
+ *
+ * Copyright (C) 2008-2010 Francois Dupoux.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License v2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * Homepage: http://www.fsarchiver.org
+ */
+
+#ifndef __STRDICO_H__
+#define __STRDICO_H__
+
+#include "types.h"
+
+struct s_strdico;
+struct s_strdicoitem;
+
+typedef struct s_strdico cstrdico;
+typedef struct s_strdicoitem cstrdicoitem;
+
+struct s_strdico
+{
+    cstrdicoitem *head; 
+    char *validkeys;
+};
+
+struct s_strdicoitem
+{   
+    char         *key;
+    char         *value;
+    cstrdicoitem *next;
+};
+
+cstrdico *strdico_alloc();
+int strdico_destroy(cstrdico *d);
+int strdico_set_valid_keys(cstrdico *d, char *keys);
+int strdico_parse_string(cstrdico *d, char *strdefs);
+int strdico_set_value(cstrdico *d, char *key, char *value);
+int strdico_get_value(cstrdico *d, char *outbuffer, int outbufsize, char *key);
+int strdico_print(cstrdico *d);
+
+#endif // __STRDICO_H__
