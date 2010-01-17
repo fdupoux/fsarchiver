@@ -27,14 +27,12 @@ typedef struct s_strdico cstrdico;
 typedef struct s_strdicoitem cstrdicoitem;
 
 struct s_strdico
-{
-    cstrdicoitem *head; 
+{   cstrdicoitem *head; 
     char *validkeys;
 };
 
 struct s_strdicoitem
-{   
-    char         *key;
+{   char         *key;
     char         *value;
     cstrdicoitem *next;
 };
@@ -44,7 +42,8 @@ int strdico_destroy(cstrdico *d);
 int strdico_set_valid_keys(cstrdico *d, char *keys);
 int strdico_parse_string(cstrdico *d, char *strdefs);
 int strdico_set_value(cstrdico *d, char *key, char *value);
-int strdico_get_value(cstrdico *d, char *outbuffer, int outbufsize, char *key);
+int strdico_get_string(cstrdico *d, char *outbuffer, int outbufsize, char *key);
+int strdico_get_s64(cstrdico *d, s64 *value, char *key);
 int strdico_print(cstrdico *d);
 
 #endif // __STRDICO_H__

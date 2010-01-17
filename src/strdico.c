@@ -24,7 +24,7 @@
  * strdico_set_valid_keys(d, "name,phone,fax");
  * strdico_parse_string(d, "name=john,phone=123456789,fax=");
  * strdico_parse_string(d, "phone=987654321");
- * strdico_get_value(d, mybuffer, sizeof(mybuffer), "phone");
+ * strdico_get_string(d, mybuffer, sizeof(mybuffer), "phone");
  * strdico_destroy(d);
  */
 
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <errno.h>
 
 #include "fsarchiver.h"
 #include "strdico.h"
@@ -242,7 +243,7 @@ int strdico_set_value(cstrdico *d, char *key, char *value)
     return FSAERR_SUCCESS;
 }
 
-int strdico_get_value(cstrdico *d, char *outbuffer, int outbufsize, char *key)
+int strdico_get_string(cstrdico *d, char *outbuffer, int outbufsize, char *key)
 {
     cstrdicoitem *item=NULL;
     
@@ -266,6 +267,36 @@ int strdico_get_value(cstrdico *d, char *outbuffer, int outbufsize, char *key)
     return FSAERR_ENOENT;
 }
 
+int strdico_get_s64(cstrdico *d, s64 *value, char *key)
+{
+    char buffer[1024];
+    char *endptr=NULL;
+    int res;
+    
+    assert(d);
+    assert(value);
+    assert(key);
+    
+    *value=-1;
+    
+    if ((res=strdico_get_string(d, buffer, sizeof(buffer), key)) != 0)
+        return res;
+    
+    if (strlen(buffer)<=0)
+    {   errprintf("key \"%s\" has an empty value. expected a valid number\n", key);
+        return FSAERR_EINVAL;
+    }
+    
+    errno=0;
+    *value=strtoll(buffer, &endptr, 10);
+    if ((errno!=0) || (*endptr!=0))
+    {   errprintf("key \"%s\" does not contain a valid number: \"%s\"\n", key, buffer);
+        return FSAERR_EINVAL;
+    }
+    
+    return FSAERR_SUCCESS;
+}
+
 int strdico_print(cstrdico *d)
 {
     cstrdicoitem *item=NULL;
@@ -276,5 +307,5 @@ int strdico_print(cstrdico *d)
     for (item=d->head; item!=NULL; item=item->next)
         printf("item[%d]: key=[%s] value=[%s]\n", pos++, item->key, item->value);
     
-    return FSAERR_ENOENT;
+    return FSAERR_SUCCESS;
 }

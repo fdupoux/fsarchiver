@@ -80,8 +80,6 @@ enum {FSYSHEADKEY_NULL=0, FSYSHEADKEY_FILESYSTEM, FSYSHEADKEY_MNTPATH, FSYSHEADK
       FSYSHEADKEY_FSEXTFSCKMAXMNTCOUNT, FSYSHEADKEY_FSEXTFSCKCHECKINTERVAL, 
       FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE};
 
-enum {FSINFOKEY_NULL=0, FSINFOKEY_FSID, FSINFOKEY_DEST, FSINFOKEY_MKFS};
-
 // -------------------------------- fsarchiver errors ---------------------------------------------
 enum {FSAERR_SUCCESS=0,           // success
       FSAERR_UNKNOWN=-1,          // uknown error (default code that means error)

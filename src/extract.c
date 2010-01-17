@@ -28,6 +28,7 @@
 #include <sys/time.h>
 
 #include "fsarchiver.h"
+#include "strdico.h"
 #include "dico.h"
 #include "common.h"
 #include "options.h"
@@ -102,109 +103,60 @@ int is_filedir_excluded(char *relpath)
     return false; // no exclusion found for that file
 }
 
-// convert a string such as "id=0,dest=/dev/sda1,fs=reiserfs" to a dico
-int convert_string_to_dico(cdico **d, int *retfsid, char *argv)
+// convert an array of strings "id=x,dest=/dev/xxx,..." to an array of strdico
+int convert_argv_to_strdicos(cstrdico *dicoargv[], char *cmdargv[])
 {
-    char name[128];
-    char value[128];
-    char *saveptr;
-    char *result;
-    char delims[]=",\t\n";
+    cstrdico *tmpdico=NULL;
+    char buffer[1024];
     struct stat64 st;
-    int i, pos;
-    
-    // init 
-    *retfsid=-1;
-    
-    // init
-    if ((*d=dico_alloc())==NULL)
-    {   errprintf("dico_alloc() failed\n");
-        return -1;
-    }
-    
-    result=strtok_r(argv, delims, &saveptr);
-    while (result!=NULL)
-    {
-        memset(name, 0, sizeof(name));
-        memset(value, 0, sizeof(value));
-        
-        for (i=0; (result[i]!=0) && (result[i]!='=') && (i<sizeof(name)); i++)
-        {
-            name[i]=result[i];
-        }
-        if (result[i++]!='=')
-        {   errprintf("Incorrect syntax in the \"restfs\" command. Cannot find symbol '=' in [%s]. "
-                "expected something like [name1=val1,name2=val2]\n", result);
-            return -1;
-        }
-        for (pos=0; (result[i]!=0) && (pos<sizeof(value)); pos++)
-        {
-            value[pos]=result[i++];
-        }
-        
-        if (strcmp(name, "id")==0)
-        {
-            *retfsid=atoi(value);
-            if (*retfsid<0 || *retfsid>FSA_MAX_FSPERARCH-1)
-            {   errprintf("the filesystem id must be an integer between 0 and %d\n", FSA_MAX_FSPERARCH-1);
-                return -1;
-            }
-            dico_add_u64(*d, 0, FSINFOKEY_FSID, *retfsid);
-        }
-        else if (strcmp(name, "dest")==0)
-        {
-            if ((stat64(value, &st)!=0) || (!S_ISBLK(st.st_mode)))
-            {   errprintf("%s is not a valid block device\n", value);
-                return -1;
-            }
-            dico_add_string(*d, 0, FSINFOKEY_DEST, value);
-        }
-        else if (strcmp(name, "mkfs")==0)
-        {
-            dico_add_string(*d, 0, FSINFOKEY_MKFS, value);
-        }
-        else
-        {   errprintf("invalid key: [%s], expected 'id' or 'dest' or 'mkfs'\n", name);
-            return -1;
-        }
-        result=strtok_r(NULL, delims, &saveptr);
-    }
-    
-    return 0;
-}
-
-// convert an array of strings to an array of dicos
-int convert_argv_to_dicos(cdico *dicoargv[], char *cmdargv[])
-{
-    cdico *tmpdico=NULL;
+    s64 temp64;
     int fsid;
     int i;
-
-    // init
-    for (i=0; i < FSA_MAX_FSPERARCH; i++)
-        dicoargv[i]=NULL;
     
-    for (i=0; (i < FSA_MAX_FSPERARCH) && (cmdargv[i]); i++)
+    for (i=0; (i < FSA_MAX_FSPERARCH) && (cmdargv[i]!=NULL); i++)
     {
-        if (convert_string_to_dico(&tmpdico, &fsid, cmdargv[i])!=0)
-        {   msgprintf(MSG_STACK, "convert_string_to_dico(%s) failed\n", cmdargv[i]);
+        if ((tmpdico=strdico_alloc())==NULL)
+            return -1;
+        
+        // parse argument and write (key,value) pairs in the strdico object
+        if ((strdico_set_valid_keys(tmpdico, "id,dest,mkfs")!=0) ||
+            (strdico_parse_string(tmpdico, cmdargv[i])!=0))
+        {   strdico_destroy(tmpdico);
             return -1;
         }
-        else if ((fsid>=0) && (fsid < FSA_MAX_FSPERARCH)) // success
-        {
-            if (dicoargv[fsid]!=NULL)
-            {   errprintf("you mentioned filesystem with id=%d multiple times, cannot continue\n", fsid);
-                return -1;
-            }
-            else // ok
-            {   
-                dicoargv[fsid]=tmpdico;
-            }
-        }
-        else
-        {   errprintf("you must specify which filesystem to extract with 'id=x'\n");
+        
+        // read and check "id=" key in the argument
+        if (strdico_get_s64(tmpdico, &temp64, "id")!=0)
+        {   errprintf("cannot find \"id=\" key in \"%s\"\n", cmdargv[i]);
+            strdico_destroy(tmpdico);
             return -1;
         }
+        fsid=temp64;
+        if (fsid<0 || fsid>FSA_MAX_FSPERARCH-1)
+        {   errprintf("the filesystem id must be an integer between 0 and %d\n", FSA_MAX_FSPERARCH-1);
+            strdico_destroy(tmpdico);
+            return -1;
+        }
+        
+        // read and check "dest=" key in the argument
+        if (strdico_get_string(tmpdico, buffer, sizeof(buffer), "dest")!=0)
+        {   errprintf("cannot find \"dest=\" key in \"%s\"\n", cmdargv[i]);
+            strdico_destroy(tmpdico);
+            return -1;
+        }
+        if ((stat64(buffer, &st)!=0) || (!S_ISBLK(st.st_mode)))
+        {   errprintf("\"%s\" is not a valid block device\n", buffer);
+            strdico_destroy(tmpdico);
+            return -1;
+        }
+        
+        // add the current argument to the list of the strdico objects
+        if (dicoargv[fsid]!=NULL)
+        {   errprintf("you mentioned filesystem with id=%d multiple times, cannot continue\n", fsid);
+            strdico_destroy(tmpdico);
+            return -1;
+        }
+        dicoargv[fsid]=tmpdico;
     }
     
     return 0;
@@ -1195,15 +1147,15 @@ int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
     return 0;
 }
 
-int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cdico *dicocmdline)
+int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dicocmdline)
 {
     char filesystem[FSA_MAX_FSNAMELEN];
     char text[FSA_MAX_FSNAMELEN];
     char fsbuf[FSA_MAX_FSNAMELEN];
     char magic[FSA_SIZEOF_MAGIC+1];
-    char partition[1024];
-    char destfs[FSA_MAX_FSNAMELEN];
     char mountinfo[4096];
+    char partition[1024];
+    char tempbuf[1024];
     cdico *dicobegin=NULL;
     cdico *dicoend=NULL;
     char mntbuf[PATH_MAX];
@@ -1220,16 +1172,13 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cdico *dicocmd
     
     // init
     memset(magic, 0, sizeof(magic));
-    memset(destfs, 0, sizeof(destfs));
     memset(partition, 0, sizeof(partition));
     
     // read destination partition from dicocmdline
-    if ((dico_get_string(dicocmdline, 0, FSINFOKEY_DEST, partition, sizeof(partition)))<0)
-    {   errprintf("dico_get_string(FSINFOKEY_DEST) failed\n");
+    if (strdico_get_string(dicocmdline, partition, sizeof(partition), "dest")!=0)
+    {   errprintf("strdico_get_string(dicocmdline, 'dest') failed\n");
         return -1;
     }
-    // read filesystem to create partition from dicocmdline (optional, may not exist: do not fail)
-    dico_get_string(dicocmdline, 0, FSINFOKEY_MKFS, destfs, sizeof(destfs));
     
     // check that the minimum fsarchiver version required is ok
     if (dico_get_u64(dicofs, 0, FSYSHEADKEY_MINFSAVERSION, &minver)!=0)
@@ -1266,15 +1215,16 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cdico *dicocmd
         return -1;
     }
     
-    if (destfs[0]) // if a filesystem to use was specified: overwrite the default one
+    // if a filesystem to use was specified: overwrite the default one
+    if (strdico_get_string(dicocmdline, tempbuf, sizeof(tempbuf), "mkfs")==0)
     {
-        snprintf(filesystem, sizeof(filesystem), "%s", destfs);
+        snprintf(filesystem, sizeof(filesystem), "%s", tempbuf);
     }
     else if ((dico_get_string(dicofs, 0, FSYSHEADKEY_FILESYSTEM, filesystem, sizeof(filesystem)))<0)
     {   errprintf("dico_get_string(FSYSHEADKEY_FILESYSTEM) failed\n");
         return -1;
     }
-    
+       
     if (dico_get_u64(dicofs, 0, FSYSHEADKEY_BYTESTOTAL, &fsbytestotal)!=0)
     {   errprintf("dico_get_string(FSYSHEADKEY_BYTESTOTAL) failed\n");
         return -1;
@@ -1352,7 +1302,7 @@ filesystem_extract_umount:
 int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
 {
     cdico *dicofsinfo[FSA_MAX_FSPERARCH];
-    cdico *dicoargv[FSA_MAX_FSPERARCH];
+    cstrdico *dicoargv[FSA_MAX_FSPERARCH];
     pthread_t thread_decomp[FSA_MAX_COMPJOBS];
     char magic[FSA_SIZEOF_MAGIC+1];
     cdico *dicomainhead=NULL;
@@ -1391,7 +1341,7 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     {
         case OPER_RESTFS:
             // convert the arguments from the command line to dico
-            if (convert_argv_to_dicos(dicoargv, cmdargv)!=0)
+            if (convert_argv_to_strdicos(dicoargv, cmdargv)!=0)
             {   msgprintf(MSG_STACK, "convert_argv_to_dico() failed\n");
                 goto do_extract_error;
             }
@@ -1583,7 +1533,7 @@ do_extract_success:
     
     for (i=0; i<FSA_MAX_FSPERARCH; i++)
         if (dicoargv[i]!=NULL)
-            dico_destroy(dicoargv[i]);
+            strdico_destroy(dicoargv[i]);
     
     for (i=0; i<FSA_MAX_FSPERARCH; i++)
     {
