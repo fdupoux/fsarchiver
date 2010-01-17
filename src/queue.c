@@ -34,20 +34,6 @@
 #include "syncthread.h"
 #include "error.h"
 
-#define printwait()                                                                \
-{                                                                       \
-    msgprintf(MSG_DEBUG4, "WAIT: %s() and qlen=%ld\n", __FUNCTION__, (long)q->itemcount);                            \
-}
-
-#define fct_in()                                                                \
-{                                                                       \
-    msgprintf(MSG_DEBUG5, "[thr=%.2ld] FCT_IN: %s() and qlen=%ld\n", (long)(pthread_self()%100), __FUNCTION__, (long)q->itemcount);        \
-}
-#define fct_out()                                                                \
-{                                                                       \
-    msgprintf(MSG_DEBUG5, "[thr=%.2ld] FCT_OUT: %s() and qlen=%ld\n", (long)(pthread_self()%100), __FUNCTION__, (long)q->itemcount);    \
-}
-
 char *qerr(s64 err)
 {
     switch (err)
@@ -140,12 +126,10 @@ s64 queue_set_end_of_queue(cqueue *q, bool state)
         return QERR_INVAL;
     }
 
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     q->endofqueue=state;
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
-    fct_out();
     return QERR_SUCCESS;
 }
 
@@ -157,11 +141,9 @@ bool queue_get_end_of_queue(cqueue *q)
         return QERR_INVAL;
     }
 
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     res=((q->itemcount<1) && (q->endofqueue==true));
     assert(pthread_mutex_unlock(&q->mutex)==0);
-    fct_out();
     return res;
 }
 
@@ -173,9 +155,7 @@ bool queuelocked_get_end_of_queue(cqueue *q)
         return QERR_INVAL;
     }
 
-    fct_in();
     res=((q->itemcount<1) && (q->endofqueue==true));
-    fct_out();
     return res;
 }
 
@@ -189,11 +169,9 @@ s64 queue_count(cqueue *q)
         return QERR_INVAL;
     }
 
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     itemcount = q->itemcount;
     assert(pthread_mutex_unlock(&q->mutex)==0);
-    fct_out();
     
     return itemcount;
 }
@@ -209,7 +187,6 @@ s64 queue_count_status(cqueue *q, int status)
         return QERR_INVAL;
     }
 
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     for (cur=q->head; cur!=NULL; cur=cur->next)
@@ -219,7 +196,6 @@ s64 queue_count_status(cqueue *q, int status)
     }
     
     assert(pthread_mutex_unlock(&q->mutex)==0);
-    fct_out();
     
     return count;
 }
@@ -246,13 +222,11 @@ s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
     item->blkinfo=*blkinfo;
     item->next=NULL;
     
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     // does not make sense to add item on a queue where endofqueue is true
     if (q->endofqueue==true)
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        fct_out();
         return QERR_ENDOFQUEUE;
     }
     
@@ -261,7 +235,6 @@ s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
     {
         struct timespec t=get_timeout();
         pthread_cond_timedwait(&q->cond, &q->mutex, &t);
-        printwait();
     }
     
     if (q->head==NULL) // if list empty: item is head
@@ -279,7 +252,6 @@ s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
     
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
-    fct_out();
     
     return QERR_SUCCESS;
 }
@@ -323,13 +295,11 @@ s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
     item->status=QITEM_STATUS_DONE;
     item->next=NULL;
     
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     // does not make sense to add item on a queue where endofqueue is true
     if (q->endofqueue==true)
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        fct_out();
         return QERR_ENDOFQUEUE;
     }
     
@@ -338,7 +308,6 @@ s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
     {
         struct timespec t=get_timeout();
         pthread_cond_timedwait(&q->cond, &q->mutex, &t);
-        printwait();
     }
     
     item->itemnum=q->curitemnum++;
@@ -354,7 +323,6 @@ s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
     q->itemcount++;
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
-    fct_out();
     
     return QERR_SUCCESS;
 }
@@ -369,13 +337,11 @@ s64 queue_replace_block(cqueue *q, s64 itemnum, cblockinfo *blkinfo, int newstat
         return QERR_INVAL;
     }
     
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     if (q->head==NULL)
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
         msgprintf(MSG_DEBUG1, "q->head is NULL: list is empty\n");
-        fct_out();
         return QERR_NOTFOUND; // item not found
     }
     
@@ -387,13 +353,11 @@ s64 queue_replace_block(cqueue *q, s64 itemnum, cblockinfo *blkinfo, int newstat
             cur->blkinfo=*blkinfo;
             assert(pthread_mutex_unlock(&q->mutex)==0);
             pthread_cond_broadcast(&q->cond);
-            fct_out();
             return QERR_SUCCESS;
         }
     }
     
     assert(pthread_mutex_unlock(&q->mutex)==0);
-    fct_out();
     return QERR_NOTFOUND; // not found
 }
 
@@ -433,8 +397,6 @@ s64 queue_get_first_block_todo(cqueue *q, cblockinfo *blkinfo)
         return QERR_INVAL;
     }
     
-    fct_in();
-    
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     while (queuelocked_get_end_of_queue(q)==false)
@@ -448,7 +410,6 @@ s64 queue_get_first_block_todo(cqueue *q, cblockinfo *blkinfo)
                 itemfound=cur->itemnum;
                 assert(pthread_mutex_unlock(&q->mutex)==0);
                 pthread_cond_broadcast(&q->cond);
-                fct_out();
                 return itemfound; // ">0" means item found
             }
         }
@@ -456,16 +417,13 @@ s64 queue_get_first_block_todo(cqueue *q, cblockinfo *blkinfo)
         struct timespec t=get_timeout();
         if ((res=pthread_cond_timedwait(&q->cond, &q->mutex, &t))!=0 && res!=ETIMEDOUT)
         {   assert(pthread_mutex_unlock(&q->mutex)==0);
-            fct_out();
             return QERR_FAIL;
         }
         
-        printwait();
     }
     
     // if it failed at the other end of the queue
     assert(pthread_mutex_unlock(&q->mutex)==0);
-    fct_out();
     
     if (queuelocked_get_end_of_queue(q))
         return QERR_ENDOFQUEUE;
@@ -486,7 +444,6 @@ s64 queue_dequeue_first(cqueue *q, int *type, cheadinfo *headinfo, cblockinfo *b
         return QERR_INVAL;
     }
     
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     while (queuelocked_get_end_of_queue(q)==false)
@@ -504,7 +461,6 @@ s64 queue_dequeue_first(cqueue *q, int *type, cheadinfo *headinfo, cblockinfo *b
                 q->itemcount--;
                 assert(pthread_mutex_unlock(&q->mutex)==0);
                 pthread_cond_broadcast(&q->cond);
-                fct_out();
                 return itemfound; // ">0" means item found
             }
             else if (cur->type==QITEM_TYPE_HEADER) // item to dequeue is a dico
@@ -517,27 +473,23 @@ s64 queue_dequeue_first(cqueue *q, int *type, cheadinfo *headinfo, cblockinfo *b
                 q->itemcount--;
                 assert(pthread_mutex_unlock(&q->mutex)==0);
                 pthread_cond_broadcast(&q->cond);
-                fct_out();
                 return itemfound; // ">0" means item found
             }
             else
             {
                 errprintf("invalid item type in queue\n");
                 assert(pthread_mutex_unlock(&q->mutex)==0);
-                fct_out();
                 return QERR_INVAL;
             }
         }
         
         struct timespec t=get_timeout();
         pthread_cond_timedwait(&q->cond, &q->mutex, &t);
-        printwait();
     }
     
     // if it failed at the other end of the queue
     ret=(queuelocked_get_end_of_queue(q)==true)?QERR_ENDOFQUEUE:QERR_FAIL;
     assert(pthread_mutex_unlock(&q->mutex)==0);
-    fct_out();
     
     return ret;
 }
@@ -553,7 +505,6 @@ s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
         return QERR_INVAL;
     }
     
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     // while ((first-item-of-the-queue-is-not-ready) && (not-at-the-end-of-the-queue))
@@ -561,13 +512,11 @@ s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
     {
         struct timespec t=get_timeout();
         pthread_cond_timedwait(&q->cond, &q->mutex, &t);
-        printwait();
     }
     
     // if it failed at the other end of the queue
     if (queuelocked_get_end_of_queue(q))
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        fct_out();
         return QERR_ENDOFQUEUE;
     }
     
@@ -585,7 +534,6 @@ s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
         q->itemcount--;
         assert(pthread_mutex_unlock(&q->mutex)==0);
         pthread_cond_broadcast(&q->cond);
-        fct_out();
         return itemnum;
     }
     else
@@ -593,7 +541,6 @@ s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
         errprintf("dequeue - wrong type of data in the queue: wanted a block, found an header\n");
         assert(pthread_mutex_unlock(&q->mutex)==0);
         pthread_cond_broadcast(&q->cond);
-        fct_out();
         return QERR_WRONGTYPE;  // ok but not found
     }
 }
@@ -630,7 +577,6 @@ s64 queue_dequeue_header_internal(cqueue *q, cheadinfo *headinfo)
         return QERR_INVAL;
     }
     
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     // while ((first-item-of-the-queue-is-not-ready) && (not-at-the-end-of-the-queue))
@@ -638,13 +584,11 @@ s64 queue_dequeue_header_internal(cqueue *q, cheadinfo *headinfo)
     {
         struct timespec t=get_timeout();
         pthread_cond_timedwait(&q->cond, &q->mutex, &t);
-        printwait();
     }
     
     // if it failed at the other end of the queue
     if (queuelocked_get_end_of_queue(q))
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        fct_out();
         return QERR_ENDOFQUEUE;
     }
     
@@ -662,19 +606,16 @@ s64 queue_dequeue_header_internal(cqueue *q, cheadinfo *headinfo)
             q->itemcount--;
             assert(pthread_mutex_unlock(&q->mutex)==0);
             pthread_cond_broadcast(&q->cond);
-            fct_out();
             return itemnum;
         case QITEM_TYPE_BLOCK:
             errprintf("dequeue - wrong type of data in the queue: expected a dico and found a block\n");
             assert(pthread_mutex_unlock(&q->mutex)==0);
             pthread_cond_broadcast(&q->cond);
-            fct_out();
             return QERR_WRONGTYPE;  // ok but not found
         default: // should never happen
             errprintf("dequeue - wrong type of data in the queue: expected a dico and found an unknown item\n");
             assert(pthread_mutex_unlock(&q->mutex)==0);
             pthread_cond_broadcast(&q->cond);
-            fct_out();
             return QERR_WRONGTYPE;  // ok but not found
     }
 }
@@ -712,7 +653,6 @@ s64 queue_check_next_item(cqueue *q, int *type, char *magic)
     memset(magic, 0, FSA_SIZEOF_MAGIC);
     *type=0;
     
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     // while ((first-item-of-the-queue-is-not-ready) && (not-at-the-end-of-the-queue))
@@ -720,13 +660,11 @@ s64 queue_check_next_item(cqueue *q, int *type, char *magic)
     {
         struct timespec t=get_timeout();
         pthread_cond_timedwait(&q->cond, &q->mutex, &t);
-        printwait();
     }
     
     // if it failed at the other end of the queue
     if (queuelocked_get_end_of_queue(q))
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        fct_out();
         return QERR_ENDOFQUEUE;
     }
     
@@ -738,7 +676,6 @@ s64 queue_check_next_item(cqueue *q, int *type, char *magic)
             *type=cur->type;
             memset(magic, 0, FSA_SIZEOF_MAGIC);
             assert(pthread_mutex_unlock(&q->mutex)==0);
-            fct_out();
             return QERR_SUCCESS;
         }
         else if (cur->type==QITEM_TYPE_HEADER) // item to dequeue is a dico
@@ -746,21 +683,18 @@ s64 queue_check_next_item(cqueue *q, int *type, char *magic)
             memcpy(magic, cur->headinfo.magic, FSA_SIZEOF_MAGIC); // header contents
             *type=cur->type;
             assert(pthread_mutex_unlock(&q->mutex)==0);
-            fct_out();
             return QERR_SUCCESS;
         }
         else
         {
             errprintf("invalid item type in queue: type=%d\n", cur->type);
             assert(pthread_mutex_unlock(&q->mutex)==0);
-            fct_out();
             return QERR_INVAL;
         }
     }
     
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
-    fct_out();
     
     return QERR_NOTFOUND;  // not found
 }
@@ -775,20 +709,17 @@ s64 queue_destroy_first_item(cqueue *q)
         return QERR_INVAL;
     }
     
-    fct_in();
     assert(pthread_mutex_lock(&q->mutex)==0);
     
     // while ((first-item-of-the-queue-is-not-ready or first-item-is-being-processed-by-comp-thread) && (not-at-the-end-of-the-queue))
     while ( (((cur=q->head)==NULL) || (cur->status==QITEM_STATUS_PROGRESS)) && (queuelocked_get_end_of_queue(q)==false) )
     {   struct timespec t=get_timeout();
         pthread_cond_timedwait(&q->cond, &q->mutex, &t);
-        printwait();
     }
     
     // if it failed at the other end of the queue
     if (queuelocked_get_end_of_queue(q))
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        fct_out();
         return QERR_ENDOFQUEUE;
     }
     
@@ -811,6 +742,5 @@ s64 queue_destroy_first_item(cqueue *q)
     q->itemcount--;
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
-    fct_out();
     return QERR_SUCCESS;
 }
