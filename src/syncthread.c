@@ -19,25 +19,7 @@
 #  include "config.h"
 #endif
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <strings.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <sys/time.h>
-#include <time.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <endian.h>
-#include <byteswap.h>
 #include <signal.h>
-#include <linux/limits.h>
 
 #include "fsarchiver.h"
 #include "fsarchiver.h"
