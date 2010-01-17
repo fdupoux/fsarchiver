@@ -19,10 +19,12 @@
 #define __OPTIONS_H__
 
 #include "strlist.h"
-#include "crypto.h"
+
+struct s_options;
+typedef struct s_options coptions;
 
 // struct that stores the options passed on the command line
-typedef struct s_options
+struct s_options
 {   bool     overwrite;
     bool     allowsaverw;
     bool     dontcheckmountopts;
@@ -39,7 +41,7 @@ typedef struct s_options
 	char     archlabel[FSA_MAX_LABELLEN];
     u8       encryptpass[FSA_MAX_PASSLEN+1];
     cstrlist exclude;
-} coptions;
+};
 
 extern coptions g_options;
 

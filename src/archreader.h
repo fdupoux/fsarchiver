@@ -20,13 +20,14 @@
 
 #include <limits.h>
 
-#include "fsarchiver.h"
-#include "dico.h"
-
 struct s_blockinfo;
 struct s_headinfo;
+struct s_dico;
 
-typedef struct s_archreader
+struct s_archreader;
+typedef struct s_archreader carchreader;
+
+struct s_archreader
 {   int    archfd; // file descriptor of the current volume (set to -1 when closed)
     u32    archid; // 32bit archive id for checking (random number generated at creation)
     u64    fscount; // how many filesystems in archive (valid only if archtype=filesystems)
@@ -43,7 +44,7 @@ typedef struct s_archreader
     char   label[FSA_MAX_LABELLEN]; // archive label defined by the user
     char   basepath[PATH_MAX]; // path of the first volume of an archive
     char   volpath[PATH_MAX]; // path of the current volume of an archive
-} carchreader;
+};
 
 int archreader_init(carchreader *ai);
 int archreader_destroy(carchreader *ai);
@@ -52,9 +53,9 @@ int archreader_close(carchreader *ai);
 int archreader_incvolume(carchreader *ai, bool waitkeypress);
 int archreader_volpath(carchreader *ai);
 int archreader_read_data(carchreader *ai, void *data, u64 size);
-int archreader_read_dico(carchreader *ai, cdico *d);
+int archreader_read_dico(carchreader *ai, struct s_dico *d);
 int archreader_read_volheader(carchreader *ai);
-int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowseek, u16 *fsid);
-int archreader_read_block(carchreader *ai, cdico *in_blkdico, int in_skipblock, int *out_sumok, struct s_blockinfo *out_blkinfo);
+int archreader_read_header(carchreader *ai, char *magic, struct s_dico **d, bool allowseek, u16 *fsid);
+int archreader_read_block(carchreader *ai, struct s_dico *in_blkdico, int in_skipblock, int *out_sumok, struct s_blockinfo *out_blkinfo);
 
 #endif // __ARCHREADER_H__

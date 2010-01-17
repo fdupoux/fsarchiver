@@ -33,7 +33,7 @@
 cdico *dico_alloc()
 {
     cdico *d;
-    if ((d=malloc(sizeof(struct s_dico)))==NULL)
+    if ((d=malloc(sizeof(cdico)))==NULL)
         return NULL;
     d->head=NULL;
     return d;
@@ -41,7 +41,7 @@ cdico *dico_alloc()
 
 int dico_destroy(cdico *d)
 {
-    struct s_dicoitem *item, *next;
+    cdicoitem *item, *next;
     
     if (d==NULL)
         return -1;
@@ -69,17 +69,17 @@ int dico_add_data(cdico *d, u8 section, u16 key, const void *data, u16 size)
 // add an item to the dico, fails if an item with that (section,key) already exists
 int dico_add_generic(cdico *d, u8 section, u16 key, const void *data, u16 size, u8 type)
 {
-    struct s_dicoitem *item, *lnew, *last;
+    cdicoitem *item, *lnew, *last;
     
     assert (d);
     
     // allocate object
-    lnew=malloc(sizeof(struct s_dicoitem));
+    lnew=malloc(sizeof(cdicoitem));
     if (!lnew)
-    {   errprintf("malloc(%ld) failed: out of memory\n", (long)sizeof(struct s_dicoitem));
+    {   errprintf("malloc(%ld) failed: out of memory\n", (long)sizeof(cdicoitem));
         return -3;
     }
-    memset(lnew, 0, sizeof(struct s_dicoitem));
+    memset(lnew, 0, sizeof(cdicoitem));
     
     // go to the end of the item and check for duplicates
     if (d->head==NULL) // item is empty
@@ -128,7 +128,7 @@ int dico_get_data(cdico *d, u8 section, u16 key, void *data, u16 maxsize, u16 *s
 
 int dico_get_generic(cdico *d, u8 section, u16 key, void *data, u16 maxsize, u16 *size)
 {
-    struct s_dicoitem *item;
+    cdicoitem *item;
     
     assert(d);
     assert(data);
@@ -169,7 +169,7 @@ int dico_get_generic(cdico *d, u8 section, u16 key, void *data, u16 maxsize, u16
 
 int dico_count_one_section(cdico *d, u8 section)
 {
-    struct s_dicoitem *item;
+    cdicoitem *item;
     int count;
     
     assert(d);
@@ -184,7 +184,7 @@ int dico_count_one_section(cdico *d, u8 section)
 
 int dico_count_all_sections(cdico *d)
 {
-    struct s_dicoitem *item;
+    cdicoitem *item;
     int count;
     
     assert(d);
@@ -289,7 +289,7 @@ int dico_show(cdico *d, u8 section, char *debugtxt)
 {
     char buffer[2048];
     char text[2048];
-    struct s_dicoitem *item;
+    cdicoitem *item;
     
     assert(d);
     msgprintf(MSG_FORCE, "\n-----------------debug-dico-begin(%s)---------------\n", debugtxt);

@@ -18,8 +18,7 @@
 #ifndef __REGMULTI_H__
 #define __REGMULTI_H__
 
-#include "dico.h"
-
+struct s_dico;
 struct s_queue;
 
 struct s_regmulti;
@@ -28,26 +27,26 @@ typedef struct s_regmulti cregmulti;
 struct s_regmulti
 {
     // common
-    u32    count; // how many small files are in this struct
-    u32    maxitems; // how many small files that struct can contains
-    u32    maxblksize; // maximum size of a data block
+    u32            count; // how many small files are in this struct
+    u32            maxitems; // how many small files that struct can contains
+    u32            maxblksize; // maximum size of a data block
     
     // linked list of headers
-    cdico  *objhead[FSA_MAX_SMALLFILECOUNT]; // worst case: each file is just one byte: this is how many files we can store in the block
+    struct s_dico  *objhead[FSA_MAX_SMALLFILECOUNT]; // worst case: each file is just one byte: this is how many files we can store in the block
     
     // common block to be compressed
-    char   data[FSA_MAX_BLKSIZE];
-    u32    usedsize; // how many bytes are used in data
+    char           data[FSA_MAX_BLKSIZE];
+    u32            usedsize; // how many bytes are used in data
 };
 
 int  regmulti_empty(cregmulti *m);
 int  regmulti_init(cregmulti *m, u32 maxblksize);
-int  regmulti_count(cregmulti *m, cdico *header, char *data, u32 datsize);
+int  regmulti_count(cregmulti *m, struct s_dico *header, char *data, u32 datsize);
 bool regmulti_save_enough_space_for_new_file(cregmulti *m, u32 filesize);
-int  regmulti_save_addfile(cregmulti *m, cdico *header, char *data, u32 datsize);
+int  regmulti_save_addfile(cregmulti *m, struct s_dico *header, char *data, u32 datsize);
 int  regmulti_save_enqueue(cregmulti *m, struct s_queue *q, int fsid);
-int  regmulti_rest_addheader(cregmulti *m, cdico *header);
+int  regmulti_rest_addheader(cregmulti *m, struct s_dico *header);
 int  regmulti_rest_setdatablock(cregmulti *m, char *data, u32 datsize);
-int  regmulti_rest_getfile(cregmulti *m, int index, cdico **filehead, char *data, u64 *datsize, u32 bufsize);
+int  regmulti_rest_getfile(cregmulti *m, int index, struct s_dico **filehead, char *data, u64 *datsize, u32 bufsize);
 
 #endif // __REGMULTI_H__

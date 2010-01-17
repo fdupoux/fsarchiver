@@ -15,9 +15,6 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-#include "types.h"
-
 #ifndef __COMPRESS_LZO_H__
 #define __COMPRESS_LZO_H__
 

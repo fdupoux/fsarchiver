@@ -30,7 +30,7 @@
 cdichl *dichl_alloc()
 {
     cdichl *d;
-    if ((d=malloc(sizeof(struct s_dichl)))==NULL)
+    if ((d=malloc(sizeof(cdichl)))==NULL)
         return NULL;
     d->head=NULL;
     return d;
@@ -38,7 +38,7 @@ cdichl *dichl_alloc()
 
 int dichl_destroy(cdichl *d)
 {
-    struct s_dichlitem *item, *next;
+    cdichlitem *item, *next;
     
     if (d==NULL)
         return -1;
@@ -59,7 +59,7 @@ int dichl_destroy(cdichl *d)
 
 int dichl_add(cdichl *d, u64 key1, u64 key2, char *str)
 {
-    struct s_dichlitem *item, *lnew, *last;
+    cdichlitem *item, *lnew, *last;
     int len;
     
     if (d==NULL || !str)
@@ -69,12 +69,12 @@ int dichl_add(cdichl *d, u64 key1, u64 key2, char *str)
     len=strlen(str);
     
     // allocate object
-    lnew=malloc(sizeof(struct s_dichlitem));
+    lnew=malloc(sizeof(cdichlitem));
     if (!lnew)
-    {   errprintf("malloc(%ld) failed: out of memory\n", (long)sizeof(struct s_dichlitem));
+    {   errprintf("malloc(%ld) failed: out of memory\n", (long)sizeof(cdichlitem));
         return -1;
     }
-    memset(lnew, 0, sizeof(sizeof(struct s_dichlitem)));
+    memset(lnew, 0, sizeof(cdichlitem));
     lnew->str=malloc(len+1);
     if (!lnew->str)
     {   
@@ -111,7 +111,7 @@ int dichl_add(cdichl *d, u64 key1, u64 key2, char *str)
 
 int dichl_get(cdichl *d, u64 key1, u64 key2, char *buf, int bufsize)
 {
-    struct s_dichlitem *item;
+    cdichlitem *item;
     int len;
     
     if (d==NULL || !buf)

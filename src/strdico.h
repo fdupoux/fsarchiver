@@ -18,8 +18,6 @@
 #ifndef __STRDICO_H__
 #define __STRDICO_H__
 
-#include "types.h"
-
 struct s_strdico;
 struct s_strdicoitem;
 

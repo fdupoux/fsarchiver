@@ -18,8 +18,6 @@
 #ifndef __COMPRESS_BZIP2_H__
 #define __COMPRESS_BZIP2_H__
 
-#include "types.h"
-
 int compress_block_bzip2(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level);
 int uncompress_block_bzip2(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsize, u8 *compbuf);
 

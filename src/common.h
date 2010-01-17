@@ -20,10 +20,8 @@
 
 #include <stdio.h>
 
-#include "types.h"
-#include "strlist.h"
-
 struct timeval;
+struct s_strlist;
 
 int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, int stdoutsize, char *stderrbuf, int stderrsize, char *format, ...);
 int get_parent_dir_time_attrib(char *filepath, char *parentdirbuf, int bufsize, struct timeval *tv);
@@ -50,7 +48,7 @@ char *strlcatf(char *dest, int destbufsize, char *format, ...) __attribute__ ((f
 int format_stacktrace(char *buffer, int bufsize);
 int stats_show(cstats stats, int fsid);
 u64 stats_errcount(cstats stats);
-int exclude_check(cstrlist *patlist, char *string);
+int exclude_check(struct s_strlist *patlist, char *string);
 int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol);
 
 #endif // __COMMON_H__

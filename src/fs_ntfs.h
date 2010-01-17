@@ -18,8 +18,8 @@
 #ifndef __FS_NTFS_H__
 #define __FS_NTFS_H__
 
-#include "dico.h"
-#include "strlist.h"
+struct s_dico;
+struct s_strlist;
 
 #define NTFS3G_VERSION(year, month, day)    ((u64)((((u64)year&0xFFFF)<<48)+(((u64)month&0xFFFF)<<32)+(((u64)day&0xFFFF)<<16)))
 #define NTFS3G_MINVER_Y                     2009
@@ -33,10 +33,10 @@ struct s_ntfsinfo
     u64 uuid;
 };
 
-int ntfs_mkfs(cdico *d, char *partition);
-int ntfs_getinfo(cdico *d, char *devname);
+int ntfs_mkfs(struct s_dico *d, char *partition);
+int ntfs_getinfo(struct s_dico *d, char *devname);
 int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
-int ntfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt);
+int ntfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
 int ntfs_replace_uuid(char *devname, u64 uuid);
 int ntfs_umount(char *partition, char *mntbuf);
 int ntfs_test(char *devname);

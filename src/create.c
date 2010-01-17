@@ -54,6 +54,7 @@
 #include "regmulti.h"
 #include "crypto.h"
 #include "error.h"
+#include "queue.h"
 
 typedef struct
 {   carchwriter ai;

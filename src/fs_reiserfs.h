@@ -18,13 +18,13 @@
 #ifndef __FS_REISERFS_H__
 #define __FS_REISERFS_H__
 
-#include "dico.h"
-#include "strlist.h"
+struct s_dico;
+struct s_strlist;
 
-int reiserfs_mkfs(cdico *d, char *partition);
-int reiserfs_getinfo(cdico *d, char *devname);
+int reiserfs_mkfs(struct s_dico *d, char *partition);
+int reiserfs_getinfo(struct s_dico *d, char *devname);
 int reiserfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
-int reiserfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt);
+int reiserfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
 int reiserfs_umount(char *partition, char *mntbuf);
 int reiserfs_test(char *devname);
 

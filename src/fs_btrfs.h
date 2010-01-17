@@ -18,15 +18,15 @@
 #ifndef __FS_BTRFS_H__
 #define __FS_BTRFS_H__
 
-#include "dico.h"
-#include "strlist.h"
+struct s_dico;
+struct s_strlist;
 
-int btrfs_mkfs(cdico *d, char *partition);
-int btrfs_getinfo(cdico *d, char *devname);
+int btrfs_mkfs(struct s_dico *d, char *partition);
+int btrfs_getinfo(struct s_dico *d, char *devname);
 int btrfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
 int btrfs_umount(char *partition, char *mntbuf);
 int btrfs_check_support_for_features(u64 compat, u64 incompat, u64 ro_compat);
-int btrfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt);
+int btrfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
 int btrfs_test(char *devname);
 
 // compat flags: features that fsa knows

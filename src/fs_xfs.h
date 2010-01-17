@@ -18,15 +18,15 @@
 #ifndef __FS_XFS_H__
 #define __FS_XFS_H__
 
+struct s_dico;
+struct s_strlist;
+
 #define XFS_SUPER_MAGIC 0x58465342
 
-#include "dico.h"
-#include "strlist.h"
-
-int xfs_mkfs(cdico *d, char *partition);
-int xfs_getinfo(cdico *d, char *devname);
+int xfs_mkfs(struct s_dico *d, char *partition);
+int xfs_getinfo(struct s_dico *d, char *devname);
 int xfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
-int xfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt);
+int xfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
 int xfs_umount(char *partition, char *mntbuf);
 int xfs_test(char *devname);
 

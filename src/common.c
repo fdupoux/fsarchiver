@@ -32,9 +32,11 @@
 #include <execinfo.h>
 #include <wordexp.h>
 #include <fnmatch.h>
+#include <time.h>
 
 #include "fsarchiver.h"
 #include "syncthread.h"
+#include "strlist.h"
 #include "common.h"
 #include "error.h"
 
@@ -410,8 +412,8 @@ int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, in
 
 int generate_random_tmpdir(char *buffer, int bufsize, int n)
 {
-        struct tm tbreak;
-        time_t abstime;
+    struct tm tbreak;
+    time_t abstime;
     struct timeval tv;
     
     gettimeofday(&tv, NULL);

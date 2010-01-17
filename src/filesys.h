@@ -18,25 +18,26 @@
 #ifndef __FILESYS_H__
 #define __FILESYS_H__
 
-#include <stdio.h>
-
 #define PROGVER(x, y, z)    (((u64)x)<<16)+(((u64)y)<<8)+(((u64)z)<<0)
 
-#include "dico.h"
-#include "strlist.h"
+struct s_strlist;
+struct s_dico;
 
-typedef struct s_filesys
+struct s_filesys;
+typedef struct s_filesys cfilesys;
+
+struct s_filesys
 {
     char *name;
     int (*mount)(char *partition, char *mntbuf, char *fsname, int flags, char *mntinfo);
     int (*umount)(char *partition, char *mntbuf);
-    int (*getinfo)(cdico *d, char *devname);
-    int (*mkfs)(cdico *d, char *partition);
+    int (*getinfo)(struct s_dico *d, char *devname);
+    int (*mkfs)(struct s_dico *d, char *partition);
     int (*test)(char *partition);
-    int (*reqmntopt)(char *partition, cstrlist *reqopt, cstrlist *badopt);
+    int (*reqmntopt)(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
     bool winattr;
     bool savesymtargettype; // we have to know the type of the target to recreate a symlink on ntfs
-} cfilesys;
+};
 
 extern cfilesys filesys[];
 

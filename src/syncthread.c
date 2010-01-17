@@ -42,6 +42,7 @@
 #include "fsarchiver.h"
 #include "fsarchiver.h"
 #include "syncthread.h"
+#include "queue.h"
 
 // queue use to share data between the three sort of threads
 cqueue g_queue;

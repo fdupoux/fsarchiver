@@ -18,13 +18,13 @@
 #ifndef __FS_REISER4_H__
 #define __FS_REISER4_H__
 
-#include "dico.h"
-#include "strlist.h"
+struct s_dico;
+struct s_strlist;
 
-int reiser4_mkfs(cdico *d, char *partition);
-int reiser4_getinfo(cdico *d, char *devname);
+int reiser4_mkfs(struct s_dico *d, char *partition);
+int reiser4_getinfo(struct s_dico *d, char *devname);
 int reiser4_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
-int reiser4_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt);
+int reiser4_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
 int reiser4_umount(char *partition, char *mntbuf);
 int reiser4_test(char *devname);
 

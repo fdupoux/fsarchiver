@@ -38,6 +38,7 @@
 #include "options.h"
 #include "logfile.h"
 #include "error.h"
+#include "queue.h"
 
 char *valid_magic[]={FSA_MAGIC_MAIN, FSA_MAGIC_VOLH, FSA_MAGIC_VOLF, FSA_MAGIC_FSIN, 
     FSA_MAGIC_FSYB, FSA_MAGIC_DATF, FSA_MAGIC_OBJT, FSA_MAGIC_BLKH, FSA_MAGIC_FILF, NULL};

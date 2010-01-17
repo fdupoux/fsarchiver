@@ -18,13 +18,13 @@
 #ifndef __FS_JFS_H__
 #define __FS_JFS_H__
 
-#include "dico.h"
-#include "strlist.h"
+struct s_dico;
+struct s_strlist;
 
-int jfs_mkfs(cdico *d, char *partition);
-int jfs_getinfo(cdico *d, char *devname);
+int jfs_mkfs(struct s_dico *d, char *partition);
+int jfs_getinfo(struct s_dico *d, char *devname);
 int jfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
-int jfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt);
+int jfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
 int jfs_umount(char *partition, char *mntbuf);
 int jfs_test(char *devname);
 

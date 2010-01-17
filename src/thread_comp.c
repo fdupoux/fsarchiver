@@ -38,6 +38,7 @@
 #include "syncthread.h"
 #include "thread_comp.h"
 #include "error.h"
+#include "queue.h"
 
 int compress_block_generic(struct s_blockinfo *blkinfo)
 {

@@ -20,13 +20,22 @@
 
 #include "types.h"
 
-typedef struct s_dichl { struct s_dichlitem *head; } cdichl;
+struct s_dichl;
+typedef struct s_dichl cdichl;
+
+struct s_dichlitem;
+typedef struct s_dichlitem cdichlitem;
+
+struct s_dichl
+{
+    cdichlitem *head;
+};
 
 struct s_dichlitem
-{   u64                 key1;
-    u64                 key2;
-    char                *str;
-    struct s_dichlitem  *next;
+{   u64         key1;
+    u64         key2;
+    char        *str;
+    cdichlitem  *next;
 };
 
 cdichl *dichl_alloc();

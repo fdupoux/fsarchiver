@@ -18,7 +18,6 @@
 #ifndef __DATAFILE_H__
 #define __DATAFILE_H__
 
-#include <limits.h>
 #include "types.h"
 
 struct s_datafile;

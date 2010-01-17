@@ -15,12 +15,10 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#include "fsarchiver.h"
-#include "dico.h"
-
 #ifndef __WRITEBUF_H__
 #define __WRITEBUF_H__
 
+struct s_dico;
 struct s_blockinfo;
 
 struct s_writebuf;
@@ -34,8 +32,8 @@ struct s_writebuf
 cwritebuf *writebuf_alloc();
 int writebuf_destroy(cwritebuf *wb);
 int writebuf_add_data(cwritebuf *wb, void *data, u64 size);
-int writebuf_add_dico(cwritebuf *wb, cdico *d, char *magic);
-int writebuf_add_header(cwritebuf *wb, cdico *d, char *magic, u32 archid, u16 fsid);
+int writebuf_add_dico(cwritebuf *wb, struct s_dico *d, char *magic);
+int writebuf_add_header(cwritebuf *wb, struct s_dico *d, char *magic, u32 archid, u16 fsid);
 int writebuf_add_block(cwritebuf *wb, struct s_blockinfo *blkinfo, u32 archid, u16 fsid);
 
 #endif // __WRITEBUF_H__

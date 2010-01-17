@@ -51,6 +51,7 @@
 #include "crypto.h"
 #include "error.h"
 #include "datafile.h"
+#include "queue.h"
 
 typedef struct s_extractar
 {   carchreader ai;

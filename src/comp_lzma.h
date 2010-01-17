@@ -20,8 +20,6 @@
 
 #ifdef OPTION_LZMA_SUPPORT
 
-#include "types.h"
-
 int compress_block_lzma(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level);
 int uncompress_block_lzma(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsize, u8 *compbuf);
 

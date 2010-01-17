@@ -111,7 +111,7 @@ int regmulti_save_addfile(cregmulti *m, cdico *header, char *data, u32 datsize)
 // add headers and datblock at the end of the queue
 int regmulti_save_enqueue(cregmulti *m, cqueue *q, int fsid)
 {
-    struct s_blockinfo blkinfo;
+    cblockinfo blkinfo;
     char *dynblock;
     u32 offset=0;
     u64 filesize;
@@ -125,7 +125,6 @@ int regmulti_save_enqueue(cregmulti *m, cqueue *q, int fsid)
     // don't do anything if block is empty
     if (m->count==0)
         return 0;
-    //errprintf("DEBUG: queue %d small files\n", m->count);
     
     for (i=0; i < m->count; i++)
     {

@@ -20,14 +20,14 @@
 
 #include <limits.h>
 
-#include "fsarchiver.h"
-#include "dico.h"
-
 struct s_writebuf;
 struct s_blockinfo;
 struct s_headinfo;
 
-typedef struct s_archwriter
+struct s_archwriter;
+typedef struct s_archwriter carchwriter;
+
+struct s_archwriter
 {   int    archfd; // file descriptor of the current volume (set to -1 when closed)
     u32    archid; // 32bit archive id for checking (random number generated at creation)
     u32    curvol; // current volume number, starts at 0, incremented when we change the volume
@@ -36,7 +36,7 @@ typedef struct s_archwriter
     char   label[FSA_MAX_LABELLEN]; // archive label defined by the user
     char   basepath[PATH_MAX]; // path of the first volume of an archive
     char   volpath[PATH_MAX]; // path of the current volume of an archive
-} carchwriter;
+};
 
 int archwriter_init(carchwriter *ai);
 int archwriter_destroy(carchwriter *ai);

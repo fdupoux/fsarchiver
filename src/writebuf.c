@@ -29,6 +29,7 @@
 #include "common.h"
 #include "error.h"
 #include "queue.h"
+#include "dico.h"
 
 cwritebuf *writebuf_alloc()
 {

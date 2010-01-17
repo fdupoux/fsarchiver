@@ -18,11 +18,11 @@
 #ifndef __ARCHINFO_H__
 #define __ARCHINFO_H__
 
-#include "archreader.h"
-#include "dico.h"
+struct s_dico;
+struct s_archreader;
 
-int archinfo_show_mainhead(carchreader *ai, cdico *dicomainhead);
-int archinfo_show_fshead(cdico *dicofshead, int fsid);
+int archinfo_show_mainhead(struct s_archreader *ai, struct s_dico *dicomainhead);
+int archinfo_show_fshead(struct s_dico *dicofshead, int fsid);
 char *compalgostr(int algo);
 char *cryptalgostr(int algo);
 

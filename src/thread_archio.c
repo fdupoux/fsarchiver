@@ -26,9 +26,11 @@
 #include "fsarchiver.h"
 #include "archreader.h"
 #include "archwriter.h"
+#include "dico.h"
 #include "common.h"
 #include "error.h"
 #include "syncthread.h"
+#include "queue.h"
 
 void *thread_writer_fct(void *args)
 {

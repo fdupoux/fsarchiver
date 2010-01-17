@@ -18,7 +18,6 @@
 #ifndef __FSARCHIVER_H__
 #define __FSARCHIVER_H__
 
-#include "config.h"
 #include "types.h"
 
 // ----------------------------- min and max -----------------------------

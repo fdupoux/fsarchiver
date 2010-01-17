@@ -30,6 +30,7 @@
 
 #include "fsarchiver.h"
 #include "queue.h"
+#include "dico.h"
 #include "common.h"
 #include "syncthread.h"
 #include "error.h"
