@@ -107,8 +107,8 @@ s64 queue_init(cqueue *q, s64 blkmax)
 
 s64 queue_destroy(cqueue *q)
 {
-    struct s_queueitem *cur;
-    struct s_queueitem *next;
+    cqueueitem *cur;
+    cqueueitem *next;
     
     if (!q)
     {   errprintf("q is NULL\n");
@@ -201,7 +201,7 @@ s64 queue_count(cqueue *q)
 // how many items in the queue have a particular status
 s64 queue_count_status(cqueue *q, int status)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     int count=0;
     
     if (!q)
@@ -225,10 +225,10 @@ s64 queue_count_status(cqueue *q, int status)
 }
 
 // add a block at the end of the queue
-s64 queue_add_block(cqueue *q, struct s_blockinfo *blkinfo, int status)
+s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
 {
-    struct s_queueitem *item;
-    struct s_queueitem *cur;
+    cqueueitem *item;
+    cqueueitem *cur;
     
     if (!q || !blkinfo)
     {   errprintf("a parameter is NULL\n");
@@ -236,9 +236,9 @@ s64 queue_add_block(cqueue *q, struct s_blockinfo *blkinfo, int status)
     }
     
     // create the new item in memory
-    item=malloc(sizeof(struct s_queueitem));
+    item=malloc(sizeof(cqueueitem));
     if (!item)
-    {   errprintf("malloc(%ld) failed: out of memory\n", (long)sizeof(struct s_queueitem));
+    {   errprintf("malloc(%ld) failed: out of memory\n", (long)sizeof(cqueueitem));
         return QERR_NOMEM;
     }
     item->type=QITEM_TYPE_BLOCK;
@@ -286,7 +286,7 @@ s64 queue_add_block(cqueue *q, struct s_blockinfo *blkinfo, int status)
 
 s64 queue_add_header(cqueue *q, cdico *d, char *magic, u16 fsid)
 {
-    struct s_headinfo headinfo;
+    cheadinfo headinfo;
     
     if (!q || !d || !magic)
     {   errprintf("parameter is null\n");
@@ -301,10 +301,10 @@ s64 queue_add_header(cqueue *q, cdico *d, char *magic, u16 fsid)
     return     queue_add_header_internal(q, &headinfo);
 }
 
-s64 queue_add_header_internal(cqueue *q, struct s_headinfo *headinfo)
+s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
 {
-    struct s_queueitem *item;
-    struct s_queueitem *cur;
+    cqueueitem *item;
+    cqueueitem *cur;
     
     if (!q || !headinfo)
     {   errprintf("parameter is null\n");
@@ -312,9 +312,9 @@ s64 queue_add_header_internal(cqueue *q, struct s_headinfo *headinfo)
     }
     
     // create the new item in memory
-    item=malloc(sizeof(struct s_queueitem));
+    item=malloc(sizeof(cqueueitem));
     if (!item)
-    {   errprintf("malloc(%ld) failed: out of memory 1\n", (long)sizeof(struct s_queueitem));
+    {   errprintf("malloc(%ld) failed: out of memory 1\n", (long)sizeof(cqueueitem));
         return QERR_NOMEM;
     }
     
@@ -360,9 +360,9 @@ s64 queue_add_header_internal(cqueue *q, struct s_headinfo *headinfo)
 }
 
 // function called by the compression thread when a block has been compressed
-s64 queue_replace_block(cqueue *q, s64 itemnum, struct s_blockinfo *blkinfo, int newstatus)
+s64 queue_replace_block(cqueue *q, s64 itemnum, cblockinfo *blkinfo, int newstatus)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     
     if (!q || !blkinfo)
     {   errprintf("a parameter is null\n");
@@ -400,7 +400,7 @@ s64 queue_replace_block(cqueue *q, s64 itemnum, struct s_blockinfo *blkinfo, int
 // get number of items to be processed
 s64 queue_count_items_todo(cqueue *q)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     s64 count=0;
     
     if (!q)
@@ -422,9 +422,9 @@ s64 queue_count_items_todo(cqueue *q)
 }
 
 // the compression thread requires the first block which has not yet been compressed
-s64 queue_get_first_block_todo(cqueue *q, struct s_blockinfo *blkinfo)
+s64 queue_get_first_block_todo(cqueue *q, cblockinfo *blkinfo)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     s64 itemfound=-1;
     int res;
     
@@ -474,10 +474,10 @@ s64 queue_get_first_block_todo(cqueue *q, struct s_blockinfo *blkinfo)
 }
 
 // the writer thread requires the first block of the queue if it ready to go
-//s64 queue_dequeue_first(cqueue *q, int *type, char *magic, cdico **dico, struct s_blockinfo *blkinfo)
-s64 queue_dequeue_first(cqueue *q, int *type, struct s_headinfo *headinfo, struct s_blockinfo *blkinfo)
+//s64 queue_dequeue_first(cqueue *q, int *type, char *magic, cdico **dico, cblockinfo *blkinfo)
+s64 queue_dequeue_first(cqueue *q, int *type, cheadinfo *headinfo, cblockinfo *blkinfo)
 {
-    struct s_queueitem *cur=NULL;
+    cqueueitem *cur=NULL;
     s64 itemfound=-1;
     int ret;
     
@@ -543,9 +543,9 @@ s64 queue_dequeue_first(cqueue *q, int *type, struct s_headinfo *headinfo, struc
 }
 
 // the extract function wants to read headers from the queue
-s64 queue_dequeue_block(cqueue *q, struct s_blockinfo *blkinfo)
+s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     s64 itemnum;
     
     if (!q || !blkinfo)
@@ -600,7 +600,7 @@ s64 queue_dequeue_block(cqueue *q, struct s_blockinfo *blkinfo)
 
 s64 queue_dequeue_header(cqueue *q, cdico **d, char *magicbuf, u16 *fsid)
 {
-    struct s_headinfo headinfo;
+    cheadinfo headinfo;
     s64 lres;
     
     if (!q || !d || !magicbuf)
@@ -620,9 +620,9 @@ s64 queue_dequeue_header(cqueue *q, cdico **d, char *magicbuf, u16 *fsid)
     return lres;
 }
 
-s64 queue_dequeue_header_internal(cqueue *q, struct s_headinfo *headinfo)
+s64 queue_dequeue_header_internal(cqueue *q, cheadinfo *headinfo)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     s64 itemnum;
     
     if (!q || !headinfo)
@@ -682,7 +682,7 @@ s64 queue_dequeue_header_internal(cqueue *q, struct s_headinfo *headinfo)
 // returns true if the first item in queue is a dico or a block which is ready
 bool queuelocked_is_first_item_ready(cqueue *q)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     
     if (!q)
     {   errprintf("a parameter is null\n");
@@ -702,7 +702,7 @@ bool queuelocked_is_first_item_ready(cqueue *q)
 // say what the next item which is ready in the queue is but do not remove it
 s64 queue_check_next_item(cqueue *q, int *type, char *magic)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     
     if (!q || !type || !magic)
     {   errprintf("a parameter is null\n");
@@ -768,7 +768,7 @@ s64 queue_check_next_item(cqueue *q, int *type, char *magic)
 // destroy the first item in the queue (similar to dequeue but do not read it)
 s64 queue_destroy_first_item(cqueue *q)
 {
-    struct s_queueitem *cur;
+    cqueueitem *cur;
     
     if (!q)
     {   errprintf("a parameter is null\n");

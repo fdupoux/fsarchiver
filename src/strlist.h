@@ -18,23 +18,32 @@
 #ifndef __STRLIST_H__
 #define __STRLIST_H__
 
+struct s_strlist;
+typedef struct s_strlist cstrlist;
+
+struct s_strlistitem;
+typedef struct s_strlistitem cstrlistitem;
+
 struct s_strlistitem
-{   char                   *str;
-    struct s_strlistitem   *next;
+{   char         *str;
+    cstrlistitem *next;
 };
 
-typedef struct s_strlist { struct s_strlistitem *head; } cstrlist;
+struct s_strlist
+{
+    cstrlistitem *head;
+};
 
-int    strlist_destroy(cstrlist *l); // dynamic destruction
-int    strlist_init(cstrlist *l); // static initialization
-int    strlist_empty(cstrlist *l);
-int    strlist_add(cstrlist *l, char *str);
-int    strlist_remove(cstrlist *l, char *str);
-int    strlist_exists(cstrlist *l, char *str);
-int    strlist_getitem(cstrlist *l, int index, char *buf, int bufsize);
-char   *strlist_merge(cstrlist *l, char *bufdat, int bufsize, char sep);
-int    strlist_split(cstrlist *l, char *text, char sep);
-int    strlist_count(cstrlist *l);
-int    strlist_show(cstrlist *l);
+int  strlist_destroy(cstrlist *l);
+int  strlist_init(cstrlist *l);
+int  strlist_empty(cstrlist *l);
+int  strlist_add(cstrlist *l, char *str);
+int  strlist_remove(cstrlist *l, char *str);
+int  strlist_exists(cstrlist *l, char *str);
+int  strlist_getitem(cstrlist *l, int index, char *buf, int bufsize);
+char *strlist_merge(cstrlist *l, char *bufdat, int bufsize, char sep);
+int  strlist_split(cstrlist *l, char *text, char sep);
+int  strlist_count(cstrlist *l);
+int  strlist_show(cstrlist *l);
 
 #endif // __STRLIST_H__

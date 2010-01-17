@@ -48,7 +48,7 @@ int strlist_destroy(cstrlist *l)
 
 int strlist_empty(cstrlist *l)
 {
-    struct s_strlistitem *item, *next;
+    cstrlistitem *item, *next;
     
     if (l==NULL)
         return -1;
@@ -65,7 +65,7 @@ int strlist_empty(cstrlist *l)
 
 int strlist_add(cstrlist *l, char *str)
 {
-    struct s_strlistitem *item, *lnew;
+    cstrlistitem *item, *lnew;
     int len;
     
     if (!l || !str || !strlen(str))
@@ -78,11 +78,11 @@ int strlist_add(cstrlist *l, char *str)
         return -1;
     }
     
-    if ((lnew=malloc(sizeof(struct s_strlistitem)))==NULL)
+    if ((lnew=malloc(sizeof(cstrlistitem)))==NULL)
     {   errprintf("malloc() failed\n");
         return -1;
     }
-    memset(lnew, 0, sizeof(struct s_strlistitem));
+    memset(lnew, 0, sizeof(cstrlistitem));
     lnew->next=NULL;    
     
     len=strlen(str);
@@ -109,7 +109,7 @@ int strlist_add(cstrlist *l, char *str)
 
 int strlist_getitem(cstrlist *l, int index, char *buf, int bufsize)
 {
-    struct s_strlistitem *item;
+    cstrlistitem *item;
     int pos=0;
 
     if (!l || !buf || bufsize<=0)
@@ -132,7 +132,7 @@ int strlist_getitem(cstrlist *l, int index, char *buf, int bufsize)
 
 int strlist_remove(cstrlist *l, char *str)
 {
-    struct s_strlistitem *item, *next;
+    cstrlistitem *item, *next;
     
     if (!l || !str)
     {   errprintf("invalid param\n");
@@ -168,7 +168,7 @@ int strlist_remove(cstrlist *l, char *str)
 
 char *strlist_merge(cstrlist *l, char *bufdat, int bufsize, char sep)
 {
-    struct s_strlistitem *item;
+    cstrlistitem *item;
     
     if (!l || !bufdat || bufsize<=0)
     {   errprintf("invalid param\n");
@@ -191,7 +191,7 @@ char *strlist_merge(cstrlist *l, char *bufdat, int bufsize, char sep)
 
 int strlist_exists(cstrlist *l, char *str)
 {
-    struct s_strlistitem *item;
+    cstrlistitem *item;
     
     if (!l || !str)
     {   errprintf("invalid param\n");
@@ -248,7 +248,7 @@ int strlist_split(cstrlist *l, char *text, char sep)
 
 int strlist_count(cstrlist *l)
 {
-    struct s_strlistitem *item;
+    cstrlistitem *item;
     int count=0;
     
     if (!l)
@@ -271,7 +271,7 @@ int strlist_count(cstrlist *l)
 
 int strlist_show(cstrlist *l)
 {
-    struct s_strlistitem *item;
+    cstrlistitem *item;
     int count=0;
     
     if (!l)

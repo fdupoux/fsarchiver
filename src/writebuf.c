@@ -30,11 +30,11 @@
 #include "error.h"
 #include "queue.h"
 
-struct s_writebuf *writebuf_alloc()
+cwritebuf *writebuf_alloc()
 {
-    struct s_writebuf *wb;
-    if ((wb=malloc(sizeof(struct s_writebuf)))==NULL)
-    {   errprintf("malloc(%d) failed: cannot allocate memory for writebuf\n", (int)sizeof(struct s_writebuf));
+    cwritebuf *wb;
+    if ((wb=malloc(sizeof(cwritebuf)))==NULL)
+    {   errprintf("malloc(%d) failed: cannot allocate memory for writebuf\n", (int)sizeof(cwritebuf));
         return NULL;
     }
     wb->size=0;
@@ -42,7 +42,7 @@ struct s_writebuf *writebuf_alloc()
     return wb;
 }
 
-int writebuf_destroy(struct s_writebuf *wb)
+int writebuf_destroy(cwritebuf *wb)
 {
     if (wb==NULL)
     {   errprintf("wb is NULL\n");
@@ -59,7 +59,7 @@ int writebuf_destroy(struct s_writebuf *wb)
     return 0;
 }
 
-int writebuf_add_data(struct s_writebuf *wb, void *data, u64 size)
+int writebuf_add_data(cwritebuf *wb, void *data, u64 size)
 {
     u64 newsize;
     
@@ -85,7 +85,7 @@ int writebuf_add_data(struct s_writebuf *wb, void *data, u64 size)
     return 0;
 }
 
-int writebuf_add_dico(struct s_writebuf *wb, cdico *d, char *magic)
+int writebuf_add_dico(cwritebuf *wb, cdico *d, char *magic)
 {
     struct s_dicoitem *item;
     int itemnum;
@@ -187,7 +187,7 @@ int writebuf_add_dico(struct s_writebuf *wb, cdico *d, char *magic)
     return 0;
 }
 
-int writebuf_add_header(struct s_writebuf *wb, cdico *d, char *magic, u32 archid, u16 fsid)
+int writebuf_add_header(cwritebuf *wb, cdico *d, char *magic, u32 archid, u16 fsid)
 {
     u16 temp16;
     u32 temp32;
@@ -226,7 +226,7 @@ int writebuf_add_header(struct s_writebuf *wb, cdico *d, char *magic, u32 archid
     return 0;
 }
 
-int writebuf_add_block(struct s_writebuf *wb, struct s_blockinfo *blkinfo, u32 archid, u16 fsid)
+int writebuf_add_block(cwritebuf *wb, struct s_blockinfo *blkinfo, u32 archid, u16 fsid)
 {
     cdico *blkdico; // header written in file
     int res;
