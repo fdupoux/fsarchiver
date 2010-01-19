@@ -30,7 +30,7 @@ a different file-system, so it can use it when you want to convert your
 file-system: you can backup an ext3 file-system, and restore it as a 
 reiserfs.
 
-FSArchiver is working at the file level. It can make an archive of any 
+FSArchiver is working at the file level. It can make an archive of most 
 unix file-system (ext3, reiserfs, xfs, ...) that the running kernel can 
 mount with a read-write support. It will preserve all the standard unix 
 file attributes (permissions, timestamps, symbolic-links, hard-links, 
@@ -39,10 +39,9 @@ enabled.
 
 Limitations
 -----------
-There are several limitations anyway: it does not support non-unix 
-file-systems (fat, ntfs) since these files attributes don't match the unix 
-standards. FSArchiver won't preserve the features which are very specific 
-to a file-system. For instance, if you create a snapshot in a btrfs volume 
+There are several limitations anyway: it does not support the fat filesystem.
+FSArchiver won't preserve the features which are very specific to a 
+file-system. For instance, if you create a snapshot in a btrfs volume 
 (the new-generation file system for linux), FSArchiver won't know anything 
 about that, and it will just backup the contents seen when you mount the 
 partition.
