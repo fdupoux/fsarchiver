@@ -56,7 +56,7 @@
 #include "error.h"
 #include "queue.h"
 
-typedef struct
+typedef struct s_savear
 {   carchwriter ai;
     cregmulti   regmulti;
     cdichl      *dichardlinks;
@@ -67,6 +67,13 @@ typedef struct
     u64         cost_global;
     u64         cost_current;
 } csavear;
+
+typedef struct s_devinfo
+{   char        devpath[PATH_MAX];
+    char        partmount[PATH_MAX];
+    bool        mountedbyfsa;
+    int         fstype;
+} cdevinfo;
 
 int createar_obj_regfile_multi(csavear *save, cdico *header, char *relpath, char *fullpath, u64 filesize)
 {
@@ -672,7 +679,7 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
     return 0;
 }
 
-int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 *costeval)
+int createar_save_directory(csavear *save, char *root, char *path, u64 *costeval)
 {
     char fulldirpath[PATH_MAX];
     char fullpath[PATH_MAX];
@@ -681,7 +688,6 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
     struct dirent *dir;
     DIR *dirdesc;
     int ret=0;
-    int res;
     
     // init
     concatenate_paths(fulldirpath, sizeof(fulldirpath), root, path);
@@ -731,47 +737,10 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 dev, u64 
             continue;
         }
         
-        // ---- if dev!=0 (when we backup a filesystem not a dir), ignore all other devices
-        if ((dev!=0) && (u64)(statbuf.st_dev)!=dev)
-        {
-            // copy directories which are used as mount-points (important especially for /dev, /proc, /sys)
-            if (S_ISDIR(statbuf.st_mode))
-            {
-                if (createar_save_file(save, root, relpath, &statbuf, costeval)!=0)
-                {   ret=-1;
-                    errprintf("createar_save_file(%s,%s) failed\n", root, path);
-                    goto backup_dir_err;
-                }
-                
-                // copy the files in /dev/ during a live-backup (option -A) else /dev files such as /dev/console would be missing
-                if (g_options.allowsaverw==true && strcmp(relpath, "/dev")==0)
-                {   
-                    if (createar_save_directory(save, root, relpath, statbuf.st_dev, costeval)!=0)
-                    {   ret=-1;
-                        msgprintf(MSG_STACK, "createar_save_directory(%s) failed\n", relpath);
-                        goto backup_dir_err;
-                    }
-                }
-            }
-            
-            continue; // don't copy the contents of mount-points directories: it's another filesystem
-        }
-        
         // backup contents before the directory itself so that the dir-attributes are written after the dir contents
         if (S_ISDIR(statbuf.st_mode))
-        {
-            // if "dev==0" then accept to go on other filesystems (archtype=ARCHTYPE_DIRECTORIES)
-            // we keep the same dichardlinks even if the filesystem is different (with different inodes numbers)
-            // since the cdichl is able to manage several filesystems (its key1)
-            if ((dev==0) && (u64)(statbuf.st_dev)!=dev) // cross filesystems when archtype=ARCHTYPE_DIRECTORIES
-            {
-                res=createar_save_directory(save, root, relpath, statbuf.st_dev, costeval);
-            }
-            else // we are still on the same filesystem
-            {
-                res=createar_save_directory(save, root, relpath, dev, costeval);
-            }
-            if (res!=0)
+        { 
+            if (createar_save_directory(save, root, relpath, costeval)!=0)
             {   msgprintf(MSG_STACK, "createar_save_directory(%s) failed\n", relpath);
                 ret=-1;
                 goto backup_dir_err;
@@ -792,7 +761,7 @@ backup_dir_err:
     return ret;
 }
 
-int createar_save_directory_wrapper(csavear *save, char *root, char *path, u64 dev, u64 *costeval)
+int createar_save_directory_wrapper(csavear *save, char *root, char *path, u64 *costeval)
 {
     int ret;
     
@@ -806,7 +775,7 @@ int createar_save_directory_wrapper(csavear *save, char *root, char *path, u64 d
         return -1;
     }
     
-    ret=createar_save_directory(save, root, path, dev, costeval);
+    ret=createar_save_directory(save, root, path, costeval);
     
     // put all small files that are in the last block to the queue
     if (regmulti_save_enqueue(&save->regmulti, &g_queue, save->fsid)!=0)
@@ -885,7 +854,7 @@ int createar_write_mainhead(csavear *save, int archtype, int fscount)
     return 0;
 }
 
-int filesystem_mount_partition(cdico *dicofs, char *partition, char *partmnt, int *fstype, u16 fsid, bool *mntbyfsa)
+int filesystem_mount_partition(cdevinfo *devinfo, cdico *dicofsinfo, u16 fsid)
 {
     char fsbuf[FSA_MAX_FSNAMELEN];
     struct statvfs64 statfsbuf;
@@ -895,50 +864,53 @@ int filesystem_mount_partition(cdico *dicofs, char *partition, char *partmnt, in
     int showwarningcount1=0;
     int showwarningcount2=0;
     char temp[PATH_MAX];
+    char curmntdir[PATH_MAX];
     char optbuf[128];
     u64 fsbytestotal;
     u64 fsbytesused;
     int readwrite;
+    int tmptype;
     int count;
     int res;
     int i;
     
-    res=generic_get_mntinfo(partition, &readwrite, temp, sizeof(temp), optbuf, sizeof(optbuf), fsbuf, sizeof(fsbuf));
+    res=generic_get_mntinfo(devinfo->devpath, &readwrite, curmntdir, sizeof(curmntdir), optbuf, sizeof(optbuf), fsbuf, sizeof(fsbuf));
     if (res==0) // partition is already mounted
     {
-        *mntbyfsa=false;
-        snprintf(partmnt, PATH_MAX, "%s", temp); // return the mount point to main savefs function
-        msgprintf(MSG_DEBUG1, "generic_get_mntinfo(%s): mnt=[%s], opt=[%s], fs=[%s], rw=[%d]\n", partition, partmnt, optbuf, fsbuf, readwrite);
+        devinfo->mountedbyfsa=false;
+        //snprintf(partmnt, PATH_MAX, "%s", curmntdir); // return the mount point to main savefs function
+        msgprintf(MSG_DEBUG1, "generic_get_mntinfo(%s): mnt=[%s], opt=[%s], fs=[%s], rw=[%d]\n", devinfo->devpath, curmntdir, optbuf, fsbuf, readwrite);
         if (readwrite==1 && g_options.allowsaverw==0)
         {
             errprintf("partition [%s] is mounted read/write. please mount it read-only \n"
                 "and then try again. you can do \"mount -o remount,ro %s\". you can \n"
-                "also run fsarchiver with option '-A' if you know what you are doing.\n", partition, partition);
+                "also run fsarchiver with option '-A' if you know what you are doing.\n", 
+                devinfo->devpath, devinfo->devpath);
             return -1;
         }
-        if (generic_get_fstype(fsbuf, fstype)!=0)
+        if (generic_get_fstype(fsbuf, &devinfo->fstype)!=0)
         {   
             if (strcmp(fsbuf, "fuseblk")==0)
-                errprintf("partition [%s] is using a fuse based filesystem (probably ntfs-3g). Unmount it and try again\n", partition);
+                errprintf("partition [%s] is using a fuse based filesystem (probably ntfs-3g). Unmount it and try again\n", devinfo->devpath);
             else
-                errprintf("filesystem of partition [%s] is not supported by fsarchiver: filesystem=[%s]\n", partition, fsbuf);
+                errprintf("filesystem of partition [%s] is not supported by fsarchiver: filesystem=[%s]\n", devinfo->devpath, fsbuf);
             return -1;
         }
         // check the filesystem is mounted with the right mount-options (to preserve acl and xattr)
         strlist_init(&reqmntopt);
         strlist_init(&badmntopt);
         strlist_init(&curmntopt);
-        if (filesys[*fstype].reqmntopt(partition, &reqmntopt, &badmntopt)!=0)
+        if (filesys[devinfo->fstype].reqmntopt(devinfo->devpath, &reqmntopt, &badmntopt)!=0)
         {
-            errprintf("cannot get the required mount options for partition=[%s]\n", partition);
+            errprintf("cannot get the required mount options for partition=[%s]\n", devinfo->devpath);
             strlist_empty(&reqmntopt);
             strlist_empty(&badmntopt);
             return -1;
         }
         strlist_split(&curmntopt, optbuf, ',');
-        msgprintf(MSG_DEBUG2, "mount options found for partition=[%s]: [%s]\n", partition, strlist_merge(&curmntopt, temp, sizeof(temp), ','));
-        msgprintf(MSG_DEBUG2, "mount options required for partition=[%s]: [%s]\n", partition, strlist_merge(&reqmntopt, temp, sizeof(temp), ','));
-        msgprintf(MSG_DEBUG2, "mount options to avoid for partition=[%s]: [%s]\n", partition, strlist_merge(&badmntopt, temp, sizeof(temp), ','));
+        msgprintf(MSG_DEBUG2, "mount options found for partition=[%s]: [%s]\n", devinfo->devpath, strlist_merge(&curmntopt, temp, sizeof(temp), ','));
+        msgprintf(MSG_DEBUG2, "mount options required for partition=[%s]: [%s]\n", devinfo->devpath, strlist_merge(&reqmntopt, temp, sizeof(temp), ','));
+        msgprintf(MSG_DEBUG2, "mount options to avoid for partition=[%s]: [%s]\n", devinfo->devpath, strlist_merge(&badmntopt, temp, sizeof(temp), ','));
         count=strlist_count(&reqmntopt);
         for (i=0; i < count; i++)
         {
@@ -949,7 +921,7 @@ int filesystem_mount_partition(cdico *dicofs, char *partition, char *partmnt, in
                 if (showwarningcount1==0)
                     errprintf("partition [%s] has to be mounted with options [%s] in order to preserve "
                         "all its attributes. you can use mount with option remount to do that.\n",
-                        partition, strlist_merge(&reqmntopt, temp, sizeof(temp), ','));
+                        devinfo->devpath, strlist_merge(&reqmntopt, temp, sizeof(temp), ','));
                 if (g_options.dontcheckmountopts==true)
                 {   if (showwarningcount1++ == 0) // show this warning only once
                         errprintf("fsarchiver will continue anyway since the option '-a' was used\n");
@@ -970,7 +942,7 @@ int filesystem_mount_partition(cdico *dicofs, char *partition, char *partmnt, in
             {
                 if (showwarningcount2==0)
                     errprintf("partition [%s] has to be mounted without options [%s] in order to preserve all its attributes\n",
-                        partition, strlist_merge(&badmntopt, temp, sizeof(temp), ','));
+                        devinfo->devpath, strlist_merge(&badmntopt, temp, sizeof(temp), ','));
                 if (g_options.dontcheckmountopts==true)
                 {   if (showwarningcount2++ == 0) // show this warning only once
                         errprintf("fsarchiver will continue anyway since the option '-a' was used\n");
@@ -985,52 +957,60 @@ int filesystem_mount_partition(cdico *dicofs, char *partition, char *partmnt, in
         strlist_empty(&reqmntopt);
         strlist_empty(&badmntopt);
         strlist_empty(&curmntopt);
+        // create a "mount --bind" for that mounted partition (to see behind its mount points)
+        mkdir_recursive(devinfo->partmount);
+        if (mount(curmntdir, devinfo->partmount, NULL, MS_BIND|MS_RDONLY, NULL)!=0)
+        {
+            errprintf("mount(src=[%s], target=[%s], NULL, MS_BIND|MS_RDONLY, NULL) failed\n", curmntdir, devinfo->partmount);
+            return -1;
+        }
+        devinfo->mountedbyfsa=true;
     }
     else // partition not yet mounted
     {
-        mkdir_recursive(partmnt);
-        msgprintf(MSG_DEBUG1, "partition %s is not mounted\n", partition);
-        for (*fstype=-1, i=0; (filesys[i].name) && (*fstype==-1); i++)
+        mkdir_recursive(devinfo->partmount);
+        msgprintf(MSG_DEBUG1, "partition %s is not mounted\n", devinfo->devpath);
+        for (tmptype=-1, i=0; (filesys[i].name) && (tmptype==-1); i++)
         {
-            if ((filesys[i].test(partition)==true) && (filesys[i].mount(partition, partmnt, filesys[i].name, MS_RDONLY, NULL)==0))
-            {   *fstype=i;
-                msgprintf(MSG_DEBUG1, "partition %s successfully mounted on [%s] as [%s]\n", partition, partmnt, filesys[i].name);
+            if ((filesys[i].test(devinfo->devpath)==true) && (filesys[i].mount(devinfo->devpath, devinfo->partmount, filesys[i].name, MS_RDONLY, NULL)==0))
+            {   tmptype=i;
+                msgprintf(MSG_DEBUG1, "partition %s successfully mounted on [%s] as [%s]\n", devinfo->devpath, devinfo->partmount, filesys[i].name);
             }
         }
-        if (*fstype==-1)
-        {   errprintf("can't detect and mount filesystem of partition [%s], cannot continue.\n", partition);
+        if (tmptype==-1)
+        {   errprintf("can't detect and mount filesystem of partition [%s], cannot continue.\n", devinfo->devpath);
             return -1;
         }
-        *mntbyfsa=true;
+        devinfo->fstype=tmptype;
+        devinfo->mountedbyfsa=true;
     }
     
     // get space statistics
-    if (statvfs64(partmnt, &statfsbuf)!=0)
-    {   errprintf("statvfs64(%s) failed\n", partmnt);
+    if (statvfs64(devinfo->partmount, &statfsbuf)!=0)
+    {   errprintf("statvfs64(%s) failed\n", devinfo->partmount);
         return -1;
     }
     fsbytestotal=(u64)statfsbuf.f_frsize*(u64)statfsbuf.f_blocks;
     fsbytesused=fsbytestotal-((u64)statfsbuf.f_frsize*(u64)statfsbuf.f_bfree);
     
-    dico_add_string(dicofs, 0, FSYSHEADKEY_FILESYSTEM, filesys[*fstype].name);
-    dico_add_string(dicofs, 0, FSYSHEADKEY_MNTPATH, partmnt);
-    dico_add_string(dicofs, 0, FSYSHEADKEY_ORIGDEV, partition);
-    dico_add_u64(dicofs, 0, FSYSHEADKEY_BYTESTOTAL, fsbytestotal);
-    dico_add_u64(dicofs, 0, FSYSHEADKEY_BYTESUSED, fsbytesused);
+    dico_add_string(dicofsinfo, 0, FSYSHEADKEY_FILESYSTEM, filesys[devinfo->fstype].name);
+    dico_add_string(dicofsinfo, 0, FSYSHEADKEY_MNTPATH, devinfo->partmount);
+    dico_add_string(dicofsinfo, 0, FSYSHEADKEY_ORIGDEV, devinfo->devpath);
+    dico_add_u64(dicofsinfo, 0, FSYSHEADKEY_BYTESTOTAL, fsbytestotal);
+    dico_add_u64(dicofsinfo, 0, FSYSHEADKEY_BYTESUSED, fsbytesused);
     
-    if (filesys[*fstype].getinfo(dicofs, partition)!=0)
-    {   errprintf("cannot save filesystem attributes for partition %s\n", partition);
+    if (filesys[devinfo->fstype].getinfo(dicofsinfo, devinfo->devpath)!=0)
+    {   errprintf("cannot save filesystem attributes for partition %s\n", devinfo->devpath);
         return -1;
     }
     
     return 0;
 }
 
-int createar_oper_savefs(csavear *save, char *partition, char *partmount, int fstype, bool mountedbyfsa)
+int createar_oper_savefs(csavear *save, cdevinfo *devinfo)
 {
     cdico *dicobegin=NULL;
     cdico *dicoend=NULL;
-    struct stat64 statbuf;
     int ret=0;
     
     // write "begin of filesystem" header
@@ -1040,17 +1020,11 @@ int createar_oper_savefs(csavear *save, char *partition, char *partmount, int fs
     }
     queue_add_header(&g_queue, dicobegin, FSA_MAGIC_FSYB, save->fsid);
     
-    // get dev ids of the filesystem to ignore mount points
-    if (lstat64(partmount, &statbuf)!=0)
-    {   sysprintf("cannot lstat64(%s)\n", partmount);
-        return -1;
-    }
-    
     // init filesystem data struct
-    save->fstype=fstype;
+    save->fstype=devinfo->fstype;
     
     // main task
-    ret=createar_save_directory_wrapper(save, partmount, "/", (u64)statbuf.st_dev, NULL);
+    ret=createar_save_directory_wrapper(save, devinfo->partmount, "/", NULL);
     
     // write "end of filesystem" header
     if ((dicoend=dico_alloc())==NULL)
@@ -1072,26 +1046,23 @@ int createar_oper_savedir(csavear *save, char *rootdir)
     if (rootdir[0]=='/') // absolute path
     {
         snprintf(fullpath, sizeof(fullpath), "%s", rootdir);
-        createar_save_directory_wrapper(save, "/", fullpath, (u64)0, NULL);
+        createar_save_directory_wrapper(save, "/", fullpath, NULL);
     }
     else // relative path
     {
         concatenate_paths(fullpath, sizeof(fullpath), getcwd(currentdir, sizeof(currentdir)), rootdir);
-        createar_save_directory_wrapper(save, ".", rootdir, (u64)0, NULL);
+        createar_save_directory_wrapper(save, ".", rootdir, NULL);
     }
     
     return 0;
 }
 
-int do_create(char *archive, char **partition, int fscount, int archtype)
+int oper_create(char *archive, int argc, char **argv, int archtype)
 {
-    cdico *dicofsinfo[FSA_MAX_FSPERARCH];
-    char partmounts[PATH_MAX][FSA_MAX_FSPERARCH];
     pthread_t thread_comp[FSA_MAX_COMPJOBS];
-    bool mountedbyfsa[FSA_MAX_FSPERARCH];
-    int fstype[FSA_MAX_FSPERARCH];
-    struct stat64 statbuf;
+    cdevinfo devinfo[FSA_MAX_FSPERARCH];
     pthread_t thread_writer;
+    cdico *dicofsinfo;
     u64 totalerr=0;
     cdico *dicoend;
     struct stat64 st;
@@ -1113,29 +1084,31 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     // init misc data struct to zero
     thread_writer=0;
     for (i=0; i<FSA_MAX_COMPJOBS; i++)
+    {
         thread_comp[i]=0;
+    }
     for (i=0; i<FSA_MAX_FSPERARCH; i++)
-        fstype[i]=-1;
-    for (i=0; i<FSA_MAX_FSPERARCH; i++)
-        memset(partmounts[i], 0, PATH_MAX);
-    for (i=0; i<FSA_MAX_FSPERARCH; i++)
-        mountedbyfsa[i]=false;
+    {
+        memset(&devinfo[i], 0, sizeof(cdevinfo));
+        devinfo[i].mountedbyfsa=false;
+        devinfo[i].fstype=-1;
+    }
     
     // check that arguments are all block devices when archtype==ARCHTYPE_FILESYSTEMS
-    for (i=0; (archtype==ARCHTYPE_FILESYSTEMS) && (i < fscount) && (partition[i]!=NULL); i++)
+    for (i=0; (archtype==ARCHTYPE_FILESYSTEMS) && (i < argc) && (argv[i]!=NULL); i++)
     {
-        if ((stat64(partition[i], &st)!=0) || (!S_ISBLK(st.st_mode)))
-        {   errprintf("%s is not a valid block device\n", partition[i]);
+        if ((stat64(argv[i], &st)!=0) || (!S_ISBLK(st.st_mode)))
+        {   errprintf("%s is not a valid block device\n", argv[i]);
             ret=-1;
             goto do_create_error;
         }
     }
     
     // check that arguments are all directories when archtype==ARCHTYPE_DIRECTORIES
-    for (i=0; (archtype==ARCHTYPE_DIRECTORIES) && (i < fscount) && (partition[i]!=NULL); i++)
+    for (i=0; (archtype==ARCHTYPE_DIRECTORIES) && (i < argc) && (argv[i]!=NULL); i++)
     {
-        if ((stat64(partition[i], &st)!=0) || (!S_ISDIR(st.st_mode)))
-        {   errprintf("%s is not a valid directory\n", partition[i]);
+        if ((stat64(argv[i], &st)!=0) || (!S_ISDIR(st.st_mode)))
+        {   errprintf("%s is not a valid directory\n", argv[i]);
             ret=-1;
             goto do_create_error;
         }
@@ -1159,48 +1132,46 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     }
     
     // write archive main header
-    if (createar_write_mainhead(&save, archtype, fscount)!=0)
+    if (createar_write_mainhead(&save, archtype, argc)!=0)
     {   errprintf("archive_write_mainhead(%s) failed\n", archive);
         ret=-1;
         goto do_create_error;
     }
     
     // write one fsinfo header for each filesystem (only if archtype==ARCHTYPE_FILESYSTEMS)
-    for (i=0; (archtype==ARCHTYPE_FILESYSTEMS) && (i < fscount) && (partition[i]); i++)
+    for (i=0; (archtype==ARCHTYPE_FILESYSTEMS) && (i < argc) && (argv[i]); i++)
     {
-        if ((dicofsinfo[i]=dico_alloc())==NULL)
+        if ((dicofsinfo=dico_alloc())==NULL)
         {   errprintf("dico_alloc() failed\n");
             goto do_create_error;
         }
         
+        snprintf(devinfo[i].devpath, sizeof(devinfo[i].devpath), "%s", argv[i]);
+        
         // mount partition and get partition info
-        generate_random_tmpdir(partmounts[i], PATH_MAX, i);
-        msgprintf(MSG_VERB2, "Mounting filesystem on %s...\n", partition[i]);
-        if (filesystem_mount_partition(dicofsinfo[i], partition[i], partmounts[i], &fstype[i], i, &mountedbyfsa[i])!=0)
-        {   msgprintf(MSG_STACK, "archive_filesystem(%s) failed\n", partition[i]);
+        generate_random_tmpdir(devinfo[i].partmount, PATH_MAX, i);
+        msgprintf(MSG_VERB2, "Mounting filesystem on %s...\n", devinfo[i].devpath);
+        if (filesystem_mount_partition(&devinfo[i], dicofsinfo, i)!=0)
+        {   msgprintf(MSG_STACK, "archive_filesystem(%s) failed\n", devinfo[i].devpath);
             goto do_create_error;
         }
         
         // evaluate the cost of the operation
-        if (lstat64(partmounts[i], &statbuf)!=0)
-        {   sysprintf("cannot lstat64(%s)\n", partmounts[i]);
-            goto do_create_error;
-        }
         u64 cost_evalfs=0;
-        msgprintf(MSG_VERB1, "Analysing filesystem on %s...\n", partition[i]);
-        if (createar_save_directory_wrapper(&save, partmounts[i], "/", (u64)statbuf.st_dev, &cost_evalfs)!=0)
-        {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", partmounts[i]);
+        msgprintf(MSG_VERB1, "Analysing filesystem on %s...\n", devinfo[i].devpath);
+        if (createar_save_directory_wrapper(&save, devinfo[i].partmount, "/", &cost_evalfs)!=0)
+        {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", devinfo[i].partmount);
             goto do_create_error;
         }
-        if (dico_add_u64(dicofsinfo[i], 0, FSYSHEADKEY_TOTALCOST, cost_evalfs)!=0)
+        if (dico_add_u64(dicofsinfo, 0, FSYSHEADKEY_TOTALCOST, cost_evalfs)!=0)
         {   errprintf("dico_add_u64(FSYSHEADKEY_TOTALCOST) failed\n");
             goto do_create_error;
         }
         save.cost_global+=cost_evalfs;
         
         // write filesystem header
-        if (queue_add_header(&g_queue, dicofsinfo[i], FSA_MAGIC_FSIN, FSA_FILESYSID_NULL)!=0)
-        {   errprintf("queue_add_header(FSA_MAGIC_FSIN, %s) failed\n", partition[i]);
+        if (queue_add_header(&g_queue, dicofsinfo, FSA_MAGIC_FSIN, FSA_FILESYSID_NULL)!=0)
+        {   errprintf("queue_add_header(FSA_MAGIC_FSIN, %s) failed\n", devinfo[i].devpath);
             goto do_create_error;
         }
     }
@@ -1213,13 +1184,13 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
     switch (archtype)
     {
         case ARCHTYPE_FILESYSTEMS:// write contents of each filesystem
-            for (i=0; (i < fscount) && (partition[i]!=NULL) && (get_interrupted()==false); i++)
+            for (i=0; (i < argc) && (devinfo[i].devpath!=NULL) && (get_interrupted()==false); i++)
             {
-                msgprintf(MSG_VERB1, "============= archiving filesystem %s =============\n", partition[i]);
+                msgprintf(MSG_VERB1, "============= archiving filesystem %s =============\n", devinfo[i].devpath);
                 save.fsid=i;
                 memset(&save.stats, 0, sizeof(save.stats));
-                if (createar_oper_savefs(&save, partition[i], partmounts[i], fstype[i], mountedbyfsa[i])!=0)
-                {   errprintf("archive_filesystem(%s) failed\n", partition[i]);
+                if (createar_oper_savefs(&save, &devinfo[i])!=0)
+                {   errprintf("archive_filesystem(%s) failed\n", devinfo[i].devpath);
                     goto do_create_error;
                 }
                 if (get_interrupted()==false)
@@ -1229,17 +1200,16 @@ int do_create(char *archive, char **partition, int fscount, int archtype)
             break;
             
         case ARCHTYPE_DIRECTORIES: // one or several directories
-            // there is no filesystem
-            save.fsid=0;
+            save.fsid=0; // there is no filesystem
             save.fstype=0;
             save.objectid=0;
             memset(&save.stats, 0, sizeof(save.stats));
             // write the contents of each directory passed on the command line
-            for (i=0; (i < fscount) && (partition[i]!=NULL) && (get_interrupted()==false); i++)
+            for (i=0; (i < argc) && (argv[i]!=NULL) && (get_interrupted()==false); i++)
             {
-                msgprintf(MSG_VERB1, "============= archiving directory %s =============\n", partition[i]);
-                if (createar_oper_savedir(&save, partition[i])!=0)
-                {   errprintf("archive_filesystem(%s) failed\n", partition[i]);
+                msgprintf(MSG_VERB1, "============= archiving directory %s =============\n", argv[i]);
+                if (createar_oper_savedir(&save, argv[i])!=0)
+                {   errprintf("archive_filesystem(%s) failed\n", argv[i]);
                     goto do_create_error;
                 }
             }
@@ -1273,15 +1243,15 @@ do_create_error:
 do_create_success:
     msgprintf(MSG_DEBUG1, "THREAD-MAIN1: exit\n");
     
-    for (i=0; (i < FSA_MAX_FSPERARCH) && (partmounts[i]); i++)
+    for (i=0; i < FSA_MAX_FSPERARCH; i++)
     {
-        if (mountedbyfsa[i]==true)
+        if (devinfo[i].mountedbyfsa==true)
         {
-            msgprintf(MSG_VERB2, "unmounting [%s] which is mounted on [%s]\n", partition[i], partmounts[i]);
-            if (filesys[fstype[i]].umount(partition[i], partmounts[i])!=0)
-                sysprintf("cannot umount [%s]\n", partmounts[i]);
+            msgprintf(MSG_VERB2, "unmounting [%s] which is mounted on [%s]\n", devinfo[i].devpath, devinfo[i].partmount);
+            if (filesys[devinfo[i].fstype].umount(devinfo[i].devpath, devinfo[i].partmount)!=0)
+                sysprintf("cannot umount [%s]\n", devinfo[i].partmount);
             else
-                rmdir(partmounts[i]); // remove temp dir created by fsarchiver
+                rmdir(devinfo[i].partmount); // remove temp dir created by fsarchiver
         }
     }
     

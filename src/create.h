@@ -18,6 +18,6 @@
 #ifndef __CREATE_H__
 #define __CREATE_H__
 
-int do_create(char *archive, char **partition, int fscount, int archtype);
+int oper_create(char *archive, int argc, char **argv, int archtype);
 
 #endif // __CREATE_H__

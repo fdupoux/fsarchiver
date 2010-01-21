@@ -145,12 +145,12 @@ static struct option const long_options[] =
 
 int process_cmdline(int argc, char **argv)
 {
+    char *partition[FSA_MAX_FSPERARCH];
     char *probemode;
     sigset_t mask_set;
     bool probedetailed=0;
     char *command=NULL;
     char *archive=NULL;
-    char *partition[32];
     char tempbuf[1024];
     char *progname;
     int fscount;
@@ -355,10 +355,10 @@ int process_cmdline(int argc, char **argv)
     switch (cmd)
     {
         case OPER_SAVEFS:
-            ret=do_create(archive, partition, fscount, ARCHTYPE_FILESYSTEMS);
+            ret=oper_create(archive, fscount, partition, ARCHTYPE_FILESYSTEMS);
             break;
         case OPER_SAVEDIR:
-            ret=do_create(archive, partition, fscount, ARCHTYPE_DIRECTORIES);
+            ret=oper_create(archive, fscount, partition, ARCHTYPE_DIRECTORIES);
             break;
         case OPER_RESTFS:
         case OPER_RESTDIR:
