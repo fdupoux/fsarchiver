@@ -41,6 +41,7 @@ int archwriter_init(carchwriter *ai)
 {
     assert(ai);
     memset(ai, 0, sizeof(struct s_archwriter));
+    ai->newarch=false;
     ai->archfd=-1;
     ai->archid=0;
     ai->curvol=0;
@@ -85,6 +86,7 @@ int archwriter_create(carchwriter *ai)
     {   sysprintf ("cannot create archive %s\n", ai->volpath);
         return -1;
     }
+    ai->newarch=true;
     
     if (lockf(ai->archfd, F_LOCK, 0)!=0)
     {   sysprintf("Cannot lock archive file: %s\n", ai->volpath);
@@ -117,10 +119,14 @@ int archwriter_remove(carchwriter *ai)
     assert(ai);
     
     if (ai->archfd >= 0)
+    {
         archwriter_close(ai);
-    
-    unlink(ai->basepath);
-    msgprintf(MSG_FORCE, "removing %s\n", ai->basepath);
+    }
+    if (ai->newarch==true)
+    {
+        unlink(ai->basepath);
+        msgprintf(MSG_FORCE, "removed %s\n", ai->basepath);
+    }
     return 0;
 }
 

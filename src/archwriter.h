@@ -31,6 +31,7 @@ struct s_archwriter
 {   int    archfd; // file descriptor of the current volume (set to -1 when closed)
     u32    archid; // 32bit archive id for checking (random number generated at creation)
     u32    curvol; // current volume number, starts at 0, incremented when we change the volume
+    bool   newarch; // true when the archive has been created by then current process
     char   filefmt[FSA_MAX_FILEFMTLEN]; // file format of that archive
     char   creatver[FSA_MAX_PROGVERLEN]; // fsa version used to create archive
     char   label[FSA_MAX_LABELLEN]; // archive label defined by the user
