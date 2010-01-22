@@ -1,5 +1,5 @@
 Name:		fsarchiver
-Version:	0.6.5
+Version:	0.6.6
 Release:	1%{?dist}
 Summary:	Safe and flexible file-system backup/deployment tool
 
@@ -53,6 +53,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING README THANKS NEWS
 
 %changelog
+* Fri Jan 22 2010 Francois Dupoux <fdupoux@free.fr> - 0.6.6-1
+- Update to 0.6.6
+
 * Thu Jan 07 2010 Francois Dupoux <fdupoux@free.fr> - 0.6.5-1
 - Update to 0.6.5
 
