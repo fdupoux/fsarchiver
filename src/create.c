@@ -1060,9 +1060,10 @@ int createar_oper_savedir(csavear *save, char *rootdir)
 int oper_create(char *archive, int argc, char **argv, int archtype)
 {
     pthread_t thread_comp[FSA_MAX_COMPJOBS];
+    cdico *dicofsinfo[FSA_MAX_FSPERARCH];
     cdevinfo devinfo[FSA_MAX_FSPERARCH];
     pthread_t thread_writer;
-    cdico *dicofsinfo;
+    u64 cost_evalfs=0;
     u64 totalerr=0;
     cdico *dicoend;
     struct stat64 st;
@@ -1092,6 +1093,7 @@ int oper_create(char *archive, int argc, char **argv, int archtype)
         memset(&devinfo[i], 0, sizeof(cdevinfo));
         devinfo[i].mountedbyfsa=false;
         devinfo[i].fstype=-1;
+        dicofsinfo[i]=NULL;
     }
     
     // check that arguments are all block devices when archtype==ARCHTYPE_FILESYSTEMS
@@ -1138,41 +1140,49 @@ int oper_create(char *archive, int argc, char **argv, int archtype)
         goto do_create_error;
     }
     
-    // write one fsinfo header for each filesystem (only if archtype==ARCHTYPE_FILESYSTEMS)
-    for (i=0; (archtype==ARCHTYPE_FILESYSTEMS) && (i < argc) && (argv[i]); i++)
+    // mount and analyse each filesystem (only if archtype==ARCHTYPE_FILESYSTEMS)
+    if (archtype==ARCHTYPE_FILESYSTEMS)
     {
-        if ((dicofsinfo=dico_alloc())==NULL)
-        {   errprintf("dico_alloc() failed\n");
-            goto do_create_error;
+        // mount each partition and get filesystem information
+        for (i=0; (i < argc) && (argv[i]); i++)
+        {
+            if ((dicofsinfo[i]=dico_alloc())==NULL)
+            {   errprintf("dico_alloc() failed\n");
+                goto do_create_error;
+            }
+            
+            snprintf(devinfo[i].devpath, sizeof(devinfo[i].devpath), "%s", argv[i]);
+            
+            generate_random_tmpdir(devinfo[i].partmount, PATH_MAX, i);
+            msgprintf(MSG_VERB2, "Mounting filesystem on %s...\n", devinfo[i].devpath);
+            if (filesystem_mount_partition(&devinfo[i], dicofsinfo[i], i)!=0)
+            {   msgprintf(MSG_STACK, "archive_filesystem(%s) failed\n", devinfo[i].devpath);
+                goto do_create_error;
+            }
         }
         
-        snprintf(devinfo[i].devpath, sizeof(devinfo[i].devpath), "%s", argv[i]);
-        
-        // mount partition and get partition info
-        generate_random_tmpdir(devinfo[i].partmount, PATH_MAX, i);
-        msgprintf(MSG_VERB2, "Mounting filesystem on %s...\n", devinfo[i].devpath);
-        if (filesystem_mount_partition(&devinfo[i], dicofsinfo, i)!=0)
-        {   msgprintf(MSG_STACK, "archive_filesystem(%s) failed\n", devinfo[i].devpath);
-            goto do_create_error;
-        }
-        
-        // evaluate the cost of the operation
-        u64 cost_evalfs=0;
-        msgprintf(MSG_VERB1, "Analysing filesystem on %s...\n", devinfo[i].devpath);
-        if (createar_save_directory_wrapper(&save, devinfo[i].partmount, "/", &cost_evalfs)!=0)
-        {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", devinfo[i].partmount);
-            goto do_create_error;
-        }
-        if (dico_add_u64(dicofsinfo, 0, FSYSHEADKEY_TOTALCOST, cost_evalfs)!=0)
-        {   errprintf("dico_add_u64(FSYSHEADKEY_TOTALCOST) failed\n");
-            goto do_create_error;
-        }
-        save.cost_global+=cost_evalfs;
-        
-        // write filesystem header
-        if (queue_add_header(&g_queue, dicofsinfo, FSA_MAGIC_FSIN, FSA_FILESYSID_NULL)!=0)
-        {   errprintf("queue_add_header(FSA_MAGIC_FSIN, %s) failed\n", devinfo[i].devpath);
-            goto do_create_error;
+        // analyse each filesystem and write its dico
+        for (i=0; (i < argc) && (argv[i]); i++)
+        {
+            // evaluate the cost of the operation
+            cost_evalfs=0;
+            msgprintf(MSG_VERB1, "Analysing filesystem on %s...\n", devinfo[i].devpath);
+            if (createar_save_directory_wrapper(&save, devinfo[i].partmount, "/", &cost_evalfs)!=0)
+            {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", devinfo[i].partmount);
+                goto do_create_error;
+            }
+            if (dico_add_u64(dicofsinfo[i], 0, FSYSHEADKEY_TOTALCOST, cost_evalfs)!=0)
+            {   errprintf("dico_add_u64(FSYSHEADKEY_TOTALCOST) failed\n");
+                goto do_create_error;
+            }
+            save.cost_global+=cost_evalfs;
+            
+            // write filesystem header
+            if (queue_add_header(&g_queue, dicofsinfo[i], FSA_MAGIC_FSIN, FSA_FILESYSID_NULL)!=0)
+            {   errprintf("queue_add_header(FSA_MAGIC_FSIN, %s) failed\n", devinfo[i].devpath);
+                goto do_create_error;
+            }
+            dicofsinfo[i]=NULL;
         }
     }
     
