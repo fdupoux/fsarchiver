@@ -1300,7 +1300,7 @@ filesystem_extract_umount:
     return ret;
 }
 
-int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
+int oper_extract(char *archive, int argc, char **argv, int oper)
 {
     cdico *dicofsinfo[FSA_MAX_FSPERARCH];
     cstrdico *dicoargv[FSA_MAX_FSPERARCH];
@@ -1322,7 +1322,7 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     exar.cost_global=0;
     exar.cost_current=0;
     archreader_init(&exar.ai);
-
+    
     // init misc data struct to zero
     for (i=0; i<FSA_MAX_FSPERARCH; i++)
         dicoargv[i]=NULL;
@@ -1342,13 +1342,13 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     {
         case OPER_RESTFS:
             // convert the arguments from the command line to dico
-            if (convert_argv_to_strdicos(dicoargv, cmdargv)!=0)
+            if (convert_argv_to_strdicos(dicoargv, argv)!=0)
             {   msgprintf(MSG_STACK, "convert_argv_to_dico() failed\n");
                 goto do_extract_error;
             }
             // say to the threadio_readarch thread which filesystems have to be read in archive
             for (i=0; i<FSA_MAX_FSPERARCH; i++)
-                g_fsbitmap[i]=!!(dicoargv[i]!=NULL);
+                g_fsbitmap[i]=!!(i<argc && dicoargv[i]!=NULL);
             break;
             
         case OPER_RESTDIR: // the files are all considered as belonging to fsid==0
@@ -1403,7 +1403,7 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
     }
     
     // check the user did not specify an invalid filesystem id (id >= fscount)
-    for (i=0; i<FSA_MAX_FSPERARCH; i++)
+    for (i=0; (i<argc) && (i<FSA_MAX_FSPERARCH); i++)
     {
         if ((dicoargv[i]!=NULL) && (i >= exar.ai.fscount))
         {   errprintf("invalid filesystem id: [%d]. the filesystem id must be an integer between 0 and %d\n", (int)i, (int)(exar.ai.fscount-1));
@@ -1466,7 +1466,7 @@ int do_extract(char *archive, char *cmdargv[], int fscount, int oper)
         else if (exar.ai.archtype==ARCHTYPE_DIRECTORIES)
         {
             exar.fsid=0;
-            destdir=cmdargv[0];
+            destdir=argv[0];
             if (stat64(destdir, &st)!=0)
             {   
                 switch (errno)

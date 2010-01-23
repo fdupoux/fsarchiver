@@ -20,6 +20,6 @@
 
 #include "dico.h"
 
-int do_extract(char *archive, char *cmdargv[], int fscount, int oper);
+int oper_extract(char *archive, int argc, char **argv, int oper);
 
 #endif // __EXTRACT_H__

@@ -131,19 +131,6 @@ enum {FSAERR_SUCCESS=0,           // success
 #define FSA_MAGIC_FILF           "FiLf" // filedat footer (one per regfile, after the list of data blocks)
 #define FSA_MAGIC_DATF           "DaEn" // data footer (one per file system, at the end of its contents, or after the contents of the flatfiles)
 
-typedef struct s_stats
-{   u64    cnt_regfile;
-    u64    cnt_dir;
-    u64    cnt_symlink;
-    u64    cnt_hardlink;
-    u64    cnt_special;
-    u64    err_regfile;
-    u64    err_dir;
-    u64    err_symlink;
-    u64    err_hardlink;
-    u64    err_special;
-} cstats;
-
 // ------------ global variables ---------------------------
 extern char *valid_magic[];
 

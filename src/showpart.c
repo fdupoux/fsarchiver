@@ -163,7 +163,7 @@ char *partlist_getinfo(char *bufdat, int bufsize, struct s_devinfo *blkdev, int 
     return bufdat;
 }
 
-int partlist_showlist(bool details)
+int oper_probe(bool details)
 {
     struct s_devinfo blkdev[FSA_MAX_BLKDEVICES];
     int diskcount;

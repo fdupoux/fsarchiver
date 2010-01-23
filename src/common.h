@@ -22,6 +22,7 @@
 
 struct timeval;
 struct s_strlist;
+struct s_stats;
 
 int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, int stdoutsize, char *stderrbuf, int stderrsize, char *format, ...);
 int get_parent_dir_time_attrib(char *filepath, char *parentdirbuf, int bufsize, struct timeval *tv);
@@ -46,8 +47,8 @@ int is_magic_valid(char *magic);
 char *strlcat(char *dest, const char *src, int n);
 char *strlcatf(char *dest, int destbufsize, char *format, ...) __attribute__ ((format (printf, 3, 4)));
 int format_stacktrace(char *buffer, int bufsize);
-int stats_show(cstats stats, int fsid);
-u64 stats_errcount(cstats stats);
+int stats_show(struct s_stats, int fsid);
+u64 stats_errcount(struct s_stats stats);
 int exclude_check(struct s_strlist *patlist, char *string);
 int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol);
 

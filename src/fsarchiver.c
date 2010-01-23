@@ -363,10 +363,10 @@ int process_cmdline(int argc, char **argv)
         case OPER_RESTFS:
         case OPER_RESTDIR:
         case OPER_ARCHINFO:
-            ret=do_extract(archive, partition, fscount, cmd);
+            ret=oper_extract(archive, fscount, partition, cmd);
             break;
         case OPER_PROBE:
-            ret=partlist_showlist(probedetailed);
+            ret=oper_probe(probedetailed);
             break;
         default:
             errprintf("[%s] is not a valid command.\n", command);

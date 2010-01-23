@@ -18,6 +18,6 @@
 #ifndef __SHOWPART_H__
 #define __SHOWPART_H__
 
-int partlist_showlist(bool details);
+int oper_probe(bool details);
 
 #endif // __SHOWPART_H__
