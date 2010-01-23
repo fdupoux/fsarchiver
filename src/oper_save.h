@@ -15,11 +15,9 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#ifndef __EXTRACT_H__
-#define __EXTRACT_H__
+#ifndef __OPER_SAVE_H__
+#define __OPER_SAVE_H__
 
-#include "dico.h"
+int oper_save(char *archive, int argc, char **argv, int archtype);
 
-int oper_extract(char *archive, int argc, char **argv, int oper);
-
-#endif // __EXTRACT_H__
+#endif // __OPER_SAVE_H__

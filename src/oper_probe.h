@@ -15,9 +15,9 @@
  * Homepage: http://www.fsarchiver.org
  */
 
-#ifndef __SHOWPART_H__
-#define __SHOWPART_H__
+#ifndef __OPER_PROBE_H__
+#define __OPER_PROBE_H__
 
 int oper_probe(bool details);
 
-#endif // __SHOWPART_H__
+#endif // __OPER_PROBE_H__

@@ -37,7 +37,7 @@
 #include "archwriter.h"
 #include "options.h"
 #include "common.h"
-#include "create.h"
+#include "oper_save.h"
 #include "md5.h"
 #include "strlist.h"
 #include "filesys.h"
@@ -1057,7 +1057,7 @@ int createar_oper_savedir(csavear *save, char *rootdir)
     return 0;
 }
 
-int oper_create(char *archive, int argc, char **argv, int archtype)
+int oper_save(char *archive, int argc, char **argv, int archtype)
 {
     pthread_t thread_comp[FSA_MAX_COMPJOBS];
     cdico *dicofsinfo[FSA_MAX_FSPERARCH];

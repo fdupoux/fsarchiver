@@ -28,9 +28,9 @@
 #include "fsarchiver.h"
 #include "dico.h"
 #include "common.h"
-#include "extract.h"
-#include "create.h"
-#include "showpart.h"
+#include "oper_restore.h"
+#include "oper_save.h"
+#include "oper_probe.h"
 #include "archinfo.h"
 #include "syncthread.h"
 #include "comp_lzo.h"
@@ -355,15 +355,15 @@ int process_cmdline(int argc, char **argv)
     switch (cmd)
     {
         case OPER_SAVEFS:
-            ret=oper_create(archive, fscount, partition, ARCHTYPE_FILESYSTEMS);
+            ret=oper_save(archive, fscount, partition, ARCHTYPE_FILESYSTEMS);
             break;
         case OPER_SAVEDIR:
-            ret=oper_create(archive, fscount, partition, ARCHTYPE_DIRECTORIES);
+            ret=oper_save(archive, fscount, partition, ARCHTYPE_DIRECTORIES);
             break;
         case OPER_RESTFS:
         case OPER_RESTDIR:
         case OPER_ARCHINFO:
-            ret=oper_extract(archive, fscount, partition, cmd);
+            ret=oper_restore(archive, fscount, partition, cmd);
             break;
         case OPER_PROBE:
             ret=oper_probe(probedetailed);

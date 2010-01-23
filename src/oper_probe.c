@@ -24,7 +24,7 @@
 
 #include "fsarchiver.h"
 #include "devinfo.h"
-#include "showpart.h"
+#include "oper_probe.h"
 #include "common.h"
 #include "error.h"
 

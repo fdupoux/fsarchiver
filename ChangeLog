@@ -5,7 +5,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
   - Partitions already mounted are remounted with MS_BIND to have access to files hidden by mounted filesystems 
   - Analyse filesystems only when they are all accessible to prevent having to wait and then get an error
   - Moved management of data files (open/write/md5sum) from extract.c to a separate object (datafile.c)
-  - Important internal changes and simplifications especially in create.c (invisible changes for the end user)
+  - Important internal changes, renaming of functions/files, and simplifications for better consistency
 * 0.6.5 (2010-01-07):
   - Fixed compilation issues (pkg-config problems especially on systems with e2fsprogs < 1.41.2)
   - Retry with the default level (gzip -6) when compression of a data block lacks memory with bzip2/lzma

@@ -32,7 +32,7 @@
 #include "dico.h"
 #include "common.h"
 #include "options.h"
-#include "extract.h"
+#include "oper_restore.h"
 #include "archreader.h"
 #include "archinfo.h"
 #include "md5.h"
@@ -1300,7 +1300,7 @@ filesystem_extract_umount:
     return ret;
 }
 
-int oper_extract(char *archive, int argc, char **argv, int oper)
+int oper_restore(char *archive, int argc, char **argv, int oper)
 {
     cdico *dicofsinfo[FSA_MAX_FSPERARCH];
     cstrdico *dicoargv[FSA_MAX_FSPERARCH];
