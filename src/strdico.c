@@ -79,7 +79,7 @@ int strdico_destroy(cstrdico *d)
 }
 
 
-int strdico_set_valid_keys(cstrdico *d, char *keys)
+int strdico_set_valid_keys(cstrdico *d, const char *keys)
 {
     assert(d);
     
@@ -91,7 +91,7 @@ int strdico_set_valid_keys(cstrdico *d, char *keys)
     return FSAERR_SUCCESS;
 }
 
-int strdico_parse_string(cstrdico *d, char *strdefs)
+int strdico_parse_string(cstrdico *d, const char *strdefs)
 {
     char *bakdefs;
     char *saveptr;
@@ -142,7 +142,7 @@ int strdico_parse_string(cstrdico *d, char *strdefs)
     return FSAERR_SUCCESS;
 }
 
-int strdico_set_value(cstrdico *d, char *key, char *value)
+int strdico_set_value(cstrdico *d, const char *key, const char *value)
 {
     cstrdicoitem *existingitem;
     cstrdicoitem *lnew;
@@ -243,7 +243,7 @@ int strdico_set_value(cstrdico *d, char *key, char *value)
     return FSAERR_SUCCESS;
 }
 
-int strdico_get_string(cstrdico *d, char *outbuffer, int outbufsize, char *key)
+int strdico_get_string(cstrdico *d, char *outbuffer, int outbufsize, const char *key)
 {
     cstrdicoitem *item=NULL;
     
@@ -267,7 +267,7 @@ int strdico_get_string(cstrdico *d, char *outbuffer, int outbufsize, char *key)
     return FSAERR_ENOENT;
 }
 
-int strdico_get_s64(cstrdico *d, s64 *value, char *key)
+int strdico_get_s64(cstrdico *d, s64 *value, const char *key)
 {
     char buffer[1024];
     char *endptr=NULL;

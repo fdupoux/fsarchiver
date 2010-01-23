@@ -37,11 +37,11 @@ struct s_strdicoitem
 
 cstrdico *strdico_alloc();
 int strdico_destroy(cstrdico *d);
-int strdico_set_valid_keys(cstrdico *d, char *keys);
-int strdico_parse_string(cstrdico *d, char *strdefs);
-int strdico_set_value(cstrdico *d, char *key, char *value);
-int strdico_get_string(cstrdico *d, char *outbuffer, int outbufsize, char *key);
-int strdico_get_s64(cstrdico *d, s64 *value, char *key);
+int strdico_set_valid_keys(cstrdico *d, const char *keys);
+int strdico_parse_string(cstrdico *d, const char *strdefs);
+int strdico_set_value(cstrdico *d, const char *key, const char *value);
+int strdico_get_string(cstrdico *d, char *outbuffer, int outbufsize, const char *key);
+int strdico_get_s64(cstrdico *d, s64 *value, const char *key);
 int strdico_print(cstrdico *d);
 
 #endif // __STRDICO_H__
