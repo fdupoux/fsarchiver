@@ -246,7 +246,7 @@ backup_obj_regfile_unique_error:
 int createar_item_xattr(csavear *save, char *root, char *relpath, struct stat64 *statbuf, cdico *d)
 {
     char fullpath[PATH_MAX];
-    char value[65535];
+    char *valbuf=NULL;
     char buffer[4096];
     s64 attrsize;
     int valsize=0;
@@ -269,33 +269,42 @@ int createar_item_xattr(csavear *save, char *root, char *relpath, struct stat64 
         len=strlen(buffer+pos)+1;
         attrsize=lgetxattr(fullpath, buffer+pos, NULL, 0);
         msgprintf(MSG_VERB2, "            xattr:file=[%s], attrid=%d, name=[%s], size=%ld\n", relpath, (int)attrcnt, buffer+pos, (long)attrsize);
-        if (attrsize>0 && attrsize>(s64)sizeof(value))
+        if ((attrsize>0) && (attrsize>65535LL))
         {   errprintf("file [%s] has an xattr [%s] with data too big (size=%ld, maxsize=64k)\n", relpath, buffer+pos, (long)attrsize);
             ret=-1;
             continue; // copy the next xattr
         }
-        memset(value, 0, sizeof(value));
         errno=0;
-        valsize=lgetxattr(fullpath, buffer+pos, value, sizeof(value));
+        if ((valbuf=malloc(attrsize+1))==NULL)
+        {   sysprintf("malloc(%ld) failed\n", (long)(attrsize+1));
+            ret=-1;
+            continue; // ignore the current xattr
+        }
+        errno=0;
+        valsize=lgetxattr(fullpath, buffer+pos, valbuf, attrsize);
+        msgprintf(MSG_VERB2, "            xattr:lgetxattr(%s,%s)=%d\n", relpath, buffer+pos, valsize);
         if (valsize>=0)
         {
             msgprintf(MSG_VERB2,  "            xattr:lgetxattr(%s,%s)=%d: [%s]\n", relpath, buffer+pos, valsize, buffer+pos);
-            msgprintf(MSG_DEBUG2, "            xattr:lgetxattr(%s)=%d: [%s]=[%s]\n", relpath, valsize, buffer+pos, value);
+            msgprintf(MSG_DEBUG2, "            xattr:lgetxattr(%s)=%d: [%s]=[%s]\n", relpath, valsize, buffer+pos, valbuf);
             msgprintf(MSG_DEBUG2, "            xattr:dico_add_string(%s, xattr): key=%d, name=[%s]\n", relpath, (int)(2*attrcnt)+0, buffer+pos);
             dico_add_string(d, DICO_OBJ_SECTION_XATTR, (2*attrcnt)+0, buffer+pos);
             msgprintf(MSG_DEBUG2, "            xattr:dico_add_data(%s, xattr): key=%d, data (size=[%d])\n", relpath, (int)(2*attrcnt)+1, valsize);
-            dico_add_data(d, DICO_OBJ_SECTION_XATTR, (2*attrcnt)+1, value, valsize);
+            dico_add_data(d, DICO_OBJ_SECTION_XATTR, (2*attrcnt)+1, valbuf, valsize);
             attrcnt++;
+            free(valbuf);
         }
         else if (errno!=ENOATTR) // if the attribute exists and we cannot read it
         {
             sysprintf("            xattr:lgetxattr(%s,%s)=%d\n", relpath, buffer+pos, valsize);
             ret=-1;
+            free(valbuf);
             continue; // copy the next xattr
         }
         else if (errno==ENOATTR) // if the attribute does not exist
         {
             msgprintf(MSG_VERB2, "            xattr:lgetxattr-win(%s,%s)=-1: errno==ENOATTR\n", relpath, buffer+pos);
+            free(valbuf);
         }
     }
     
