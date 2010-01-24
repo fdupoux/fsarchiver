@@ -10,7 +10,7 @@ on a partition which has a different size and it can be restored on a
 different file-system. Unlike tar/dar, FSArchiver also creates the 
 file-system when it extracts the data to partitions. Everything is 
 checksummed in the archive in order to protect the data. If the archive 
-is corrupt, you just loose the current file, not the whole archive. 
+is corrupt, you just lose the current file, not the whole archive. 
 Fsarchiver is released under the GPL-v2 license. You should read the 
 Quick start guide if you are using FSArchiver for the first time.
 
@@ -65,7 +65,7 @@ archive. That way we can identify which block of your file is damaged. Once a
 file has been restored, the md5 checksum of the whole file is compared to the 
 original md5. It's a 128bit checksum, so it's will detect all file corruptions.
 In case one file is damaged, FSArchiver will restore all the other files from 
-your archive, so you won't loose all your data. It's very different from 
+your archive, so you won't lose all your data. It's very different from 
 tar.gz where the whole tar is compressed with gzip. In that case, the data 
 which are written after the corruption are lost. FSArchiver-0.2.3 and newer 
 version are able to ignore corrupt contents in an archive file, so all the 
