@@ -137,12 +137,12 @@ struct s_diskinfo partinfo[]=
 {
     {false,    "[%-16s] ",    "[=====DEVICE=====] "},
     {false,    "[%-11s] ",    "[==FILESYS==] "},
-    {false,    "[%-15s] ",    "[=====LABEL=====] "},
+    {false,    "[%-17s] ",    "[======LABEL======] "},
     {false,    "[%12s] ",     "[====SIZE====] "},
     {false,    "[%3s] ",      "[MAJ] "},
     {false,    "[%3s] ",      "[MIN] "},
     {true,     "[%-36s] ",    "[==============LONGNAME==============] "},
-    {true,     "[%-40s] ",    "[==================UUID==================] "},
+    {true,     "[%-38s] ",    "[=================UUID=================] "},
     {false,    "",            ""}
 };
 
@@ -181,10 +181,10 @@ int oper_probe(bool details)
     // ---- 1. show physical disks
     if (diskcount>0)
     {
-        msgprintf(MSG_FORCE, "[======DISK======] [============NAME=============] [====SIZE====] [MAJ] [MIN]\n");
+        msgprintf(MSG_FORCE, "[======DISK======] [=============NAME==============] [====SIZE====] [MAJ] [MIN]\n");
         for (i=0; i < res; i++)
             if (blkdev[i].devtype==BLKDEV_PHYSDISK)
-                msgprintf(MSG_FORCE, "[%-16s] [%-29s] [%12s] [%3d] [%3d]\n", blkdev[i].devname, 
+                msgprintf(MSG_FORCE, "[%-16s] [%-31s] [%12s] [%3d] [%3d]\n", blkdev[i].devname, 
                     blkdev[i].name, blkdev[i].txtsize, blkdev[i].major, blkdev[i].minor);
         msgprintf(MSG_FORCE, "\n");
     }
