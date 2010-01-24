@@ -105,7 +105,7 @@ int is_filedir_excluded(char *relpath)
 }
 
 // convert an array of strings "id=x,dest=/dev/xxx,..." to an array of strdico
-int convert_argv_to_strdicos(cstrdico *dicoargv[], int argc, char *cmdargv[], int fscount)
+int convert_argv_to_strdicos(cstrdico *dicoargv[], int argc, char *cmdargv[])
 {
     cstrdico *tmpdico=NULL;
     char buffer[1024];
@@ -133,8 +133,8 @@ int convert_argv_to_strdicos(cstrdico *dicoargv[], int argc, char *cmdargv[], in
             return -1;
         }
         fsid=temp64;
-        if ((fsid<0) || (fsid>fscount-1))
-        {   errprintf("invalid filesystem id [%d]: it must be an integer between 0 and %d\n", fsid, fscount-1);
+        if ((fsid<0) || (fsid>FSA_MAX_FSPERARCH-1))
+        {   errprintf("invalid filesystem id [%d]: it must match a valid filesystem id as shown by archinfo\n", fsid);
             strdico_destroy(tmpdico);
             return -1;
         }
@@ -1337,6 +1337,25 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     // set archive path
     snprintf(exar.ai.basepath, PATH_MAX, "%s", archive);
     
+    // convert the command line arguments to dicos and init g_fsbitmap
+    switch (oper)
+    {
+        case OPER_RESTFS:
+            // convert the arguments from the command line to dico
+            if (convert_argv_to_strdicos(dicoargv, argc, argv)!=0)
+            {   msgprintf(MSG_STACK, "convert_argv_to_dico() failed\n");
+                goto do_extract_error;
+            }
+            // say to the threadio_readarch thread which filesystems have to be read in archive
+            for (i=0; i<FSA_MAX_FSPERARCH; i++)
+                g_fsbitmap[i]=!!(dicoargv[i]!=NULL);
+            break;
+            
+        case OPER_RESTDIR: // the files are all considered as belonging to fsid==0
+            g_fsbitmap[0]=1;
+            break;
+    }
+
     // create decompression threads
     for (i=0; (i<g_options.compressjobs) && (i<FSA_MAX_COMPJOBS); i++)
     {
@@ -1357,26 +1376,7 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     {   msgprintf(MSG_STACK, "read_mainhead(%s) failed\n", archive);
         goto do_extract_error;
     }
-    
-    // convert the command line arguments to dicos and init g_fsbitmap
-    switch (oper)
-    {
-        case OPER_RESTFS:
-            // convert the arguments from the command line to dico
-            if (convert_argv_to_strdicos(dicoargv, argc, argv, exar.ai.fscount)!=0)
-            {   msgprintf(MSG_STACK, "convert_argv_to_dico() failed\n");
-                goto do_extract_error;
-            }
-            // say to the threadio_readarch thread which filesystems have to be read in archive
-            for (i=0; i<FSA_MAX_FSPERARCH; i++)
-                g_fsbitmap[i]=!!(dicoargv[i]!=NULL);
-            break;
             
-        case OPER_RESTDIR: // the files are all considered as belonging to fsid==0
-            g_fsbitmap[0]=1;
-            break;
-    }
-        
     if (oper==OPER_ARCHINFO && archinfo_show_mainhead(&exar.ai, dicomainhead)!=0)
     {     errprintf("archinfo_show_mainhead(%s) failed\n", archive);
         goto do_extract_error;
@@ -1403,7 +1403,7 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     }
     
     // check the user did not specify an invalid filesystem id (id >= fscount)
-    for (i=0; (i<argc) && (i<FSA_MAX_FSPERARCH); i++)
+    for (i=0; (i<FSA_MAX_FSPERARCH); i++)
     {
         if ((dicoargv[i]!=NULL) && (i >= exar.ai.fscount))
         {   errprintf("invalid filesystem id: [%d]. the filesystem id must be an integer between 0 and %d\n", (int)i, (int)(exar.ai.fscount-1));
