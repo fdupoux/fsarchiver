@@ -1348,7 +1348,7 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
             }
             // say to the threadio_readarch thread which filesystems have to be read in archive
             for (i=0; i<FSA_MAX_FSPERARCH; i++)
-                g_fsbitmap[i]=!!(i<argc && dicoargv[i]!=NULL);
+                g_fsbitmap[i]=!!(dicoargv[i]!=NULL);
             break;
             
         case OPER_RESTDIR: // the files are all considered as belonging to fsid==0
