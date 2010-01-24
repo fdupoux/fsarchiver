@@ -53,7 +53,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING README THANKS NEWS
 
 %changelog
-* Fri Jan 22 2010 Francois Dupoux <fdupoux@free.fr> - 0.6.6-1
+* Sun Jan 24 2010 Francois Dupoux <fdupoux@free.fr> - 0.6.6-1
 - Update to 0.6.6
 
 * Thu Jan 07 2010 Francois Dupoux <fdupoux@free.fr> - 0.6.5-1

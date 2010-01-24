@@ -1,6 +1,6 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
-* 0.6.6:
+* 0.6.6 (2010-01-24):
   - Fix: don't remove the archive file when savefs/savedir fails because the archive already exists
   - Partitions already mounted are remounted with MS_BIND to have access to files hidden by mounted filesystems 
   - Analyse filesystems only when they are all accessible to prevent having to wait and then get an error
