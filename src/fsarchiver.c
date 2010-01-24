@@ -90,7 +90,7 @@ void usage(char *progname, bool examples)
     
     if (examples==true)
     {
-        msgprintf(MSG_FORCE, "Examples:\n");
+        msgprintf(MSG_FORCE, "<examples>\n");
         msgprintf(MSG_FORCE, " * \e[1msave only one filesystem (/dev/sda1) to an archive:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive1.fsa /dev/sda1\n");
         msgprintf(MSG_FORCE, " * \e[1msave two filesystems (/dev/sda1 and /dev/sdb1) to an archive:\e[0m\n");
