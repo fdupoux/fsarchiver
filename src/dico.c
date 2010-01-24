@@ -326,7 +326,7 @@ int dico_show(cdico *d, u8 section, char *debugtxt)
                         snprintf(text, sizeof(text), "type=unknown");
                         break;
                 }
-                strlcat(buffer, text, sizeof(buffer));
+                strlcatf(buffer, sizeof(buffer) ,"%s", text);
                 msgprintf(MSG_FORCE, "%s\n", buffer);
             }
         }

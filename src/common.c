@@ -60,7 +60,7 @@ void concatenate_paths(char *buffer, int maxbufsize, char *p1, char *p2)
     *(buffer++)='/';
     while (*p2=='/')
         p2++;
-    strlcat(buffer, p2, maxbufsize);
+    strlcatf(buffer, maxbufsize, "%s", p2);
 }
 
 char *format_size(u64 size, char *text, int max, char units)
@@ -485,7 +485,7 @@ char *format_time(char *buffer, int bufsize, u64 t)
 }
 
 // replacement for strncat() where we can't specify the destbuf size
-char *strlcat(char *dest, const char *src, int n)
+/*char *mystrlcat(char *dest, const char *src, int n)
 {
     int i, pos;
     
@@ -493,7 +493,7 @@ char *strlcat(char *dest, const char *src, int n)
         dest[i] = src[pos];
     dest[i]=0;
     return dest;
-}
+}*/
 
 // add a formatted string at the end of a buffer that already contains a string
 char *strlcatf(char *dest, int destbufsize, char *format, ...)

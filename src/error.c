@@ -56,7 +56,7 @@ int fsaprintf(int level, bool showerrno, bool showloc, const char *file, const c
         va_start(ap, format);
         vsnprintf(temp, sizeof(temp), format, ap);
         va_end(ap);
-        strlcat(buffer, temp, sizeof(buffer));
+        strlcatf(buffer, sizeof(buffer), "%s", temp);
         
         // 4. show message on screen
         if (msgscreen)
