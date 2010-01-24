@@ -59,7 +59,6 @@ void usage(char *progname, bool examples)
     
     msgprintf(MSG_FORCE, "====> fsarchiver version %s (%s) - http://www.fsarchiver.org <====\n", FSA_VERSION, FSA_RELDATE);
     msgprintf(MSG_FORCE, "Distributed under the GPL v2 license (GNU General Public License v2).\n");
-    msgprintf(MSG_FORCE, "<usage>\n");
     msgprintf(MSG_FORCE, " * usage: %s [<options>] <command> <archive> [<part1> [<part2> [...]]]\n", progname);
     msgprintf(MSG_FORCE, "<commands>\n");
     msgprintf(MSG_FORCE, " * savefs: save filesystems to an archive file (backup a partition to a file)\n");
@@ -67,16 +66,16 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " * savedir: save directories to the archive (similar to a compressed tarball)\n");
     msgprintf(MSG_FORCE, " * restdir: restore data from an archive which is not based on a filesystem\n");
     msgprintf(MSG_FORCE, " * archinfo: show information about an existing archive file and its contents\n");
-    msgprintf(MSG_FORCE, " * probe simple|detailed: show list of filesystems detected on the disks\n");
+    msgprintf(MSG_FORCE, " * probe [detailed]: show list of filesystems detected on the disks\n");
     msgprintf(MSG_FORCE, "<options>\n");
     msgprintf(MSG_FORCE, " -o: overwrite the archive if it already exists instead of failing\n");
     msgprintf(MSG_FORCE, " -v: verbose mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -d: debug mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -A: allow to save a filesystem which is mounted in read-write (live backup)\n");
-    msgprintf(MSG_FORCE, " -a: allow to run savefs when partition mounted without the acl/xattr options\n");
+    msgprintf(MSG_FORCE, " -a: allow running savefs when partition mounted without the acl/xattr options\n");
     msgprintf(MSG_FORCE, " -e <pattern>: exclude files and directories that match that pattern\n");
     msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
-    msgprintf(MSG_FORCE, " -z <level>: valid compression level are between 1 (very fast) and 9 (very good)\n");
+    msgprintf(MSG_FORCE, " -z <level>: compression level from 1 (very fast)  to  9 (very good) default=3\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one compression thread. useful on multi-core cpu\n");
 #ifdef OPTION_CRYPTO_SUPPORT
@@ -84,43 +83,41 @@ void usage(char *progname, bool examples)
 #endif // OPTION_CRYPTO_SUPPORT
     msgprintf(MSG_FORCE, " -h: show help and information about how to use fsarchiver with examples\n");
     msgprintf(MSG_FORCE, " -V: show program version and exit\n");
-    msgprintf(MSG_FORCE, "Support for optional features: (enabled or disabled during compilation):\n");
-    msgprintf(MSG_FORCE, " * support for lzo compression:............%s\n", (lzo==true)?"yes":"no");
-    msgprintf(MSG_FORCE, " * support for lzma compression:...........%s\n", (lzma==true)?"yes":"no");
-    msgprintf(MSG_FORCE, " * support for encryption:.................%s\n", (crypto==true)?"yes":"no");
-    msgprintf(MSG_FORCE, "Warnings:\n");
-    msgprintf(MSG_FORCE, " * fsarchiver is still in development, don't use it for critical data yet.\n");
+    msgprintf(MSG_FORCE, "<information>\n");
+    msgprintf(MSG_FORCE, " * Support included for: lzo=%s, lzma=%s, encryption=%s\n",
+              (lzo==true)?"yes":"no", (lzma==true)?"yes":"no", (crypto==true)?"yes":"no");
+    msgprintf(MSG_FORCE, " * fsarchiver is still in development, don't use it for production.\n");
     
     if (examples==true)
     {
         msgprintf(MSG_FORCE, "Examples:\n");
-        msgprintf(MSG_FORCE, " * save only one filesystem (/dev/sda1) to an archive:\n");
+        msgprintf(MSG_FORCE, " * \e[1msave only one filesystem (/dev/sda1) to an archive:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive1.fsa /dev/sda1\n");
-        msgprintf(MSG_FORCE, " * save two filesystems (/dev/sda1 and /dev/sdb1) to an archive:\n");
+        msgprintf(MSG_FORCE, " * \e[1msave two filesystems (/dev/sda1 and /dev/sdb1) to an archive:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive2.fsa /dev/sda1 /dev/sdb1\n");
-        msgprintf(MSG_FORCE, " * restore the first filesystem from an archive (first = number 0):\n");
+        msgprintf(MSG_FORCE, " * \e[1mrestore the first filesystem from an archive (first = number 0):\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive2.fsa id=0,dest=/dev/sda1\n");
-        msgprintf(MSG_FORCE, " * restore the second filesystem from an archive (second = number 1):\n");
+        msgprintf(MSG_FORCE, " * \e[1mrestore the second filesystem from an archive (second = number 1):\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive2.fsa id=1,dest=/dev/sdb1\n");
-        msgprintf(MSG_FORCE, " * restore two filesystems from an archive (number 0 and 1):\n");
+        msgprintf(MSG_FORCE, " * \e[1mrestore two filesystems from an archive (number 0 and 1):\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/arch2.fsa id=0,dest=/dev/sda1 id=1,dest=/dev/sdb1\n");
-        msgprintf(MSG_FORCE, " * restore a filesystem from an archive and convert it to reiserfs:\n");
+        msgprintf(MSG_FORCE, " * \e[1mrestore a filesystem from an archive and convert it to reiserfs:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs\n");
-        msgprintf(MSG_FORCE, " * save the contents of /usr/src/linux to an archive (similar to tar):\n");
+        msgprintf(MSG_FORCE, " * \e[1msave the contents of /usr/src/linux to an archive (similar to tar):\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savedir /data/linux-sources.fsa /usr/src/linux\n");
-        msgprintf(MSG_FORCE, " * save a filesystem (/dev/sda1) to an archive split into volumes of 680MB:\n");
+        msgprintf(MSG_FORCE, " * \e[1msave a filesystem (/dev/sda1) to an archive split into volumes of 680MB:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -s 680 /data/myarchive1.fsa /dev/sda1\n");
-        msgprintf(MSG_FORCE, " * save a filesystem and exclude all files/dirs called 'pagefile.*'\n");
+        msgprintf(MSG_FORCE, " * \e[1msave a filesystem and exclude all files/dirs called 'pagefile.*':\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive.fsa /dev/sda1 --exclude='pagefile.*'\n");
-        msgprintf(MSG_FORCE, " * generic exclude for 'share' such as '/usr/share' and '/usr/local/share':\n");
+        msgprintf(MSG_FORCE, " * \e[1mgeneric exclude for 'share' such as '/usr/share' and '/usr/local/share':\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive.fsa --exclude=share\n");
-        msgprintf(MSG_FORCE, " * absolute exclude valid for '/usr/share' but not for '/usr/local/share'\n");
+        msgprintf(MSG_FORCE, " * \e[1mabsolute exclude valid for '/usr/share' but not for '/usr/local/share':\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive.fsa --exclude=/usr/share\n");
-        msgprintf(MSG_FORCE, " * save a filesystem (/dev/sda1) to an encrypted archive:\n");
+        msgprintf(MSG_FORCE, " * \e[1msave a filesystem (/dev/sda1) to an encrypted archive:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -c mypassword /data/myarchive1.fsa /dev/sda1\n");
-        msgprintf(MSG_FORCE, " * extract an archive made of simple files to /tmp/extract:\n");
+        msgprintf(MSG_FORCE, " * \e[1mextract an archive made of simple files to /tmp/extract:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restdir /data/linux-sources.fsa /tmp/extract\n");
-        msgprintf(MSG_FORCE, " * show information about an archive and its file systems:\n");
+        msgprintf(MSG_FORCE, " * \e[1mshow information about an archive and its file systems:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver archinfo /data/myarchive2.fsa\n");
     }
 }
@@ -204,7 +201,7 @@ int process_cmdline(int argc, char **argv)
                 g_options.compressjobs=atoi(optarg);
                 if (g_options.compressjobs<1 || g_options.compressjobs>FSA_MAX_COMPJOBS)
                 {
-                    errprintf("[%s] is not a valid job number. Must be between 1 and %d\n", optarg, FSA_MAX_COMPJOBS);
+                    errprintf("[%s] is not a valid number of jobs. Must be between 1 and %d\n", optarg, FSA_MAX_COMPJOBS);
                     usage(progname, false);
                     return 1;
                 }
@@ -236,7 +233,7 @@ int process_cmdline(int argc, char **argv)
                 if (options_select_compress_level(g_options.fsacomplevel)<0)
                     return -1;
                 if (g_options.fsacomplevel>=8)
-                    msgprintf(MSG_FORCE, "High compression levels may require a huge amount of memory\n"
+                    msgprintf(MSG_FORCE, "Compression levels >= 8 may require a huge amount of memory\n"
                         "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
                 break;
             case 'c': // encryption
@@ -249,7 +246,7 @@ int process_cmdline(int argc, char **argv)
                 }
                 snprintf((char*)g_options.encryptpass, FSA_MAX_PASSLEN, "%s", optarg);
 #else // OPTION_CRYPTO_SUPPORT
-                errprintf("support for encryption has been disabled at compilation, cannot use that option.\n");
+                errprintf("Encryption was not included in this version during compilation, cannot continue.\n");
                 return 1;
 #endif // OPTION_CRYPTO_SUPPORT
                 break;
@@ -270,7 +267,7 @@ int process_cmdline(int argc, char **argv)
     
     // in all cases we need at least 1 parameters
     if (argc < 1)
-    {   fprintf(stderr, "the first argument must be a command.\n");
+    {   fprintf(stderr, "No arguments provided, cannot continue\n");
         usage(progname, false);
         return -1;
     }
@@ -306,7 +303,7 @@ int process_cmdline(int argc, char **argv)
     }
     else if (strcmp(command, "probe")==0)
     {   cmd=OPER_PROBE;
-        argcok=(argc==1);
+        argcok=(argc<=1);
     }
     else // command not found
     {   errprintf("[%s] is not a valid command.\n", command);
@@ -316,30 +313,31 @@ int process_cmdline(int argc, char **argv)
     
     // check there are enough parameters on the cmd line
     if (argcok!=true)
-    {   errprintf("invalid arguments on the command line\n");
+    {   errprintf("invalid number of arguments.\n");
         usage(progname, false);
         return -1;
     }
     
     // commands that require an archive as the first argument
-    if (cmd==OPER_SAVEFS || cmd==OPER_RESTFS || cmd==OPER_SAVEDIR || cmd==OPER_RESTDIR || cmd==OPER_ARCHINFO)
+    switch (cmd)
     {
-        archive=*argv++, argc--;
-    }
-    else if (cmd==OPER_PROBE)
-    {
-        probemode=*argv++, argc--;
-        if (strcmp(probemode, "simple")==0)
-        {   probedetailed=false;
-        }
-        else if (strcmp(probemode, "detailed")==0)
-        {   probedetailed=true;
-        }
-        else
-        {   errprintf("command 'probe' expects one argument: it must be either 'simple' or 'detailed'\n");
-            usage(progname, false);
-            return -1;
-        }
+        case OPER_SAVEFS:
+        case OPER_RESTFS:
+        case OPER_SAVEDIR:
+        case OPER_RESTDIR:
+        case OPER_ARCHINFO:
+            archive=*argv++, argc--;
+            break;
+        case OPER_PROBE:
+            probedetailed=false; // do "simple" by default
+            if (g_options.verboselevel>0)
+                probedetailed=true;
+            if (argc>0)
+            {   probemode=*argv++, argc--;
+                if (strcmp(probemode, "detailed")==0)
+                    probedetailed=true;
+            }
+            break;
     }
     
     // list of partitions to backup/restore
