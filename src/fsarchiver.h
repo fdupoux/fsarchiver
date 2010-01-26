@@ -54,7 +54,7 @@ enum {DISKITEMKEY_NULL=0, DISKITEMKEY_OBJECTID, DISKITEMKEY_PATH, DISKITEMKEY_OB
       DISKITEMKEY_SYMLINK, DISKITEMKEY_HARDLINK, DISKITEMKEY_RDEV, DISKITEMKEY_MODE, 
       DISKITEMKEY_SIZE, DISKITEMKEY_UID, DISKITEMKEY_GID, DISKITEMKEY_ATIME, DISKITEMKEY_MTIME,
       DISKITEMKEY_MD5SUM, DISKITEMKEY_MULTIFILESCOUNT, DISKITEMKEY_MULTIFILESOFFSET,
-      DISKITEMKEY_LINKTARGETTYPE};
+      DISKITEMKEY_LINKTARGETTYPE, DISKITEMKEY_FLAGS};
 
 enum {BLOCKHEADITEMKEY_NULL=0, BLOCKHEADITEMKEY_REALSIZE, BLOCKHEADITEMKEY_BLOCKOFFSET, 
       BLOCKHEADITEMKEY_COMPRESSALGO, BLOCKHEADITEMKEY_ENCRYPTALGO, BLOCKHEADITEMKEY_ARSIZE, 
@@ -106,11 +106,11 @@ enum {FSAERR_SUCCESS=0,           // success
 #define FSA_MAX_QUEUESIZE        32
 #define FSA_MAX_BLKSIZE          921600
 #define FSA_DEF_BLKSIZE          262144
-#define FSA_DEF_COMPRESS_ALGO    COMPRESS_GZIP // compress using gzip by default
-#define FSA_DEF_COMPRESS_LEVEL   6             // compress with "gzip -6" by default
-#define FSA_MAX_SMALLFILECOUNT   512      // there can be up to FSA_MAX_SMALLFILECOUNT files copied in a single data block 
-#define FSA_MAX_SMALLFILESIZE    131072   // files smaller than that will be grouped with other small files in a single data block
-#define FSA_COST_PER_FILE        16384    // how much it cost to copy an empty file/dir/link: used to eval the progress bar
+#define FSA_DEF_COMPRESS_ALGO    COMPRESS_GZIP  // compress using gzip by default
+#define FSA_DEF_COMPRESS_LEVEL   6              // compress with "gzip -6" by default
+#define FSA_MAX_SMALLFILECOUNT   512            // there can be up to FSA_MAX_SMALLFILECOUNT files copied in a single data block 
+#define FSA_MAX_SMALLFILESIZE    131072         // files smaller than that will be grouped with other small files in a single data block
+#define FSA_COST_PER_FILE        16384          // how much it cost to copy an empty file/dir/link: used to eval the progress bar
 
 #define FSA_MAX_LABELLEN         512
 #define FSA_MIN_PASSLEN          6
@@ -118,6 +118,8 @@ enum {FSAERR_SUCCESS=0,           // success
 
 #define FSA_FILESYSID_NULL       0xFFFF
 #define FSA_CHECKPASSBUF_SIZE    4096
+
+#define FSA_FILEFLAGS_SPARSE     1<<0           // set when a regfile is a sparse file
 
 // ----------------------------- fsarchiver magics --------------------------------------------------
 #define FSA_SIZEOF_MAGIC         4

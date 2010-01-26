@@ -37,6 +37,7 @@ struct s_datafile
 {   int  fd; // file descriptor
     bool simul; // simulation: don't write anything if true
     bool open; // true when file is open even if simulation
+    bool sparse; // true if that's a sparse file
     char path[PATH_MAX]; // path to file
     struct md5_ctx md5ctx; // struct for md5
 };
@@ -50,6 +51,7 @@ cdatafile *datafile_alloc()
     f->fd=-1;
     f->simul=false;
     f->open=false;
+    f->sparse=false;
     return f;
 }
 
@@ -64,7 +66,7 @@ int datafile_destroy(cdatafile *f)
     return 0;
 }
 
-int datafile_open_write(cdatafile *f, char *path, bool simul)
+int datafile_open_write(cdatafile *f, char *path, bool simul, bool sparse)
 {
     assert(f);
     
@@ -92,7 +94,20 @@ int datafile_open_write(cdatafile *f, char *path, bool simul)
     snprintf(f->path, PATH_MAX, "%s", path);
     f->simul=simul;
     f->open=true;
+    f->sparse=sparse;
     return 0;
+}
+
+int datafile_is_block_zero(cdatafile *f, char *data, u64 len)
+{
+    bool zero=true;
+    u64 pos;
+    
+    for (pos=0; (pos<len) && (zero==true); pos++)
+        if (data[pos]!=0)
+            zero=false;
+    
+    return zero;
 }
 
 int datafile_write(cdatafile *f, char *data, u64 len)
@@ -108,16 +123,26 @@ int datafile_write(cdatafile *f, char *data, u64 len)
     
     if (f->simul==false)
     {
-        errno=0;
-        if ((lres=write(f->fd, data, len))!=len) // error
+        if ((f->sparse==true) && (datafile_is_block_zero(f, data, len)))
         {
-            if ((errno==ENOSPC) || ((lres>0) && (lres < len)))
-            {   sysprintf("Can't write file [%s]: no space left on device\n", f->path);
+            if (lseek64(f->fd, len, SEEK_CUR)<0)
+            {   sysprintf("Can't lseek64() in file [%s]\n", f->path);
                 return -1; // fatal error
             }
-            else // another error
-            {   sysprintf("cannot write %s: size=%ld\n", f->path, (long)len);
-                return -1;
+        }
+        else
+        {
+            errno=0;
+            if ((lres=write(f->fd, data, len))!=len) // error
+            {
+                if ((errno==ENOSPC) || ((lres>0) && (lres < len)))
+                {   sysprintf("Can't write file [%s]: no space left on device\n", f->path);
+                    return -1; // fatal error
+                }
+                else // another error
+                {   sysprintf("cannot write %s: size=%ld\n", f->path, (long)len);
+                    return -1;
+                }
             }
         }
     }
@@ -150,7 +175,13 @@ int datafile_close(cdatafile *f, u8 *md5bufdat, int md5bufsize)
     }
     
     if ((f->open==true) && (f->simul==false))
-        res=close(f->fd);
+    {
+        if ((f->sparse==true) && (ftruncate(f->fd, lseek64(f->fd, 0, SEEK_CUR))<0))
+        {   sysprintf("ftruncate() failed for file [%s]\n", f->path);
+            res=-1;
+        }
+        res=min(close(f->fd), res);
+    }
     
     f->open=false;
     f->path[0]=0;

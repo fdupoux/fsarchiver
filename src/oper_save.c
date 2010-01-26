@@ -395,9 +395,11 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
     char buffer[PATH_MAX];
     char buffer2[PATH_MAX];
     char directory[PATH_MAX];
+    u64 flags;
     int res;
     
     // init
+    flags=0;
     *objtype=OBJTYPE_NULL;
     *filecost=FSA_COST_PER_FILE; // fixed cost per file
     concatenate_paths(fullpath, sizeof(fullpath), root, relpath);
@@ -501,6 +503,11 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
                     *objtype=OBJTYPE_REGFILEUNIQUE;
                 // empty files are considered as OBJTYPE_REGFILEUNIQUE (statbuf->st_size==0)
             }
+            if (*objtype==OBJTYPE_REGFILEUNIQUE || *objtype==OBJTYPE_REGFILEMULTI)
+            {
+                if (((u64)statbuf->st_blocks) * ((u64)S_BLKSIZE) < ((u64)statbuf->st_size))
+                    flags|=FSA_FILEFLAGS_SPARSE;
+            }
             break;
         case S_IFCHR:
             dico_add_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_RDEV, statbuf->st_rdev);
@@ -525,6 +532,8 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
     }
     
     dico_add_u32(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_OBJTYPE, *objtype);
+    if (flags!=0)
+        dico_add_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_FLAGS, flags);
     
     return 0;
 }

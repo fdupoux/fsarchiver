@@ -691,7 +691,7 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
                 goto extractar_restore_obj_regfile_multi_err;
             }
             
-            if (datafile_open_write(datafile, fullpath, false)<0)
+            if (datafile_open_write(datafile, fullpath, false, false)<0)
                 goto extractar_restore_obj_regfile_multi_err;
             
             if (datafile_write(datafile, databuf, datsize)!=0)
@@ -744,8 +744,10 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     u8 md5sumorig[16];
     char text[256];
     int excluded;
+    bool sparse;
     u64 filesize;
     u64 filepos;
+    u64 flags=0;
     s64 lres;
     int res;
     
@@ -758,6 +760,8 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     {   errprintf("Cannot read filesize DISKITEMKEY_SIZE from archive for file=[%s]\n", relpath);
         goto restore_obj_regfile_unique_error;
     }
+    
+    sparse=((dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_FLAGS, &flags)==0) && (flags&FSA_FILEFLAGS_SPARSE));
     
     // update cost statistics and progress bar
     exar->cost_current+=FSA_COST_PER_FILE; 
@@ -783,7 +787,7 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
         extractar_listing_print_file(exar, objtype, relpath);
     }
     
-    if (datafile_open_write(datafile, fullpath, excluded)<0)
+    if (datafile_open_write(datafile, fullpath, excluded, sparse)<0)
         goto restore_obj_regfile_unique_error;
     
     msgprintf(MSG_DEBUG2, "restore_obj_regfile_unique(file=%s, size=%lld)\n", relpath, (long long)filesize);
