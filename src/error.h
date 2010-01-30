@@ -38,9 +38,6 @@ int fsaprintf(int level, bool showerrno, bool showloc, const char *file,
     const char *fct, int line, char *format, ...) 
     __attribute__ ((format (printf, 7, 8)));
 
-// ---- error codes
-enum {ERR_FATAL=1, ERR_MINOR=2};
-
 // ---- message levels
 enum {MSG_FORCE=0,     // always show this messages whatever the level is
       MSG_VERB1=1,     // normal messages that have to be shown when verbose>=1 (fsarchive -v)

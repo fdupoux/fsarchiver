@@ -186,20 +186,20 @@ int archreader_read_dico(carchreader *ai, cdico *d)
         case 1:
             if (archreader_read_data(ai, &temp16, sizeof(temp16))!=0)
             {   errprintf("imgdisk_read_data() failed\n");
-                return ERR_FATAL;
+                return OLDERR_FATAL;
             }
             headerlen=le16_to_cpu(temp16);
             break;
         case 2:
             if (archreader_read_data(ai, &temp32, sizeof(temp32))!=0)
             {   errprintf("imgdisk_read_data() failed\n");
-                return ERR_FATAL;
+                return OLDERR_FATAL;
             }
             headerlen=le32_to_cpu(temp32);
             break;
         default:
             errprintf("Fatal error: invalid file format version: ai->filefmtver=%d\n", ai->filefmtver);
-            return ERR_FATAL;
+            return OLDERR_FATAL;
     }
     
     bufpos=buffer=malloc(headerlen);
@@ -211,13 +211,13 @@ int archreader_read_dico(carchreader *ai, cdico *d)
     if (archreader_read_data(ai, buffer, headerlen)!=0)
     {   errprintf("cannot read header data\n");
         free(buffer);
-        return ERR_FATAL;
+        return OLDERR_FATAL;
     }
     
     if (archreader_read_data(ai, &temp32, sizeof(temp32))!=0)
     {   errprintf("cannot read header checksum\n");
         free(buffer);
-        return ERR_FATAL;
+        return OLDERR_FATAL;
     }
     origsum=le32_to_cpu(temp32);
     
@@ -227,7 +227,7 @@ int archreader_read_dico(carchreader *ai, cdico *d)
     if (newsum!=origsum)
     {   errprintf("bad checksum for header\n");
         free(buffer);
-        return ERR_MINOR; // header corrupt --> skip file
+        return OLDERR_MINOR; // header corrupt --> skip file
     }
     
     // read count from buffer
@@ -258,7 +258,7 @@ int archreader_read_dico(carchreader *ai, cdico *d)
         
         // e. add item to dico
         if (dico_add_generic(d, section, key, bufpos, size, type)!=0)
-            return ERR_FATAL;
+            return OLDERR_FATAL;
         bufpos+=size;
     }
     
@@ -285,56 +285,56 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
     
     if ((*d=dico_alloc())==NULL)
     {   errprintf("dico_alloc() failed\n");
-        return ERR_FATAL;
+        return OLDERR_FATAL;
     }
     
     // search for next read header marker and magic (it may be further if corruption in archive)
     if ((curpos=lseek64(ai->archfd, 0, SEEK_CUR))<0)
     {   sysprintf("lseek64() failed to get the current position in archive\n");
-        return ERR_FATAL;
+        return OLDERR_FATAL;
     }
     
     if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=FSAERR_SUCCESS)
     {   msgprintf(MSG_STACK, "cannot read header magic: res=%d\n", res);
-        return ERR_FATAL;
+        return OLDERR_FATAL;
     }
     
     // we don't want to search for the magic if it's a volume header
     if (is_magic_valid(magic)!=true && allowseek!=true)
     {   errprintf("cannot read header magic: this is not a valid fsarchiver file, or it has been created with a different version.\n");
-        return ERR_FATAL;
+        return OLDERR_FATAL;
     }
     
     while (is_magic_valid(magic)!=true)
     {
         if (lseek64(ai->archfd, curpos++, SEEK_SET)<0)
         {   sysprintf("lseek64(pos=%lld, SEEK_SET) failed\n", (long long)curpos);
-            return ERR_FATAL;
+            return OLDERR_FATAL;
         }
         if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=FSAERR_SUCCESS)
         {   msgprintf(MSG_STACK, "cannot read header magic: res=%d\n", res);
-            return ERR_FATAL;
+            return OLDERR_FATAL;
         }
     }
     
     // read the archive id
     if ((res=archreader_read_data(ai, &temp32, sizeof(temp32)))!=FSAERR_SUCCESS)
     {   msgprintf(MSG_STACK, "cannot read archive-id in header: res=%d\n", res);
-        return ERR_FATAL;
+        return OLDERR_FATAL;
     }
     archid=le32_to_cpu(temp32);
     if (ai->archid) // only check archive-id if it's known (when main header has been read)
     {
         if (archid!=ai->archid)
         {   errprintf("archive-id in header does not match: archid=[%.8x], expected=[%.8x]\n", archid, ai->archid);
-            return ERR_MINOR;
+            return OLDERR_MINOR;
         }
     }
     
     // read the filesystem id
     if ((res=archreader_read_data(ai, &temp16, sizeof(temp16)))!=FSAERR_SUCCESS)
     {   msgprintf(MSG_STACK, "cannot read filesystem-id in header: res=%d\n", res);
-        return ERR_FATAL;
+        return OLDERR_FATAL;
     }
     *fsid=le16_to_cpu(temp16);
     

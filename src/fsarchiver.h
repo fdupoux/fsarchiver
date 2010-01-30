@@ -90,6 +90,10 @@ enum {FSAERR_SUCCESS=0,           // success
       FSAERR_NOTOPEN=-7           // ressource has been closed
 };
 
+// -------------------------------- old errors codes ---------------------------------------------
+enum {OLDERR_FATAL=1,
+      OLDERR_MINOR=2};
+
 // ----------------------------- fsarchiver const ------------------------
 #define FSA_VERSION              PACKAGE_VERSION
 #define FSA_RELDATE              PACKAGE_RELDATE

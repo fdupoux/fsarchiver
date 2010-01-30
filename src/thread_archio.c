@@ -174,14 +174,14 @@ void *thread_reader_fct(void *args)
         if ((res=archreader_read_header(ai, magic, &dico, true, &fsid))!=FSAERR_SUCCESS)
         {   dico_destroy(dico);
             msgprintf(MSG_STACK, "archreader_read_header() failed to read next header\n");
-            if (res==ERR_MINOR) // header is corrupt or not what we expected
+            if (res==OLDERR_MINOR) // header is corrupt or not what we expected
             {   errors++;
-                msgprintf(MSG_DEBUG1, "ERR_MINOR\n");
+                msgprintf(MSG_DEBUG1, "OLDERR_MINOR\n");
                 continue;
             }
             else // fatal error (eg: cannot read archive from disk)
             {
-                msgprintf(MSG_DEBUG1, "!ERR_MINOR\n");
+                msgprintf(MSG_DEBUG1, "!OLDERR_MINOR\n");
                 goto thread_reader_fct_error;
             }
         }
