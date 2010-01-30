@@ -478,7 +478,7 @@ char *format_time(char *buffer, int bufsize, u64 t)
     t2=t;
     
     localtime_r(&t2, &timeres);
-    snprintf(buffer, bufsize, "%.4d%.2d%.2d-%.2d:%.2d:%.2d",
+    snprintf(buffer, bufsize, "%.4d-%.2d-%.2d_%.2d-%.2d-%.2d",
         timeres.tm_year+1900, timeres.tm_mon+1, timeres.tm_mday,
         timeres.tm_hour, timeres.tm_min, timeres.tm_sec);
     return buffer;

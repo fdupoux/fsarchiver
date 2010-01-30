@@ -25,6 +25,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <time.h>
 
 #include "fsarchiver.h"
 #include "logfile.h"
@@ -35,23 +37,30 @@ int g_logfile=-1;
 
 int logfile_open()
 {
-    mkdir_recursive("/var/log");
-    g_logfile=open64("/var/log/fsarchiver.log", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+    char logpath[PATH_MAX];
+    char timestamp[1024];
+    char *logdir="/var/log";  
+    
+    format_time(timestamp, sizeof(timestamp), time(NULL));
+    snprintf(logpath, sizeof(logpath), "%s/fsarchiver_%s_%ld.log", logdir, timestamp, (long)getpid());
+    mkdir_recursive(logdir);
+    
+    g_logfile=open64(logpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
     if (g_logfile>=0)
-    {   msgprintf(1, "Creating logfile in /var/log/fsarchiver.log\n");
-        msgprintf(1, "Running fsarchiver version=[%s], fileformat=[%s]\n", FSA_VERSION, FSA_FILEFORMAT);
-        return 0;
+    {   msgprintf(MSG_VERB1, "Creating logfile in %s\n", logpath);
+        msgprintf(MSG_VERB1, "Running fsarchiver version=[%s], fileformat=[%s]\n", FSA_VERSION, FSA_FILEFORMAT);
+        return FSAERR_SUCCESS;
     }
     else
-    {   sysprintf("Cannot create logfile in /var/log/fsarchiver.log\n");
-        return -1;
+    {   sysprintf("Cannot create logfile in %s\n", logpath);
+        return FSAERR_UNKNOWN;
     }
 }
 
 int logfile_close()
 {
     close(g_logfile);
-    return 0;
+    return FSAERR_SUCCESS;
 }
 
 int logfile_write(char *str, int len)
@@ -59,5 +68,5 @@ int logfile_write(char *str, int len)
     if (g_logfile>=0)
         return write(g_logfile, str, len);
     else
-        return -1;
+        return FSAERR_UNKNOWN;
 }

@@ -280,7 +280,7 @@ int process_cmdline(int argc, char **argv)
     // calculate threshold for small files that are compressed together
     g_options.smallfilethresh=min(g_options.datablocksize/4, FSA_MAX_SMALLFILESIZE);
     msgprintf(MSG_DEBUG1, "Files smaller than %ld will be packed with other small files\n", (long)g_options.smallfilethresh);
-
+    
     // convert commands to integers
     if (strcmp(command, "savefs")==0)
     {   cmd=OPER_SAVEFS;
@@ -351,6 +351,9 @@ int process_cmdline(int argc, char **argv)
     sigaddset(&mask_set, SIGTERM);
     sigprocmask(SIG_SETMASK, &mask_set, NULL);
     
+    if (g_options.debuglevel>0)
+        logfile_open();
+    
     switch (cmd)
     {
         case OPER_SAVEFS:
@@ -373,6 +376,8 @@ int process_cmdline(int argc, char **argv)
             ret=-1;
             break;
     };
+    
+    logfile_close();
     
     return ret;
 }
@@ -404,17 +409,15 @@ int main(int argc, char **argv)
 #endif // OPTION_CRYPTO_SUPPORT
     
     // init
-    logfile_open();
     options_init(&g_options);
     queue_init(&g_queue, FSA_MAX_QUEUESIZE);
     
     // bulk of the program
     ret=process_cmdline(argc, argv);
-    
+
     // cleanup
     queue_destroy(&g_queue);
     options_destroy(&g_options);
-    logfile_close();
     
     // cleanup libgcrypt
 #ifdef OPTION_CRYPTO_SUPPORT
