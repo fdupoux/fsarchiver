@@ -1024,7 +1024,14 @@ int extractar_extract_read_objects(cextractar *exar, int *errors, char *destdir,
 
 int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
 {
+    u8 bufcheckclear[FSA_CHECKPASSBUF_SIZE+8];
+    u8 bufcheckcrypt[FSA_CHECKPASSBUF_SIZE+8];
     char magic[FSA_SIZEOF_MAGIC+1];
+    u16 cryptbufsize;
+    u8 md5sumar[16];
+    u8 md5sumnew[16];
+    u64 clearsize;
+    int passlen;
     u32 temp32;
     
     assert(exar);
@@ -1116,14 +1123,6 @@ int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
         exar->ai.minfsaver=FSA_VERSION_BUILD(0, 0, 0, 0); // not defined
     
     // if encryption is enabled, check the password is correct using the encrypted random buffer saved in the archive
-    u8 bufcheckclear[FSA_CHECKPASSBUF_SIZE+8];
-    u8 bufcheckcrypt[FSA_CHECKPASSBUF_SIZE+8];
-    //struct md5_ctx md5ctx;
-    u16 cryptbufsize;
-    u8 md5sumar[16];
-    u8 md5sumnew[16];
-    u64 clearsize;
-    int passlen;
     if (exar->ai.cryptalgo!=ENCRYPT_NONE)
     {
         memset(md5sumar, 0, sizeof(md5sumar));
@@ -1145,11 +1144,6 @@ int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
         
         if (crypto_blowfish(cryptbufsize, &clearsize, bufcheckcrypt, bufcheckclear, g_options.encryptpass, strlen((char*)g_options.encryptpass), false)==0)
             gcry_md_hash_buffer(GCRY_MD_MD5, md5sumnew, bufcheckclear, clearsize);
-        /*{
-            md5_init_ctx(&md5ctx);
-            md5_process_bytes(bufcheckclear, clearsize, &md5ctx);
-            md5_finish_ctx(&md5ctx, md5sumnew);
-        }*/
         
         if (memcmp(md5sumar, md5sumnew, 16)!=0)
         {   errprintf("you have to provide the password which was used to create archive, cannot decrypt the test buffer.\n");

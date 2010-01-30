@@ -78,7 +78,6 @@ typedef struct s_devinfo
 int createar_obj_regfile_multi(csavear *save, cdico *header, char *relpath, char *fullpath, u64 filesize)
 {
     char databuf[FSA_MAX_SMALLFILESIZE];
-    //struct md5_ctx md5ctx;
     u8 md5sum[16];
     int ret=0;
     int res;
@@ -108,9 +107,6 @@ int createar_obj_regfile_multi(csavear *save, cdico *header, char *relpath, char
         }
     }
     
-    /*md5_init_ctx(&md5ctx);
-    md5_process_bytes(databuf, filesize, &md5ctx);
-    md5_finish_ctx(&md5ctx, md5sum);*/
     gcry_md_hash_buffer(GCRY_MD_MD5, md5sum, databuf, filesize);
     dico_add_data(header, 0, DISKITEMKEY_MD5SUM, md5sum, 16);
     
@@ -151,7 +147,6 @@ int createar_obj_regfile_unique(csavear *save, cdico *header, char *relpath, cha
     int res;
     int fd;
     
-    //md5_init_ctx(&md5ctx);
     if (gcry_md_open(&md5ctx, GCRY_MD_MD5, 0) != GPG_ERR_NO_ERROR)
     {   errprintf("gcry_md_open() failed\n");
         return -1;
@@ -201,7 +196,6 @@ int createar_obj_regfile_unique(csavear *save, cdico *header, char *relpath, cha
             memset(origblock, 0, curblocksize);
         }
         
-        //md5_process_bytes(origblock, curblocksize, &md5ctx);
         gcry_md_write(md5ctx, origblock, curblocksize);
         
         // add block to the queue
@@ -224,7 +218,6 @@ int createar_obj_regfile_unique(csavear *save, cdico *header, char *relpath, cha
     }
     
     // write the footer with the global md5sum
-    //md5_finish_ctx(&md5ctx, md5sum);
     if ((md5tmp=gcry_md_read(md5ctx, GCRY_MD_MD5))==NULL)
     {   errprintf("gcry_md_read() failed\n");
         ret=-1;
@@ -823,6 +816,10 @@ int createar_save_directory_wrapper(csavear *save, char *root, char *path, u64 *
 
 int createar_write_mainhead(csavear *save, int archtype, int fscount)
 {
+    u8 bufcheckclear[FSA_CHECKPASSBUF_SIZE+8];
+    u8 bufcheckcrypt[FSA_CHECKPASSBUF_SIZE+8];
+    u64 cryptsize;
+    u8 md5sum[16];
     struct timeval now;
     cdico *d;
     
@@ -859,11 +856,6 @@ int createar_write_mainhead(csavear *save, int archtype, int fscount)
     }
     
     // if encryption is enabled, save the md5sum of a random buffer to check the password
-    u8 bufcheckclear[FSA_CHECKPASSBUF_SIZE+8];
-    u8 bufcheckcrypt[FSA_CHECKPASSBUF_SIZE+8];
-    u64 cryptsize;
-    //struct md5_ctx md5ctx;
-    u8 md5sum[16];
     if (g_options.encryptalgo!=ENCRYPT_NONE)
     {
         memset(md5sum, 0, sizeof(md5sum));
@@ -871,9 +863,6 @@ int createar_write_mainhead(csavear *save, int archtype, int fscount)
         crypto_blowfish(FSA_CHECKPASSBUF_SIZE, &cryptsize, bufcheckclear, bufcheckcrypt, 
             g_options.encryptpass, strlen((char*)g_options.encryptpass), true);
         
-        /*md5_init_ctx(&md5ctx);
-        md5_process_bytes(bufcheckclear, FSA_CHECKPASSBUF_SIZE, &md5ctx);
-        md5_finish_ctx(&md5ctx, md5sum);*/
         gcry_md_hash_buffer(GCRY_MD_MD5, md5sum, bufcheckclear, FSA_CHECKPASSBUF_SIZE);
         
         assert(dico_add_data(d, 0, MAINHEADKEY_BUFCHECKPASSCLEARMD5, md5sum, 16)==0);

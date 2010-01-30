@@ -69,7 +69,6 @@ int crypto_blowfish(u64 insize, u64 *outsize, u8 *inbuf, u8 *outbuf, u8 *passwor
     if ((password==NULL) || (passlen==0))
         return -1;
     
-    // gcry_error_t gcry_cipher_open (gcry_cipher_hd_t *handle, int algo, int mode, unsigned int flags);
     if ((res=gcry_cipher_open(&hd, GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_CFB, GCRY_CIPHER_SECURE))!=0)
     {
         errprintf("gcry_cipher_open() failed\n");
@@ -77,7 +76,6 @@ int crypto_blowfish(u64 insize, u64 *outsize, u8 *inbuf, u8 *outbuf, u8 *passwor
         return -1;
     }
     
-    // gcry_error_t gcry_cipher_setkey (gcry_cipher_hd_t hd, const void *key, size_t keylen);
     if ((res=gcry_cipher_setkey(hd, password, passlen))!=0)
     {
         errprintf("gcry_cipher_setkey() failed\n");
@@ -85,7 +83,6 @@ int crypto_blowfish(u64 insize, u64 *outsize, u8 *inbuf, u8 *outbuf, u8 *passwor
         return -1;
     }
     
-    // gcry_error_t gcry_cipher_setiv (gcry_cipher_hd_t h, const void *k, size_t l)
     if (gcry_cipher_setiv(hd, iv, strlen((char*)iv)))
     {
         errprintf("gcry_cipher_setiv() failed\n");
@@ -96,11 +93,9 @@ int crypto_blowfish(u64 insize, u64 *outsize, u8 *inbuf, u8 *outbuf, u8 *passwor
     switch(enc)
     {
         case 1: // encrypt
-            // gcry_error_t gcry_cipher_encrypt (gcry_cipher_hd_t h, void *out, size_t outsize, const void *in, size_t inlen);
             res=gcry_cipher_encrypt(hd, outbuf, insize, inbuf, insize);
             break;
         case 0: // decrypt
-            // gcry_error_t gcry_cipher_decrypt (gcry_cipher_hd_t h, void *out, size_t outsize, const void *in, size_t inlen);
             res=gcry_cipher_decrypt(hd, outbuf, insize, inbuf, insize);
             break;
         default: // invalid
@@ -108,8 +103,7 @@ int crypto_blowfish(u64 insize, u64 *outsize, u8 *inbuf, u8 *outbuf, u8 *passwor
             gcry_cipher_close(hd);
             return -1;
     }
-    
-    // void gcry_md_close (gcry_md_hd_t hd);    
+      
     gcry_cipher_close(hd);
     
     *outsize=insize;

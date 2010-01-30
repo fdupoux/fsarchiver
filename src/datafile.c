@@ -40,7 +40,6 @@ struct s_datafile
     bool sparse; // true if that's a sparse file
     char path[PATH_MAX]; // path to file
     gcry_md_hd_t md5ctx; // struct for md5
-    //struct md5_ctx md5ctx; // struct for md5
 };
 
 cdatafile *datafile_alloc()
@@ -91,7 +90,6 @@ int datafile_open_write(cdatafile *f, char *path, bool simul, bool sparse)
         }
     }
     
-    //md5_init_ctx(&f->md5ctx);
     if (gcry_md_open(&f->md5ctx, GCRY_MD_MD5, 0) != GPG_ERR_NO_ERROR)
     {   errprintf("gcry_md_open() failed\n");
         return -1;
@@ -153,7 +151,6 @@ int datafile_write(cdatafile *f, char *data, u64 len)
         }
     }
     
-    //md5_process_bytes(data, len, &f->md5ctx);
     gcry_md_write(f->md5ctx, data, len);
     
     return 0;
@@ -172,7 +169,6 @@ int datafile_close(cdatafile *f, u8 *md5bufdat, int md5bufsize)
         return -1;
     }
     
-    //md5_finish_ctx(&f->md5ctx, md5temp);
     if ((md5tmp=gcry_md_read(f->md5ctx, GCRY_MD_MD5))==NULL)
     {   errprintf("gcry_md_read() failed\n");
         return -1;
