@@ -76,20 +76,6 @@ struct s_queue
     bool                 endofqueue; // set to true when no more data to put in queue (like eof): reader must stop
 };
 
-// ---- error management
-enum
-{   QERR_SUCCESS=0, // should not be used
-    QERR_FAIL=-1, // any fatal error
-    QERR_NOMEM=-2, // malloc failed, out of memory
-    QERR_INVAL=-3, // a parameter is invalid (null pointer)
-    QERR_NOTFOUND=-4, // item not found in the list
-    QERR_ENDOFQUEUE=-5, // we have reached the end of the queue
-    QERR_WRONGTYPE=-6, // the first item found in the queue is not what expected
-    QERR_CLOSED=-7 // the queue has been closed by the reader: don't write anymore
-};
-
-char *qerr(s64 err);
-
 // ----return status
 // a) ">0" means success for functions that return item numbers
 // b) =0   means success for functions that do not return item numbers

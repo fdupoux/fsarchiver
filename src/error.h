@@ -34,7 +34,9 @@ struct s_stats
     u64    err_special;
 };
 
-int fsaprintf(int level, bool showerrno, bool showloc, const char *file, const char *fct, int line, char *format, ...) __attribute__ ((format (printf, 7, 8)));
+int fsaprintf(int level, bool showerrno, bool showloc, const char *file, 
+    const char *fct, int line, char *format, ...) 
+    __attribute__ ((format (printf, 7, 8)));
 
 // ---- error codes
 enum {ERR_FAIL=-1, ERR_SUCCESS=0, ERR_FATAL=1, ERR_MINOR=2};
@@ -50,6 +52,8 @@ enum {MSG_FORCE=0,     // always show this messages whatever the level is
       MSG_DEBUG4=7,    // debugging messages level 4
       MSG_DEBUG5=8     // debugging messages level 5 (very detailed debug)
 };
+
+char *error_int_to_string(s64 err);
 
 // use sysprintf to print an error that follows a libc function and to show errno
 #define sysprintf(fmt, args...) fsaprintf(0, true, true, __FILE__, __FUNCTION__, __LINE__, fmt, ## args)

@@ -71,3 +71,19 @@ int fsaprintf(int level, bool showerrno, bool showloc, const char *file, const c
     
     return 0;
 }
+
+char *error_int_to_string(s64 err)
+{
+    switch (err)
+    {
+        case FSAERR_SUCCESS:    return "FSAERR_SUCCESS";
+        case FSAERR_UNKNOWN:    return "FSAERR_UNKNOWN";
+        case FSAERR_ENOMEM:     return "FSAERR_ENOMEM";
+        case FSAERR_EINVAL:     return "FSAERR_EINVAL";
+        case FSAERR_ENOENT:     return "FSAERR_ENOENT";
+        case FSAERR_ENDOFFILE:  return "FSAERR_ENDOFFILE";
+        case FSAERR_WRONGTYPE:  return "FSAERR_WRONGTYPE";
+        case FSAERR_NOTOPEN:    return "FSAERR_NOTOPEN";
+        default:                return "FSAERR_?";
+    }
+}

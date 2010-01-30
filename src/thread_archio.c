@@ -62,8 +62,8 @@ void *thread_writer_fct(void *args)
     
     while (queue_get_end_of_queue(&g_queue)==false)
     {
-        if ((blknum=queue_dequeue_first(&g_queue, &type, &headinfo, &blkinfo))<0 && blknum!=QERR_ENDOFQUEUE) // error
-        {   msgprintf(MSG_STACK, "queue_dequeue_first()=%ld=%s failed\n", (long)blknum, qerr(blknum));
+        if ((blknum=queue_dequeue_first(&g_queue, &type, &headinfo, &blkinfo))<0 && blknum!=FSAERR_ENDOFFILE) // error
+        {   msgprintf(MSG_STACK, "queue_dequeue_first()=%ld=%s failed\n", (long)blknum, error_int_to_string(blknum));
             goto thread_writer_fct_error;
         }
         else if (blknum>0) // block or header found
@@ -163,8 +163,8 @@ void *thread_reader_fct(void *args)
         goto thread_reader_fct_error;
     }
     
-    if ((lres=queue_add_header(&g_queue, dico, magic, fsid))!=QERR_SUCCESS)
-    {   errprintf("queue_add_header()=%ld=%s failed to add the archive header\n", (long)lres, qerr(lres));
+    if ((lres=queue_add_header(&g_queue, dico, magic, fsid))!=FSAERR_SUCCESS)
+    {   errprintf("queue_add_header()=%ld=%s failed to add the archive header\n", (long)lres, error_int_to_string(lres));
         goto thread_reader_fct_error;
     }
     
@@ -238,9 +238,9 @@ void *thread_reader_fct(void *args)
                 if (skipblock==false)
                 {
                     status=((sumok==true)?QITEM_STATUS_TODO:QITEM_STATUS_DONE);
-                    if ((lres=queue_add_block(&g_queue, &blkinfo, status))!=QERR_SUCCESS)
-                    {   if (lres!=QERR_CLOSED)
-                            errprintf("queue_add_block()=%ld=%s failed\n", (long)lres, qerr(lres));
+                    if ((lres=queue_add_block(&g_queue, &blkinfo, status))!=FSAERR_SUCCESS)
+                    {   if (lres!=FSAERR_NOTOPEN)
+                            errprintf("queue_add_block()=%ld=%s failed\n", (long)lres, error_int_to_string(lres));
                         goto thread_reader_fct_error;
                     }
                     if (sumok==false) errors++;
@@ -252,8 +252,8 @@ void *thread_reader_fct(void *args)
                 // if it's a global header or a if this local header belongs to a filesystem that the main thread needs
                 if (fsid==FSA_FILESYSID_NULL || g_fsbitmap[fsid]==1)
                 {
-                    if ((lres=queue_add_header(&g_queue, dico, magic, fsid))!=QERR_SUCCESS)
-                    {   msgprintf(MSG_STACK, "queue_add_header()=%ld=%s failed\n", (long)lres, qerr(lres));
+                    if ((lres=queue_add_header(&g_queue, dico, magic, fsid))!=FSAERR_SUCCESS)
+                    {   msgprintf(MSG_STACK, "queue_add_header()=%ld=%s failed\n", (long)lres, error_int_to_string(lres));
                         goto thread_reader_fct_error;
                     }
                 }

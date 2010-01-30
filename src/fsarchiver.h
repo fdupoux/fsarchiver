@@ -85,6 +85,9 @@ enum {FSAERR_SUCCESS=0,           // success
       FSAERR_ENOMEM=-2,           // out of memory error
       FSAERR_EINVAL=-3,           // invalid parameter
       FSAERR_ENOENT=-4,           // entry not found
+      FSAERR_ENDOFFILE=-5,        // end of file/queue
+      FSAERR_WRONGTYPE=-6,        // wrong type of data
+      FSAERR_NOTOPEN=-7           // ressource has been closed
 };
 
 // ----------------------------- fsarchiver const ------------------------

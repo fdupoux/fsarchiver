@@ -35,22 +35,6 @@
 #include "syncthread.h"
 #include "error.h"
 
-char *qerr(s64 err)
-{
-    switch (err)
-    {
-        case QERR_SUCCESS: return "QERR_SUCCESS";
-        case QERR_FAIL: return "QERR_FAIL";
-        case QERR_NOMEM: return "QERR_NOMEM";
-        case QERR_INVAL: return "QERR_INVAL";
-        case QERR_NOTFOUND: return "QERR_NOTFOUND";
-        case QERR_ENDOFQUEUE: return "QERR_ENDOFQUEUE";
-        case QERR_WRONGTYPE: return "QERR_WRONGTYPE";
-        case QERR_CLOSED: return "QERR_CLOSED";
-        default: return "QERR_UNKNOWN";
-    }
-}
-
 struct timespec get_timeout()
 {
     struct timespec t;
@@ -65,7 +49,7 @@ s64 queue_init(cqueue *q, s64 blkmax)
 
     if (!q)
     {   errprintf("q is NULL\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     // ---- init default attributes
@@ -81,15 +65,15 @@ s64 queue_init(cqueue *q, s64 blkmax)
     assert(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK)==0);
     if (pthread_mutex_init(&q->mutex, &attr)!=0)
     {   msgprintf(3, "pthread_mutex_init failed\n");
-        return QERR_FAIL;
+        return FSAERR_UNKNOWN;
     }
     
     if (pthread_cond_init(&q->cond,NULL)!=0)
     {   msgprintf(3, "pthread_cond_init failed\n");
-        return QERR_FAIL;
+        return FSAERR_UNKNOWN;
     }
     
-    return QERR_SUCCESS;
+    return FSAERR_SUCCESS;
 }
 
 s64 queue_destroy(cqueue *q)
@@ -99,7 +83,7 @@ s64 queue_destroy(cqueue *q)
     
     if (!q)
     {   errprintf("q is NULL\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -117,21 +101,21 @@ s64 queue_destroy(cqueue *q)
     assert(pthread_mutex_destroy(&q->mutex)==0);
     assert(pthread_cond_destroy(&q->cond)==0);
     
-    return QERR_SUCCESS;
+    return FSAERR_SUCCESS;
 }
 
 s64 queue_set_end_of_queue(cqueue *q, bool state)
 {
     if (!q)
     {   errprintf("q is NULL\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
 
     assert(pthread_mutex_lock(&q->mutex)==0);
     q->endofqueue=state;
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
-    return QERR_SUCCESS;
+    return FSAERR_SUCCESS;
 }
 
 bool queue_get_end_of_queue(cqueue *q)
@@ -139,7 +123,7 @@ bool queue_get_end_of_queue(cqueue *q)
     bool res;
     if (!q)
     {   errprintf("q is NULL\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
 
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -153,7 +137,7 @@ bool queuelocked_get_end_of_queue(cqueue *q)
     bool res;
     if (!q)
     {   errprintf("q is NULL\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
 
     res=((q->itemcount<1) && (q->endofqueue==true));
@@ -167,7 +151,7 @@ s64 queue_count(cqueue *q)
     
     if (!q)
     {   errprintf("q is NULL\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
 
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -185,7 +169,7 @@ s64 queue_count_status(cqueue *q, int status)
     
     if (!q)
     {   errprintf("q is NULL\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
 
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -209,14 +193,14 @@ s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
     
     if (!q || !blkinfo)
     {   errprintf("a parameter is NULL\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     // create the new item in memory
     item=malloc(sizeof(cqueueitem));
     if (!item)
     {   errprintf("malloc(%ld) failed: out of memory\n", (long)sizeof(cqueueitem));
-        return QERR_NOMEM;
+        return FSAERR_ENOMEM;
     }
     item->type=QITEM_TYPE_BLOCK;
     item->status=status;
@@ -228,7 +212,7 @@ s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
     // does not make sense to add item on a queue where endofqueue is true
     if (q->endofqueue==true)
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        return QERR_ENDOFQUEUE;
+        return FSAERR_ENDOFFILE;
     }
     
     // wait while (queue-is-full) to let the other threads remove items first
@@ -254,7 +238,7 @@ s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
     
-    return QERR_SUCCESS;
+    return FSAERR_SUCCESS;
 }
 
 s64 queue_add_header(cqueue *q, cdico *d, char *magic, u16 fsid)
@@ -263,7 +247,7 @@ s64 queue_add_header(cqueue *q, cdico *d, char *magic, u16 fsid)
     
     if (!q || !d || !magic)
     {   errprintf("parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     memset(&headinfo, 0, sizeof(headinfo));
@@ -281,14 +265,14 @@ s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
     
     if (!q || !headinfo)
     {   errprintf("parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     // create the new item in memory
     item=malloc(sizeof(cqueueitem));
     if (!item)
     {   errprintf("malloc(%ld) failed: out of memory 1\n", (long)sizeof(cqueueitem));
-        return QERR_NOMEM;
+        return FSAERR_ENOMEM;
     }
     
     item->headinfo=*headinfo;
@@ -301,7 +285,7 @@ s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
     // does not make sense to add item on a queue where endofqueue is true
     if (q->endofqueue==true)
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        return QERR_ENDOFQUEUE;
+        return FSAERR_ENDOFFILE;
     }
     
     // wait while (queue-is-full) to let the other threads remove items first
@@ -325,7 +309,7 @@ s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
     
-    return QERR_SUCCESS;
+    return FSAERR_SUCCESS;
 }
 
 // function called by the compression thread when a block has been compressed
@@ -335,7 +319,7 @@ s64 queue_replace_block(cqueue *q, s64 itemnum, cblockinfo *blkinfo, int newstat
     
     if (!q || !blkinfo)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -343,7 +327,7 @@ s64 queue_replace_block(cqueue *q, s64 itemnum, cblockinfo *blkinfo, int newstat
     if (q->head==NULL)
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
         msgprintf(MSG_DEBUG1, "q->head is NULL: list is empty\n");
-        return QERR_NOTFOUND; // item not found
+        return FSAERR_ENOENT; // item not found
     }
     
     for (cur=q->head; cur!=NULL; cur=cur->next)
@@ -354,12 +338,12 @@ s64 queue_replace_block(cqueue *q, s64 itemnum, cblockinfo *blkinfo, int newstat
             cur->blkinfo=*blkinfo;
             assert(pthread_mutex_unlock(&q->mutex)==0);
             pthread_cond_broadcast(&q->cond);
-            return QERR_SUCCESS;
+            return FSAERR_SUCCESS;
         }
     }
     
     assert(pthread_mutex_unlock(&q->mutex)==0);
-    return QERR_NOTFOUND; // not found
+    return FSAERR_ENOENT; // not found
 }
 
 // get number of items to be processed
@@ -370,7 +354,7 @@ s64 queue_count_items_todo(cqueue *q)
     
     if (!q)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -395,7 +379,7 @@ s64 queue_get_first_block_todo(cqueue *q, cblockinfo *blkinfo)
     
     if (!q || !blkinfo)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -418,7 +402,7 @@ s64 queue_get_first_block_todo(cqueue *q, cblockinfo *blkinfo)
         struct timespec t=get_timeout();
         if ((res=pthread_cond_timedwait(&q->cond, &q->mutex, &t))!=0 && res!=ETIMEDOUT)
         {   assert(pthread_mutex_unlock(&q->mutex)==0);
-            return QERR_FAIL;
+            return FSAERR_UNKNOWN;
         }
         
     }
@@ -427,9 +411,9 @@ s64 queue_get_first_block_todo(cqueue *q, cblockinfo *blkinfo)
     assert(pthread_mutex_unlock(&q->mutex)==0);
     
     if (queuelocked_get_end_of_queue(q))
-        return QERR_ENDOFQUEUE;
+        return FSAERR_ENDOFFILE;
     else
-        return QERR_FAIL;
+        return FSAERR_UNKNOWN;
 }
 
 // the writer thread requires the first block of the queue if it ready to go
@@ -442,7 +426,7 @@ s64 queue_dequeue_first(cqueue *q, int *type, cheadinfo *headinfo, cblockinfo *b
     
     if (!q || !headinfo || !blkinfo)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -480,7 +464,7 @@ s64 queue_dequeue_first(cqueue *q, int *type, cheadinfo *headinfo, cblockinfo *b
             {
                 errprintf("invalid item type in queue\n");
                 assert(pthread_mutex_unlock(&q->mutex)==0);
-                return QERR_INVAL;
+                return FSAERR_EINVAL;
             }
         }
         
@@ -489,7 +473,7 @@ s64 queue_dequeue_first(cqueue *q, int *type, cheadinfo *headinfo, cblockinfo *b
     }
     
     // if it failed at the other end of the queue
-    ret=(queuelocked_get_end_of_queue(q)==true)?QERR_ENDOFQUEUE:QERR_FAIL;
+    ret=(queuelocked_get_end_of_queue(q)==true)?FSAERR_ENDOFFILE:FSAERR_UNKNOWN;
     assert(pthread_mutex_unlock(&q->mutex)==0);
     
     return ret;
@@ -503,7 +487,7 @@ s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
     
     if (!q || !blkinfo)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -518,7 +502,7 @@ s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
     // if it failed at the other end of the queue
     if (queuelocked_get_end_of_queue(q))
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        return QERR_ENDOFQUEUE;
+        return FSAERR_ENDOFFILE;
     }
     
     // should not happen since queuelocked_is_first_block_ready means there is at least one block in the queue
@@ -542,7 +526,7 @@ s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
         errprintf("dequeue - wrong type of data in the queue: wanted a block, found an header\n");
         assert(pthread_mutex_unlock(&q->mutex)==0);
         pthread_cond_broadcast(&q->cond);
-        return QERR_WRONGTYPE;  // ok but not found
+        return FSAERR_WRONGTYPE;  // ok but not found
     }
 }
 
@@ -553,7 +537,7 @@ s64 queue_dequeue_header(cqueue *q, cdico **d, char *magicbuf, u16 *fsid)
     
     if (!q || !d || !magicbuf)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     if ((lres=queue_dequeue_header_internal(q, &headinfo))<=0)
@@ -575,7 +559,7 @@ s64 queue_dequeue_header_internal(cqueue *q, cheadinfo *headinfo)
     
     if (!q || !headinfo)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -590,7 +574,7 @@ s64 queue_dequeue_header_internal(cqueue *q, cheadinfo *headinfo)
     // if it failed at the other end of the queue
     if (queuelocked_get_end_of_queue(q))
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        return QERR_ENDOFQUEUE;
+        return FSAERR_ENDOFFILE;
     }
     
     // should not happen since queuelocked_is_first_block_ready means there is at least one block in the queue
@@ -612,12 +596,12 @@ s64 queue_dequeue_header_internal(cqueue *q, cheadinfo *headinfo)
             errprintf("dequeue - wrong type of data in the queue: expected a dico and found a block\n");
             assert(pthread_mutex_unlock(&q->mutex)==0);
             pthread_cond_broadcast(&q->cond);
-            return QERR_WRONGTYPE;  // ok but not found
+            return FSAERR_WRONGTYPE;  // ok but not found
         default: // should never happen
             errprintf("dequeue - wrong type of data in the queue: expected a dico and found an unknown item\n");
             assert(pthread_mutex_unlock(&q->mutex)==0);
             pthread_cond_broadcast(&q->cond);
-            return QERR_WRONGTYPE;  // ok but not found
+            return FSAERR_WRONGTYPE;  // ok but not found
     }
 }
 
@@ -648,7 +632,7 @@ s64 queue_check_next_item(cqueue *q, int *type, char *magic)
     
     if (!q || !type || !magic)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     memset(magic, 0, FSA_SIZEOF_MAGIC);
@@ -666,7 +650,7 @@ s64 queue_check_next_item(cqueue *q, int *type, char *magic)
     // if it failed at the other end of the queue
     if (queuelocked_get_end_of_queue(q))
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        return QERR_ENDOFQUEUE;
+        return FSAERR_ENDOFFILE;
     }
     
     // test the first item
@@ -677,27 +661,27 @@ s64 queue_check_next_item(cqueue *q, int *type, char *magic)
             *type=cur->type;
             memset(magic, 0, FSA_SIZEOF_MAGIC);
             assert(pthread_mutex_unlock(&q->mutex)==0);
-            return QERR_SUCCESS;
+            return FSAERR_SUCCESS;
         }
         else if (cur->type==QITEM_TYPE_HEADER) // item to dequeue is a dico
         {
             memcpy(magic, cur->headinfo.magic, FSA_SIZEOF_MAGIC); // header contents
             *type=cur->type;
             assert(pthread_mutex_unlock(&q->mutex)==0);
-            return QERR_SUCCESS;
+            return FSAERR_SUCCESS;
         }
         else
         {
             errprintf("invalid item type in queue: type=%d\n", cur->type);
             assert(pthread_mutex_unlock(&q->mutex)==0);
-            return QERR_INVAL;
+            return FSAERR_EINVAL;
         }
     }
     
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
     
-    return QERR_NOTFOUND;  // not found
+    return FSAERR_ENOENT;  // not found
 }
 
 // destroy the first item in the queue (similar to dequeue but do not read it)
@@ -707,7 +691,7 @@ s64 queue_destroy_first_item(cqueue *q)
     
     if (!q)
     {   errprintf("a parameter is null\n");
-        return QERR_INVAL;
+        return FSAERR_EINVAL;
     }
     
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -721,7 +705,7 @@ s64 queue_destroy_first_item(cqueue *q)
     // if it failed at the other end of the queue
     if (queuelocked_get_end_of_queue(q))
     {   assert(pthread_mutex_unlock(&q->mutex)==0);
-        return QERR_ENDOFQUEUE;
+        return FSAERR_ENDOFFILE;
     }
     
     // should not happen since queuelocked_is_first_block_ready means there is at least one block in the queue
@@ -743,5 +727,5 @@ s64 queue_destroy_first_item(cqueue *q)
     q->itemcount--;
     assert(pthread_mutex_unlock(&q->mutex)==0);
     pthread_cond_broadcast(&q->cond);
-    return QERR_SUCCESS;
+    return FSAERR_SUCCESS;
 }

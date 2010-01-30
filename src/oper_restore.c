@@ -636,7 +636,7 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
     
     // ---- dequeue the block which contains data for several small files
     if ((lres=queue_dequeue_block(&g_queue, &blkinfo))<=0)
-    {   errprintf("queue_dequeue_block()=%ld=%s failed\n", (long)lres, qerr(lres));
+    {   errprintf("queue_dequeue_block()=%ld=%s failed\n", (long)lres, error_int_to_string(lres));
         return -1;
     }
     
@@ -794,7 +794,7 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     for (filepos=0; (filesize>0) && (filepos < filesize) && (get_interrupted()==false); filepos+=blkinfo.blkrealsize)
     {
         if ((lres=queue_dequeue_block(&g_queue, &blkinfo))<=0)
-        {   errprintf("queue_dequeue_block()=%ld=%s for file(%s) failed\n", (long)lres, qerr(lres), relpath);
+        {   errprintf("queue_dequeue_block()=%ld=%s for file(%s) failed\n", (long)lres, error_int_to_string(lres), relpath);
             goto restore_obj_regfile_unique_error;
         }
         
