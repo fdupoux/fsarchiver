@@ -12,9 +12,9 @@ IUSE="lzo lzma gcrypt static"
 DEPEND="sys-libs/zlib
 	app-arch/bzip2
 	>=sys-fs/e2fsprogs-1.41.4
+	>=dev-libs/libgcrypt-1.2.3
 	lzma? ( >=app-arch/xz-utils-4.999.9_beta )
-	lzo? ( >=dev-libs/lzo-2.02 )
-	gcrypt? ( dev-libs/libgcrypt )"
+	lzo? ( >=dev-libs/lzo-2.02 )"
 
 src_unpack() {
 	unpack ${A}
@@ -26,7 +26,6 @@ src_compile() {
 	local myconf="--prefix=/usr"
 	use lzma || myconf="${myconf} --disable-lzma"
 	use lzo || myconf="${myconf} --disable-lzo"
-	use gcrypt || myconf="${myconf} --disable-crypto"
 	use static && myconf="${myconf} --enable-static"
 	econf ${myconf} || die "econf failed."
 	emake || die "emake failed."
