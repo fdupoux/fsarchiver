@@ -39,7 +39,7 @@ int fsaprintf(int level, bool showerrno, bool showloc, const char *file,
     __attribute__ ((format (printf, 7, 8)));
 
 // ---- error codes
-enum {ERR_FAIL=-1, ERR_SUCCESS=0, ERR_FATAL=1, ERR_MINOR=2};
+enum {ERR_FATAL=1, ERR_MINOR=2};
 
 // ---- message levels
 enum {MSG_FORCE=0,     // always show this messages whatever the level is

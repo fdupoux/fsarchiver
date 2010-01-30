@@ -153,7 +153,7 @@ void *thread_reader_fct(void *args)
     }
     
     // ---- read main archive header
-    if ((res=archreader_read_header(ai, magic, &dico, false, &fsid))!=ERR_SUCCESS)
+    if ((res=archreader_read_header(ai, magic, &dico, false, &fsid))!=FSAERR_SUCCESS)
     {   errprintf("archreader_read_header() failed to read the archive header\n");
         goto thread_reader_fct_error; // this header is required to continue
     }
@@ -171,7 +171,7 @@ void *thread_reader_fct(void *args)
     // read all other data from file (filesys-header, normal objects headers, ...)
     while (endofarchive==false && get_stopfillqueue()==false)
     {
-        if ((res=archreader_read_header(ai, magic, &dico, true, &fsid))!=ERR_SUCCESS)
+        if ((res=archreader_read_header(ai, magic, &dico, true, &fsid))!=FSAERR_SUCCESS)
         {   dico_destroy(dico);
             msgprintf(MSG_STACK, "archreader_read_header() failed to read next header\n");
             if (res==ERR_MINOR) // header is corrupt or not what we expected

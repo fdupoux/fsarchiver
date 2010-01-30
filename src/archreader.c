@@ -205,7 +205,7 @@ int archreader_read_dico(carchreader *ai, cdico *d)
     bufpos=buffer=malloc(headerlen);
     if (!buffer)
     {   errprintf("cannot allocate memory for header\n");
-        return ERR_FATAL;
+        return FSAERR_ENOMEM;
     }
     
     if (archreader_read_data(ai, buffer, headerlen)!=0)
@@ -263,7 +263,7 @@ int archreader_read_dico(carchreader *ai, cdico *d)
     }
     
     free(buffer);
-    return ERR_SUCCESS;
+    return FSAERR_SUCCESS;
 }
 
 int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowseek, u16 *fsid)
@@ -294,7 +294,7 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
         return ERR_FATAL;
     }
     
-    if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=ERR_SUCCESS)
+    if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=FSAERR_SUCCESS)
     {   msgprintf(MSG_STACK, "cannot read header magic: res=%d\n", res);
         return ERR_FATAL;
     }
@@ -311,14 +311,14 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
         {   sysprintf("lseek64(pos=%lld, SEEK_SET) failed\n", (long long)curpos);
             return ERR_FATAL;
         }
-        if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=ERR_SUCCESS)
+        if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=FSAERR_SUCCESS)
         {   msgprintf(MSG_STACK, "cannot read header magic: res=%d\n", res);
             return ERR_FATAL;
         }
     }
     
     // read the archive id
-    if ((res=archreader_read_data(ai, &temp32, sizeof(temp32)))!=ERR_SUCCESS)
+    if ((res=archreader_read_data(ai, &temp32, sizeof(temp32)))!=FSAERR_SUCCESS)
     {   msgprintf(MSG_STACK, "cannot read archive-id in header: res=%d\n", res);
         return ERR_FATAL;
     }
@@ -332,19 +332,19 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
     }
     
     // read the filesystem id
-    if ((res=archreader_read_data(ai, &temp16, sizeof(temp16)))!=ERR_SUCCESS)
+    if ((res=archreader_read_data(ai, &temp16, sizeof(temp16)))!=FSAERR_SUCCESS)
     {   msgprintf(MSG_STACK, "cannot read filesystem-id in header: res=%d\n", res);
         return ERR_FATAL;
     }
     *fsid=le16_to_cpu(temp16);
     
     // read the dico of the header
-    if ((res=archreader_read_dico(ai, *d))!=ERR_SUCCESS)
+    if ((res=archreader_read_dico(ai, *d))!=FSAERR_SUCCESS)
     {   msgprintf(MSG_STACK, "imgdisk_read_dico() failed\n");
         return res;
     }
     
-    return ERR_SUCCESS;
+    return FSAERR_SUCCESS;
 }
 
 int archreader_read_volheader(carchreader *ai)
@@ -364,7 +364,7 @@ int archreader_read_volheader(carchreader *ai)
     memset(magic, 0, sizeof(magic));
 
     // ---- a. read header from archive file
-    if ((res=archreader_read_header(ai, magic, &d, false, &fsid))!=ERR_SUCCESS)
+    if ((res=archreader_read_header(ai, magic, &d, false, &fsid))!=FSAERR_SUCCESS)
     {   errprintf("archreader_read_header() failed to read the archive header\n");
         return -1;
     }
@@ -500,7 +500,7 @@ int archreader_read_block(carchreader *ai, cdico *in_blkdico, int in_skipblock, 
     // ---- allocate memory
     if ((buffer=malloc(finalsize))==NULL)
     {   errprintf("cannot allocate block: malloc(%d) failed\n", finalsize);
-        return -1;
+        return FSAERR_ENOMEM;
     }
     
     if (read(ai->archfd, buffer, (long)finalsize)!=(long)finalsize)
@@ -527,7 +527,7 @@ int archreader_read_block(carchreader *ai, cdico *in_blkdico, int in_skipblock, 
         free(out_blkinfo->blkdata);
         if ((out_blkinfo->blkdata=malloc(curblocksize))==NULL)
         {   errprintf("cannot allocate block: malloc(%d) failed\n", curblocksize);
-            return -1;
+            return FSAERR_ENOMEM;
         }
         memset(out_blkinfo->blkdata, 0, curblocksize);
         *out_sumok=false;
