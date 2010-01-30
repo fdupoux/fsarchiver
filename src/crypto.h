@@ -18,15 +18,11 @@
 #ifndef __CRYPTO_H__
 #define __CRYPTO_H__
 
-#ifdef OPTION_CRYPTO_SUPPORT
-
 #include "types.h"
 
 int crypto_init();
 int crypto_blowfish(u64 insize, u64 *outsize, u8 *inbuf, u8 *outbuf, u8 *password, int passlen, int enc);
 int crypto_random(u8 *buf, int bufsize);
 int crypto_cleanup();
-
-#endif // OPTION_CRYPTO_SUPPORT
 
 #endif // __CRYPTO_H__

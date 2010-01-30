@@ -28,8 +28,6 @@
 #include "crypto.h"
 #include "error.h"
 
-#ifdef OPTION_CRYPTO_SUPPORT
-
 #include <gcrypt.h>
 
 // required for safety with multi-threading in gcrypt
@@ -124,5 +122,3 @@ int crypto_random(u8 *buf, int bufsize)
     gcry_randomize(buf, bufsize, GCRY_STRONG_RANDOM);
     return 0;
 }
-
-#endif // OPTION_CRYPTO_SUPPORT

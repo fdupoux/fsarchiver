@@ -26,12 +26,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <gcrypt.h>
 
 #include "fsarchiver.h"
 #include "datafile.h"
 #include "common.h"
 #include "error.h"
-#include "md5.h"
 
 struct s_datafile 
 {   int  fd; // file descriptor
@@ -39,7 +39,8 @@ struct s_datafile
     bool open; // true when file is open even if simulation
     bool sparse; // true if that's a sparse file
     char path[PATH_MAX]; // path to file
-    struct md5_ctx md5ctx; // struct for md5
+    gcry_md_hd_t md5ctx; // struct for md5
+    //struct md5_ctx md5ctx; // struct for md5
 };
 
 cdatafile *datafile_alloc()
@@ -90,7 +91,12 @@ int datafile_open_write(cdatafile *f, char *path, bool simul, bool sparse)
         }
     }
     
-    md5_init_ctx(&f->md5ctx);
+    //md5_init_ctx(&f->md5ctx);
+    if (gcry_md_open(&f->md5ctx, GCRY_MD_MD5, 0) != GPG_ERR_NO_ERROR)
+    {   errprintf("gcry_md_open() failed\n");
+        return -1;
+    }
+    
     snprintf(f->path, PATH_MAX, "%s", path);
     f->simul=simul;
     f->open=true;
@@ -147,13 +153,16 @@ int datafile_write(cdatafile *f, char *data, u64 len)
         }
     }
     
-    md5_process_bytes(data, len, &f->md5ctx);
+    //md5_process_bytes(data, len, &f->md5ctx);
+    gcry_md_write(f->md5ctx, data, len);
+    
     return 0;
 }
 
 int datafile_close(cdatafile *f, u8 *md5bufdat, int md5bufsize)
 {
-    char md5temp[16];
+    char md5store[16];
+    u8 *md5tmp;
     int res=0;
     
     assert(f);
@@ -163,7 +172,13 @@ int datafile_close(cdatafile *f, u8 *md5bufdat, int md5bufsize)
         return -1;
     }
     
-    md5_finish_ctx(&f->md5ctx, md5temp);
+    //md5_finish_ctx(&f->md5ctx, md5temp);
+    if ((md5tmp=gcry_md_read(f->md5ctx, GCRY_MD_MD5))==NULL)
+    {   errprintf("gcry_md_read() failed\n");
+        return -1;
+    }
+    memcpy(md5store, md5tmp, 16);
+    gcry_md_close(f->md5ctx);
     
     if (md5bufdat!=NULL)
     {
@@ -171,7 +186,7 @@ int datafile_close(cdatafile *f, u8 *md5bufdat, int md5bufsize)
         {   errprintf("Buffer too small for md5 checksum\n");
             return -1;
         }
-        memcpy(md5bufdat, md5temp, 16);
+        memcpy(md5bufdat, md5store, 16);
     }
     
     if ((f->open==true) && (f->simul==false))

@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <attr/xattr.h>
 #include <sys/time.h>
+#include <gcrypt.h>
 
 #include "fsarchiver.h"
 #include "strdico.h"
@@ -35,7 +36,6 @@
 #include "oper_restore.h"
 #include "archreader.h"
 #include "archinfo.h"
-#include "md5.h"
 #include "filesys.h"
 #include "fs_ext2.h"
 #include "fs_reiserfs.h"
@@ -252,7 +252,6 @@ int extractar_restore_attr_windows(cextractar *exar, u32 objtype, char *fullpath
         if ((res=lsetxattr(fullpath, xattrname, xattrvalue, xattrdatasize, 0))!=0)
         {
             sysprintf("winattr:lsetxattr(%s,%s) failed\n", relpath, xattrname);
-            printf("DEBUGERR: val=[%s]\n", xattrvalue);
             ret=-1;
         }
         else // success
@@ -699,7 +698,7 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
             
             if (datafile_close(datafile, md5sumcalc, sizeof(md5sumcalc))!=0)
                 goto extractar_restore_obj_regfile_multi_err;
-            
+                
             if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
             {   errprintf("cannot restore file %s, the data block (which is shared by multiple files) is corrupt\n", relpath);
                 res=truncate(fullpath, 0); // don't leave corrupt data in the file
@@ -1117,10 +1116,9 @@ int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
         exar->ai.minfsaver=FSA_VERSION_BUILD(0, 0, 0, 0); // not defined
     
     // if encryption is enabled, check the password is correct using the encrypted random buffer saved in the archive
-#ifdef OPTION_CRYPTO_SUPPORT
     u8 bufcheckclear[FSA_CHECKPASSBUF_SIZE+8];
     u8 bufcheckcrypt[FSA_CHECKPASSBUF_SIZE+8];
-    struct md5_ctx md5ctx;
+    //struct md5_ctx md5ctx;
     u16 cryptbufsize;
     u8 md5sumar[16];
     u8 md5sumnew[16];
@@ -1146,18 +1144,19 @@ int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
         }
         
         if (crypto_blowfish(cryptbufsize, &clearsize, bufcheckcrypt, bufcheckclear, g_options.encryptpass, strlen((char*)g_options.encryptpass), false)==0)
-        {
+            gcry_md_hash_buffer(GCRY_MD_MD5, md5sumnew, bufcheckclear, clearsize);
+        /*{
             md5_init_ctx(&md5ctx);
             md5_process_bytes(bufcheckclear, clearsize, &md5ctx);
             md5_finish_ctx(&md5ctx, md5sumnew);
-        }
+        }*/
         
         if (memcmp(md5sumar, md5sumnew, 16)!=0)
         {   errprintf("you have to provide the password which was used to create archive, cannot decrypt the test buffer.\n");
             return -1;
         }
     }
-#endif // OPTION_CRYPTO_SUPPORT
+
     return 0;
 }
 

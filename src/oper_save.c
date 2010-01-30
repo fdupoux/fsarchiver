@@ -30,6 +30,7 @@
 #include <attr/xattr.h>
 #include <zlib.h>
 #include <assert.h>
+#include <gcrypt.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
@@ -38,7 +39,6 @@
 #include "options.h"
 #include "common.h"
 #include "oper_save.h"
-#include "md5.h"
 #include "strlist.h"
 #include "filesys.h"
 #include "fs_ext2.h"
@@ -78,7 +78,7 @@ typedef struct s_devinfo
 int createar_obj_regfile_multi(csavear *save, cdico *header, char *relpath, char *fullpath, u64 filesize)
 {
     char databuf[FSA_MAX_SMALLFILESIZE];
-    struct md5_ctx md5ctx;
+    //struct md5_ctx md5ctx;
     u8 md5sum[16];
     int ret=0;
     int res;
@@ -108,10 +108,10 @@ int createar_obj_regfile_multi(csavear *save, cdico *header, char *relpath, char
         }
     }
     
-    md5_init_ctx(&md5ctx);
+    /*md5_init_ctx(&md5ctx);
     md5_process_bytes(databuf, filesize, &md5ctx);
-    md5_finish_ctx(&md5ctx, md5sum);
-    
+    md5_finish_ctx(&md5ctx, md5sum);*/
+    gcry_md_hash_buffer(GCRY_MD_MD5, md5sum, databuf, filesize);
     dico_add_data(header, 0, DISKITEMKEY_MD5SUM, md5sum, 16);
     
     // if shared-block with many small files is full, push it to queue and make a new one
@@ -138,19 +138,24 @@ int createar_obj_regfile_unique(csavear *save, cdico *header, char *relpath, cha
 {
     cdico *footerdico=NULL;
     struct s_blockinfo blkinfo;
-    struct md5_ctx md5ctx;
+    gcry_md_hd_t md5ctx;
     u32 curblocksize;
     bool eof=false;
     u64 remaining;
     char text[256];
     u8 *origblock;
+    u8 *md5tmp;
     u8 md5sum[16];
     u64 filepos;
     int ret=0;
     int res;
     int fd;
     
-    md5_init_ctx(&md5ctx);
+    //md5_init_ctx(&md5ctx);
+    if (gcry_md_open(&md5ctx, GCRY_MD_MD5, 0) != GPG_ERR_NO_ERROR)
+    {   errprintf("gcry_md_open() failed\n");
+        return -1;
+    }
     
     if ((fd=open64(fullpath, O_RDONLY|O_LARGEFILE))<0)
     {   sysprintf("Cannot open %s for reading\n", relpath);
@@ -196,7 +201,8 @@ int createar_obj_regfile_unique(csavear *save, cdico *header, char *relpath, cha
             memset(origblock, 0, curblocksize);
         }
         
-        md5_process_bytes(origblock, curblocksize, &md5ctx);
+        //md5_process_bytes(origblock, curblocksize, &md5ctx);
+        gcry_md_write(md5ctx, origblock, curblocksize);
         
         // add block to the queue
         memset(&blkinfo, 0, sizeof(blkinfo));
@@ -218,7 +224,15 @@ int createar_obj_regfile_unique(csavear *save, cdico *header, char *relpath, cha
     }
     
     // write the footer with the global md5sum
-    md5_finish_ctx(&md5ctx, md5sum);
+    //md5_finish_ctx(&md5ctx, md5sum);
+    if ((md5tmp=gcry_md_read(md5ctx, GCRY_MD_MD5))==NULL)
+    {   errprintf("gcry_md_read() failed\n");
+        ret=-1;
+        goto backup_obj_regfile_unique_error;
+    }
+    memcpy(md5sum, md5tmp, 16);
+    gcry_md_close(md5ctx);
+    
     msgprintf(MSG_DEBUG1, "--> finished loop for file=%s, size=%lld, md5=[%s]\n", relpath, (long long)filesize, format_md5(text, sizeof(text), md5sum));
     
     // don't write the footer for empty files (checksum does not make sense --> don't waste space in the archive)
@@ -845,11 +859,10 @@ int createar_write_mainhead(csavear *save, int archtype, int fscount)
     }
     
     // if encryption is enabled, save the md5sum of a random buffer to check the password
-#ifdef OPTION_CRYPTO_SUPPORT
     u8 bufcheckclear[FSA_CHECKPASSBUF_SIZE+8];
     u8 bufcheckcrypt[FSA_CHECKPASSBUF_SIZE+8];
     u64 cryptsize;
-    struct md5_ctx md5ctx;
+    //struct md5_ctx md5ctx;
     u8 md5sum[16];
     if (g_options.encryptalgo!=ENCRYPT_NONE)
     {
@@ -858,14 +871,14 @@ int createar_write_mainhead(csavear *save, int archtype, int fscount)
         crypto_blowfish(FSA_CHECKPASSBUF_SIZE, &cryptsize, bufcheckclear, bufcheckcrypt, 
             g_options.encryptpass, strlen((char*)g_options.encryptpass), true);
         
-        md5_init_ctx(&md5ctx);
+        /*md5_init_ctx(&md5ctx);
         md5_process_bytes(bufcheckclear, FSA_CHECKPASSBUF_SIZE, &md5ctx);
-        md5_finish_ctx(&md5ctx, md5sum);
+        md5_finish_ctx(&md5ctx, md5sum);*/
+        gcry_md_hash_buffer(GCRY_MD_MD5, md5sum, bufcheckclear, FSA_CHECKPASSBUF_SIZE);
         
         assert(dico_add_data(d, 0, MAINHEADKEY_BUFCHECKPASSCLEARMD5, md5sum, 16)==0);
         assert(dico_add_data(d, 0, MAINHEADKEY_BUFCHECKPASSCRYPTBUF, bufcheckcrypt, FSA_CHECKPASSBUF_SIZE)==0);
     }
-#endif // OPTION_CRYPTO_SUPPORT
     
     if (queue_add_header(&g_queue, d, FSA_MAGIC_MAIN, FSA_FILESYSID_NULL)!=0)
     {   errprintf("cannot write dico for main header\n");

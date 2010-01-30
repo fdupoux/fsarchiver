@@ -46,7 +46,7 @@ char *valid_magic[]={FSA_MAGIC_MAIN, FSA_MAGIC_VOLH, FSA_MAGIC_VOLF,
 
 void usage(char *progname, bool examples)
 {
-    int lzo=false, lzma=false, crypto=false;
+    int lzo=false, lzma=false;
     
 #ifdef OPTION_LZO_SUPPORT
     lzo=true;
@@ -54,9 +54,6 @@ void usage(char *progname, bool examples)
 #ifdef OPTION_LZMA_SUPPORT
     lzma=true;
 #endif // OPTION_LZMA_SUPPORT
-#ifdef OPTION_CRYPTO_SUPPORT
-    crypto=true;
-#endif // OPTION_CRYPTO_SUPPORT
     
     msgprintf(MSG_FORCE, "====> fsarchiver version %s (%s) - http://www.fsarchiver.org <====\n", FSA_VERSION, FSA_RELDATE);
     msgprintf(MSG_FORCE, "Distributed under the GPL v2 license (GNU General Public License v2).\n");
@@ -79,14 +76,11 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -z <level>: compression level from 1 (very fast)  to  9 (very good) default=3\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one compression thread. useful on multi-core cpu\n");
-#ifdef OPTION_CRYPTO_SUPPORT
     msgprintf(MSG_FORCE, " -c <password>: encrypt/decrypt data in archive. password length: %d to %d chars\n", FSA_MIN_PASSLEN, FSA_MAX_PASSLEN);
-#endif // OPTION_CRYPTO_SUPPORT
     msgprintf(MSG_FORCE, " -h: show help and information about how to use fsarchiver with examples\n");
     msgprintf(MSG_FORCE, " -V: show program version and exit\n");
     msgprintf(MSG_FORCE, "<information>\n");
-    msgprintf(MSG_FORCE, " * Support included for: lzo=%s, lzma=%s, encryption=%s\n",
-              (lzo==true)?"yes":"no", (lzma==true)?"yes":"no", (crypto==true)?"yes":"no");
+    msgprintf(MSG_FORCE, " * Support included for: lzo=%s, lzma=%s\n", (lzo==true)?"yes":"no", (lzma==true)?"yes":"no");
     msgprintf(MSG_FORCE, " * fsarchiver is still in development, don't use it for production.\n");
     
     if (examples==true)
@@ -238,7 +232,6 @@ int process_cmdline(int argc, char **argv)
                         "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
                 break;
             case 'c': // encryption
-#ifdef OPTION_CRYPTO_SUPPORT
                 g_options.encryptalgo=ENCRYPT_BLOWFISH;
                 if (strlen(optarg)<FSA_MIN_PASSLEN || strlen(optarg)>FSA_MAX_PASSLEN)
                 {   errprintf("the password lenght is incorrect, it must between %d and %d chars.\n", FSA_MIN_PASSLEN, FSA_MAX_PASSLEN);
@@ -246,10 +239,6 @@ int process_cmdline(int argc, char **argv)
                     return -1;
                 }
                 snprintf((char*)g_options.encryptpass, FSA_MAX_PASSLEN, "%s", optarg);
-#else // OPTION_CRYPTO_SUPPORT
-                errprintf("Encryption was not included in this version during compilation, cannot continue.\n");
-                return 1;
-#endif // OPTION_CRYPTO_SUPPORT
                 break;
             case 'L': // archive label
                 snprintf(g_options.archlabel, sizeof(g_options.archlabel), "%s", optarg);
@@ -401,12 +390,10 @@ int main(int argc, char **argv)
 #endif // OPTION_LZO_SUPPORT
     
     // init libgcrypt
-#ifdef OPTION_CRYPTO_SUPPORT
     if (crypto_init()!=0)
     {   errprintf("cannot initialize the crypto environment\n");
         exit(EXIT_FAILURE);
     }
-#endif // OPTION_CRYPTO_SUPPORT
     
     // init
     options_init(&g_options);
@@ -420,9 +407,7 @@ int main(int argc, char **argv)
     options_destroy(&g_options);
     
     // cleanup libgcrypt
-#ifdef OPTION_CRYPTO_SUPPORT
     crypto_cleanup();
-#endif // OPTION_CRYPTO_SUPPORT
     
     return !!ret;
 }

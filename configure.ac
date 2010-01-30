@@ -74,19 +74,10 @@ then
     AC_CHECK_HEADERS(lzo/lzo1x.h)
 fi
 
-dnl option to disable crypto support (for people who don't have libgcrypt installed)
-AC_ARG_ENABLE([crypto],
-    [AS_HELP_STRING([--disable-crypto], [don't compile the support for encryption (which requires libgcrypt)])],
-    [enable_crypto=$enableval],
-    [enable_crypto=yes])
-if test "x$enable_crypto" = "xyes"
-then
-    AC_DEFINE([OPTION_CRYPTO_SUPPORT], 1, [Define to 1 to enable the support for archive encryption using libgcrypt])
-    AC_CHECKING([for libgcrypt (library and header files)])
-    AC_CHECK_LIB([gcrypt], [gcry_cipher_encrypt], [LIBS="$LIBS -lgcrypt -lgpg-error"],
-        AC_MSG_ERROR([*** libgcrypt not found: you can either install libgcrypt or disable the support for encryption using --disable-crypto]))
-    AC_CHECK_HEADERS(gcrypt.h)
-fi
+dnl check libgcrypt (required for crypto and md5)
+AC_CHECKING([for libgcrypt (library and header files)])
+AC_CHECK_LIB([gcrypt], [gcry_cipher_encrypt], [LIBS="$LIBS -lgcrypt -lgpg-error"], AC_MSG_ERROR([*** libgcrypt not found]))
+AC_CHECK_HEADERS(gcrypt.h)
 
 dnl check e2fsprogs and its libs
 PKG_CHECK_EXISTS([ext2fs < 1.41.2], [CFLAGS="$CFLAGS -I /usr/include/blkid -I /usr/include/ext2fs -I /usr/include/uuid -I /usr/include/e2p"])

@@ -117,7 +117,6 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
         //errprintf ("COMP_DBG: block copied uncompressed, attempted using %s\n", compress_algo_int_to_string(compalgo));
     }
     
-#ifdef OPTION_CRYPTO_SUPPORT
     u64 cryptsize;
     char *bufcrypt=NULL;
     if (g_options.encryptalgo==ENCRYPT_BLOWFISH)
@@ -140,9 +139,6 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
     {
         blkinfo->blkcryptalgo=ENCRYPT_NONE;
     }
-#else // OPTION_CRYPTO_SUPPORT
-    blkinfo->blkcryptalgo=ENCRYPT_NONE;
-#endif // OPTION_CRYPTO_SUPPORT
     
     // calculates the final block checksum (block as it will be stored in the archive)
     blkinfo->blkarcsum=fletcher32((void*)blkinfo->blkdata, blkinfo->blkarsize);
@@ -175,7 +171,6 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
             return -1;
         }
         
-#ifdef OPTION_CRYPTO_SUPPORT
         char *bufcrypt=NULL;
         u64 clearsize;
         if (blkinfo->blkcryptalgo==ENCRYPT_BLOWFISH)
@@ -197,13 +192,6 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
             free(blkinfo->blkdata);
             blkinfo->blkdata=bufcrypt;
         }
-#else // OPTION_CRYPTO_SUPPORT
-        if (blkinfo->blkcryptalgo!=ENCRYPT_NONE)
-        {   errprintf("data in the archive have been encrypted, and this fsarchiver is compiled with no "
-                "support for encryption.\n");
-            return -1;
-        }
-#endif // OPTION_CRYPTO_SUPPORT
         
         switch (blkinfo->blkcompalgo)
         {
