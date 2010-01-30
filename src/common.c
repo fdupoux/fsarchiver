@@ -484,17 +484,6 @@ char *format_time(char *buffer, int bufsize, u64 t)
     return buffer;
 }
 
-// replacement for strncat() where we can't specify the destbuf size
-/*char *mystrlcat(char *dest, const char *src, int n)
-{
-    int i, pos;
-    
-    for (i=strlen(dest), pos=0; (i < n-1) && (src[pos] != 0) ; i++, pos++)
-        dest[i] = src[pos];
-    dest[i]=0;
-    return dest;
-}*/
-
 // add a formatted string at the end of a buffer that already contains a string
 char *strlcatf(char *dest, int destbufsize, char *format, ...)
 {

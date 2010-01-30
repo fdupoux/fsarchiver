@@ -44,7 +44,6 @@ u32 generate_random_u32_id(void);
 u32 fletcher32(u8 *data, u32 len);
 int regfile_exists(char *filepath);
 int is_magic_valid(char *magic);
-//char *mystrlcat(char *dest, const char *src, int n);
 char *strlcatf(char *dest, int destbufsize, char *format, ...) __attribute__ ((format (printf, 3, 4)));
 int format_stacktrace(char *buffer, int bufsize);
 int stats_show(struct s_stats, int fsid);
