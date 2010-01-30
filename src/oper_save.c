@@ -834,6 +834,7 @@ int createar_write_mainhead(csavear *save, int archtype, int fscount)
     dico_add_u32(d, 0, MAINHEADKEY_COMPRESSLEVEL, g_options.compresslevel);
     dico_add_u32(d, 0, MAINHEADKEY_ENCRYPTALGO, g_options.encryptalgo);
     dico_add_u32(d, 0, MAINHEADKEY_FSACOMPLEVEL, g_options.fsacomplevel);
+    dico_add_u32(d, 0, MAINHEADKEY_HASDIRSINFOHEAD, true);
     
     // minimum fsarchiver version required to restore that archive
     dico_add_u64(d, 0, MAINHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 7, 0));
@@ -1086,7 +1087,8 @@ int oper_save(char *archive, int argc, char **argv, int archtype)
     pthread_t thread_writer;
     u64 cost_evalfs=0;
     u64 totalerr=0;
-    cdico *dicoend;
+    cdico *dicoend=NULL;
+    cdico *dirsinfo=NULL;
     struct stat64 st;
     csavear save;
     int ret=0;
@@ -1205,6 +1207,38 @@ int oper_save(char *archive, int argc, char **argv, int archtype)
             }
             dicofsinfo[i]=NULL;
         }
+    }
+    
+    // analyse directories and write statistics in the dirsinfo
+    if (archtype==ARCHTYPE_DIRECTORIES)
+    {
+        // analyse each directory to eval the cost of the operation
+        for (i=0; (i < argc) && (argv[i]); i++)
+        {
+            cost_evalfs=0;
+            msgprintf(MSG_VERB1, "Analysing directory %s...\n", argv[i]);
+            if (createar_save_directory_wrapper(&save, argv[i], "/", &cost_evalfs)!=0)
+            {   sysprintf("cannot run evaluation createar_save_directory(%s)\n", argv[i]);
+                goto do_create_error;
+            }
+            save.cost_global+=cost_evalfs;
+        }
+        
+        // write dirsinfo header
+        if ((dirsinfo=dico_alloc())==NULL)
+        {   errprintf("dico_alloc() failed\n");
+            goto do_create_error;
+        }
+        if (dico_add_u64(dirsinfo, 0, DIRSINFOKEY_TOTALCOST, save.cost_global)!=0)
+        {   errprintf("dico_add_u64(DIRSINFOKEY_TOTALCOST) failed\n");
+            goto do_create_error;
+        }
+        
+        if (queue_add_header(&g_queue, dirsinfo, FSA_MAGIC_DIRS, FSA_FILESYSID_NULL)!=0)
+        {   errprintf("queue_add_header(FSA_MAGIC_DIRS, %s) failed\n", argv[i]);
+            goto do_create_error;
+        }
+        dirsinfo=NULL;
     }
     
     // init counters to zero before real savefs/savedir

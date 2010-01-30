@@ -66,7 +66,7 @@ enum {MAINHEADKEY_NULL=0, MAINHEADKEY_FILEFORMATVER, MAINHEADKEY_PROGVERCREAT, M
       MAINHEADKEY_CREATTIME, MAINHEADKEY_ARCHLABEL, MAINHEADKEY_ARCHTYPE, MAINHEADKEY_FSCOUNT, 
       MAINHEADKEY_COMPRESSALGO, MAINHEADKEY_COMPRESSLEVEL, MAINHEADKEY_ENCRYPTALGO, 
       MAINHEADKEY_BUFCHECKPASSCLEARMD5, MAINHEADKEY_BUFCHECKPASSCRYPTBUF, MAINHEADKEY_FSACOMPLEVEL,
-      MAINHEADKEY_MINFSAVERSION};
+      MAINHEADKEY_MINFSAVERSION, MAINHEADKEY_HASDIRSINFOHEAD};
 
 enum {FSYSHEADKEY_NULL=0, FSYSHEADKEY_FILESYSTEM, FSYSHEADKEY_MNTPATH, FSYSHEADKEY_BYTESTOTAL, 
       FSYSHEADKEY_BYTESUSED, FSYSHEADKEY_FSLABEL, FSYSHEADKEY_FSUUID, FSYSHEADKEY_FSINODESIZE, 
@@ -79,6 +79,8 @@ enum {FSYSHEADKEY_NULL=0, FSYSHEADKEY_FILESYSTEM, FSYSHEADKEY_MNTPATH, FSYSHEADK
       FSYSHEADKEY_MOUNTINFO, FSYSHEADKEY_ORIGDEV, FSYSHEADKEY_TOTALCOST,
       FSYSHEADKEY_FSEXTFSCKMAXMNTCOUNT, FSYSHEADKEY_FSEXTFSCKCHECKINTERVAL, 
       FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE};
+
+enum {DIRSINFOKEY_NULL=0, DIRSINFOKEY_TOTALCOST};
 
 // -------------------------------- fsarchiver errors ---------------------------------------------
 enum {FSAERR_SUCCESS=0,           // success
@@ -135,7 +137,8 @@ enum {OLDERR_FATAL=1,
 #define FSA_MAGIC_VOLF           "FsAE" // volume footer (one per volume at the very end)
 #define FSA_MAGIC_MAIN           "ArCh" // archive header (one per archive at the beginning of the first volume)
 #define FSA_MAGIC_FSIN           "FsIn" // filesys info (one per filesystem at the beginning of the archive)
-#define FSA_MAGIC_FSYB           "FsYs" // filesys begin (one per filesystem when the filesys contents start, or when the flatfiles start)
+#define FSA_MAGIC_FSYB           "FsYs" // filesys begin (one per filesystem when the filesys contents start)
+#define FSA_MAGIC_DIRS           "DiRs" // dirs info (one per archive after mainhead before flat dirs/files)
 #define FSA_MAGIC_OBJT           "ObJt" // object header (one per object: regfiles, dirs, symlinks, ...)
 #define FSA_MAGIC_BLKH           "BlKh" // datablk header (one per data block, each regfile may have [0-n])
 #define FSA_MAGIC_FILF           "FiLf" // filedat footer (one per regfile, after the list of data blocks)

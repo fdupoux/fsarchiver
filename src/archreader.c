@@ -48,6 +48,7 @@ int archreader_init(carchreader *ai)
     ai->archid=0;
     ai->curvol=0;
     ai->filefmtver=0;
+    ai->hasdirsinfohead=false;
     return 0;
 }
 

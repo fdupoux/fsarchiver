@@ -1026,6 +1026,7 @@ int extractar_extract_read_objects(cextractar *exar, int *errors, char *destdir,
 int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
 {
     char magic[FSA_SIZEOF_MAGIC+1];
+    u32 temp32;
     
     assert(exar);
     assert(dicomainhead);
@@ -1097,6 +1098,10 @@ int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
     {   errprintf("cannot find MAINHEADKEY_CREATTIME in main-header\n");
         return -1;
     }
+    
+    // MAINHEADKEY_HASDIRSINFOHEAD has been introduced in fsarchiver-0.6.7: don't fail if missing
+    if (dico_get_u32(*dicomainhead, 0, MAINHEADKEY_HASDIRSINFOHEAD, &temp32)==0)
+        exar->ai.hasdirsinfohead=temp32;
     
     // check the file format. New versions based on "FsArCh_002" also understand "FsArCh_001" which is very close (and "FsArCh_00Y"=="FsArCh_001")
     if (strcmp(exar->ai.filefmt, FSA_FILEFORMAT)!=0 && strcmp(exar->ai.filefmt, "FsArCh_00Y")!=0 && strcmp(exar->ai.filefmt, "FsArCh_001")!=0)
@@ -1315,6 +1320,7 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     pthread_t thread_decomp[FSA_MAX_COMPJOBS];
     char magic[FSA_SIZEOF_MAGIC+1];
     cdico *dicomainhead=NULL;
+    cdico *dirsinfo=NULL;
     pthread_t thread_reader;
     struct stat64 st;
     char *destdir;
@@ -1455,6 +1461,26 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
         // calculate total cost of the restfs
         if ((dicoargv[i]!=NULL) && (dico_get_u64(dicofsinfo[i], 0, FSYSHEADKEY_TOTALCOST, &fscost)==0))
             exar.cost_global+=fscost;
+    }
+    
+    // read the dirsinfo header which contains the statistrics (only if this header is present)
+    // the support for that header has been introduced in fsarchiver-0.6.7, but this will be
+    // written in archives later when most users have upgraded to fsarchiver >= 0.6.7
+    // so that they don't have error when they try to restore an archive which has that header
+    if ((exar.ai.archtype==ARCHTYPE_DIRECTORIES) && (exar.ai.hasdirsinfohead==true))
+    {
+        if (queue_dequeue_header(&g_queue, &dirsinfo, magic, NULL)<=0)
+        {   errprintf("queue_dequeue_header() failed: cannot read the dirsinfo header\n");
+            goto do_extract_error;
+        }
+        if (memcmp(magic, FSA_MAGIC_DIRS, FSA_SIZEOF_MAGIC)!=0)
+        {   errprintf("header is not what we expected: found=[%s] and expected=[%s]\n", magic, FSA_MAGIC_DIRS);
+            goto do_extract_error;
+        }
+        if ((dirsinfo!=NULL) && (dico_get_u64(dirsinfo, 0, DIRSINFOKEY_TOTALCOST, &exar.cost_global)!=0))
+        {   errprintf("cannot read DIRSINFOKEY_TOTALCOST in dirsinfo\n");
+            goto do_extract_error;
+        }
     }
     
     if ((oper==OPER_RESTFS) || (oper==OPER_RESTDIR))
