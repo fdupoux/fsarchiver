@@ -1107,6 +1107,10 @@ int extractar_read_mainhead(cextractar *exar, cdico **dicomainhead)
         return -1;
     }
     
+    // read minimum fsarchiver version requirement
+    if (dico_get_u64(*dicomainhead, 0, MAINHEADKEY_MINFSAVERSION, &exar->ai.minfsaver)!=0)
+        exar->ai.minfsaver=FSA_VERSION_BUILD(0, 0, 0, 0); // not defined
+    
     // if encryption is enabled, check the password is correct using the encrypted random buffer saved in the archive
 #ifdef OPTION_CRYPTO_SUPPORT
     u8 bufcheckclear[FSA_CHECKPASSBUF_SIZE+8];
@@ -1317,6 +1321,7 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     cextractar exar;
     u64 totalerr=0;
     u64 fscost;
+    u64 curver;
     int errors=0;
     int ret=0;
     int i;
@@ -1364,14 +1369,14 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     for (i=0; (i<g_options.compressjobs) && (i<FSA_MAX_COMPJOBS); i++)
     {
         if (pthread_create(&thread_decomp[i], NULL, thread_decomp_fct, NULL) != 0)
-        {     errprintf("pthread_create(thread_decomp_fct) failed\n");
+        {   errprintf("pthread_create(thread_decomp_fct) failed\n");
             goto do_extract_error;
         }
     }
     
     // create archive-reader thread
     if (pthread_create(&thread_reader, NULL, thread_reader_fct, (void*)&exar.ai) != 0)
-    {     errprintf("pthread_create(thread_reader_fct) failed\n");
+    {   errprintf("pthread_create(thread_reader_fct) failed\n");
         goto do_extract_error;
     }
     
@@ -1380,9 +1385,22 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     {   msgprintf(MSG_STACK, "read_mainhead(%s) failed\n", archive);
         goto do_extract_error;
     }
-            
+    
     if (oper==OPER_ARCHINFO && archinfo_show_mainhead(&exar.ai, dicomainhead)!=0)
-    {     errprintf("archinfo_show_mainhead(%s) failed\n", archive);
+    {   errprintf("archinfo_show_mainhead(%s) failed\n", archive);
+        goto do_extract_error;
+    }
+    
+    // check that the minimum fsarchiver version required is ok
+    curver=FSA_VERSION_BUILD(PACKAGE_VERSION_A, PACKAGE_VERSION_B, PACKAGE_VERSION_C, PACKAGE_VERSION_D);
+    msgprintf(MSG_VERB1, "Current fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(curver), 
+        (int)FSA_VERSION_GET_B(curver), (int)FSA_VERSION_GET_C(curver), (int)FSA_VERSION_GET_D(curver));
+    msgprintf(MSG_VERB1, "Minimum fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(exar.ai.minfsaver), 
+        (int)FSA_VERSION_GET_B(exar.ai.minfsaver), (int)FSA_VERSION_GET_C(exar.ai.minfsaver), (int)FSA_VERSION_GET_D(exar.ai.minfsaver));
+    if (((oper==OPER_RESTFS) || (oper==OPER_RESTDIR)) && (curver < exar.ai.minfsaver))
+    {   errprintf("This archive can only be restored with fsarchiver %d.%d.%d.%d or more recent\n",
+        (int)FSA_VERSION_GET_A(exar.ai.minfsaver), (int)FSA_VERSION_GET_B(exar.ai.minfsaver), 
+        (int)FSA_VERSION_GET_C(exar.ai.minfsaver), (int)FSA_VERSION_GET_D(exar.ai.minfsaver));
         goto do_extract_error;
     }
     

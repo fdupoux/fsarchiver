@@ -38,6 +38,7 @@ struct s_archreader
     u32    complevel; // compression level which is specific to the compression algorithm
     u32    fsacomp; // fsa compression level given on the command line by the user
     u64    creattime; // archive create time (number of seconds since epoch)
+    u64    minfsaver; // minimin fsarchiver version required to restore that archive
     int    filefmtver; // set to 1 for "FsArCh_001" or 2 for "FsArCh_002"
     char   filefmt[FSA_MAX_FILEFMTLEN]; // file format of that archive
     char   creatver[FSA_MAX_PROGVERLEN]; // fsa version used to create archive

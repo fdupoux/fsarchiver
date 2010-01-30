@@ -33,11 +33,11 @@ char *compalgostr(int algo)
     switch (algo)
     {
         case COMPRESS_NONE:    return "none";
-        case COMPRESS_LZO:    return "lzo";
+        case COMPRESS_LZO:     return "lzo";
         case COMPRESS_GZIP:    return "gzip";
-        case COMPRESS_BZIP2:    return "bzip2";
+        case COMPRESS_BZIP2:   return "bzip2";
         case COMPRESS_LZMA:    return "lzma";
-        default:        return "unknown";
+        default:               return "unknown";
     }
 }
 
@@ -45,9 +45,9 @@ char *cryptalgostr(int algo)
 {
     switch (algo)
     {
-        case ENCRYPT_NONE:    return "none";
-        case ENCRYPT_BLOWFISH:    return "blowfish";
-        default:        return "unknown";
+        case ENCRYPT_NONE:     return "none";
+        case ENCRYPT_BLOWFISH: return "blowfish";
+        default:               return "unknown";
     }
 }
 
@@ -69,6 +69,9 @@ int archinfo_show_mainhead(carchreader *ai, cdico *dicomainhead)
     msgprintf(MSG_FORCE, "Archive created with: \t\t%s\n", ai->creatver);
     msgprintf(MSG_FORCE, "Archive creation date: \t\t%s\n", format_time(buffer, sizeof(buffer), ai->creattime));
     msgprintf(MSG_FORCE, "Archive label: \t\t\t%s\n", ai->label);
+    if (ai->minfsaver > 0) // fsarchiver < 0.6.7 had no per-archive minfsaver version requirement
+        msgprintf(MSG_FORCE, "Minimum fsarchiver version:\t%d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(ai->minfsaver), 
+            (int)FSA_VERSION_GET_B(ai->minfsaver), (int)FSA_VERSION_GET_C(ai->minfsaver), (int)FSA_VERSION_GET_D(ai->minfsaver));
     msgprintf(MSG_FORCE, "Compression level: \t\t%d (%s level %d)\n", ai->fsacomp, compalgostr(ai->compalgo), ai->complevel);
     msgprintf(MSG_FORCE, "Encryption algorithm: \t\t%s\n", cryptalgostr(ai->cryptalgo));
     msgprintf(MSG_FORCE, "\n");
