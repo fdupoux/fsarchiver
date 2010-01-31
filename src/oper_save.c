@@ -1237,7 +1237,7 @@ int oper_save(char *archive, int argc, char **argv, int archtype)
         }
         
         if (queue_add_header(&g_queue, dirsinfo, FSA_MAGIC_DIRS, FSA_FILESYSID_NULL)!=0)
-        {   errprintf("queue_add_header(FSA_MAGIC_DIRS, %s) failed\n", argv[i]);
+        {   errprintf("queue_add_header(FSA_MAGIC_DIRS) failed\n");
             goto do_create_error;
         }
         dirsinfo=NULL;
