@@ -7,6 +7,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
   - The logfile created when option -d is used now has a specific name so that it's not overwritten
   - The md5 checksums are now calculated using the implemention from libgcrypt instead of the internal one
   - The libgcrypt library is now a mandatory dependency and crypto cannot be disabled any more
+  - Allow non root users to use "fsarchiver archinfo" as long as they have read permissions on the archive
 * 0.6.6 (2010-01-24):
   - Fix: don't remove the archive file when savefs/savedir fails because the archive already exists
   - Partitions already mounted are remounted with MS_BIND to have access to files hidden by mounted filesystems 

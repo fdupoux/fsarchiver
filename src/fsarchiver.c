@@ -138,6 +138,7 @@ static struct option const long_options[] =
 int process_cmdline(int argc, char **argv)
 {
     char *partition[FSA_MAX_FSPERARCH];
+    bool runasroot=true;
     char *probemode;
     sigset_t mask_set;
     bool probedetailed=0;
@@ -273,26 +274,32 @@ int process_cmdline(int argc, char **argv)
     // convert commands to integers
     if (strcmp(command, "savefs")==0)
     {   cmd=OPER_SAVEFS;
+        runasroot=true;
         argcok=(argc>=2);
     }
     else if (strcmp(command, "restfs")==0)
     {   cmd=OPER_RESTFS;
+        runasroot=true;
         argcok=(argc>=2);
     }
     else if (strcmp(command, "savedir")==0)
     {   cmd=OPER_SAVEDIR;
+        runasroot=true;
         argcok=(argc>=2);
     }
     else if (strcmp(command, "restdir")==0)
     {   cmd=OPER_RESTDIR;
+        runasroot=true;
         argcok=(argc==2);
     }
     else if (strcmp(command, "archinfo")==0)
     {   cmd=OPER_ARCHINFO;
+        runasroot=false;
         argcok=(argc==1);
     }
     else if (strcmp(command, "probe")==0)
     {   cmd=OPER_PROBE;
+        runasroot=true;
         argcok=(argc<=1);
     }
     else // command not found
@@ -305,6 +312,12 @@ int process_cmdline(int argc, char **argv)
     if (argcok!=true)
     {   errprintf("invalid number of arguments.\n");
         usage(progname, false);
+        return -1;
+    }
+    
+    // check if must be run as root
+    if (runasroot==true && geteuid()!=0)
+    {   errprintf("\"fsarchiver %s\" must be run as root. cannot continue.\n", command);
         return -1;
     }
     
@@ -374,12 +387,6 @@ int process_cmdline(int argc, char **argv)
 int main(int argc, char **argv)
 {
     int ret;
-    
-    // must be run as root
-    if (geteuid()!=0)
-    {   errprintf("%s must be run as root. cannot continue.\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
     
     // init the lzo library
 #ifdef OPTION_LZO_SUPPORT
