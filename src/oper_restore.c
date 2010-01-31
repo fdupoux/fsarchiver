@@ -1191,9 +1191,9 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     if (dico_get_u64(dicofs, 0, FSYSHEADKEY_MINFSAVERSION, &minver)!=0)
         minver=FSA_VERSION_BUILD(0, 6, 4, 0); // fsarchiver-0.6.4 is the first fsa version having fileformat="FsArCh_002"
     curver=FSA_VERSION_BUILD(PACKAGE_VERSION_A, PACKAGE_VERSION_B, PACKAGE_VERSION_C, PACKAGE_VERSION_D);
-    msgprintf(MSG_VERB1, "Current fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(curver), 
+    msgprintf(MSG_VERB2, "Current fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(curver), 
         (int)FSA_VERSION_GET_B(curver), (int)FSA_VERSION_GET_C(curver), (int)FSA_VERSION_GET_D(curver));
-    msgprintf(MSG_VERB1, "Minimum fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(minver), 
+    msgprintf(MSG_VERB2, "Minimum fsarchiver version for that filesystem: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(minver), 
         (int)FSA_VERSION_GET_B(minver), (int)FSA_VERSION_GET_C(minver), (int)FSA_VERSION_GET_D(minver));
     if (curver < minver)
     {   errprintf("This filesystem can only be restored with fsarchiver %d.%d.%d.%d or more recent\n",
@@ -1392,10 +1392,13 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     
     // check that the minimum fsarchiver version required is ok
     curver=FSA_VERSION_BUILD(PACKAGE_VERSION_A, PACKAGE_VERSION_B, PACKAGE_VERSION_C, PACKAGE_VERSION_D);
-    msgprintf(MSG_VERB1, "Current fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(curver), 
-        (int)FSA_VERSION_GET_B(curver), (int)FSA_VERSION_GET_C(curver), (int)FSA_VERSION_GET_D(curver));
-    msgprintf(MSG_VERB1, "Minimum fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(exar.ai.minfsaver), 
-        (int)FSA_VERSION_GET_B(exar.ai.minfsaver), (int)FSA_VERSION_GET_C(exar.ai.minfsaver), (int)FSA_VERSION_GET_D(exar.ai.minfsaver));
+    if (exar.ai.minfsaver > 0)
+    {
+        msgprintf(MSG_VERB2, "Current fsarchiver version: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(curver), 
+            (int)FSA_VERSION_GET_B(curver), (int)FSA_VERSION_GET_C(curver), (int)FSA_VERSION_GET_D(curver));
+        msgprintf(MSG_VERB2, "Minimum fsarchiver version for that archive: %d.%d.%d.%d\n", (int)FSA_VERSION_GET_A(exar.ai.minfsaver), 
+            (int)FSA_VERSION_GET_B(exar.ai.minfsaver), (int)FSA_VERSION_GET_C(exar.ai.minfsaver), (int)FSA_VERSION_GET_D(exar.ai.minfsaver));
+    }
     if (((oper==OPER_RESTFS) || (oper==OPER_RESTDIR)) && (curver < exar.ai.minfsaver))
     {   errprintf("This archive can only be restored with fsarchiver %d.%d.%d.%d or more recent\n",
         (int)FSA_VERSION_GET_A(exar.ai.minfsaver), (int)FSA_VERSION_GET_B(exar.ai.minfsaver), 
