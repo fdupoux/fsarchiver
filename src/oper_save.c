@@ -848,7 +848,7 @@ int createar_write_mainhead(csavear *save, int archtype, int fscount)
     dico_add_u32(d, 0, MAINHEADKEY_HASDIRSINFOHEAD, true);
     
     // minimum fsarchiver version required to restore that archive
-    dico_add_u64(d, 0, MAINHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 7, 0));
+    dico_add_u64(d, 0, MAINHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
     
     if (archtype==ARCHTYPE_FILESYSTEMS)
     {   
