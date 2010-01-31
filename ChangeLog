@@ -1,6 +1,6 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
-* 0.6.7:
+* 0.6.7 (2010-01-31):
   - Added support for sparse files (sparse file on the original disk will be recreated as sparse file)
   - Added per-archive minimum fsarchiver version requirement (MAINHEADKEY_MINFSAVERSION)
   - Added dirsinfo in archives with simple files and directories to store stats required for progression
