@@ -197,18 +197,11 @@ int strdico_set_value(cstrdico *d, const char *key, const char *value)
     if (existingitem!=NULL)
     {
         oldvalue=existingitem->value;
-        if (vallen>0) // value not empty
-        {
-            if ((existingitem->value=malloc(vallen+1))==NULL)
-            {   errprintf("malloc(%d) failed: out of memory\n", vallen+1);
-                return -FSAERR_ENOMEM;
-            }
-            snprintf(existingitem->value, vallen+1, "%s", value);
+        if ((existingitem->value=malloc(vallen+1))==NULL)
+        {   errprintf("malloc(%d) failed: out of memory\n", vallen+1);
+            return -FSAERR_ENOMEM;
         }
-        else // value may be an empty string
-        {
-            existingitem->value=NULL;
-        }
+        snprintf(existingitem->value, vallen+1, "%s", value);
         if (oldvalue!=NULL)
             free(oldvalue); // only free oldvalue if malloc is successful
         return FSAERR_SUCCESS;
@@ -225,18 +218,11 @@ int strdico_set_value(cstrdico *d, const char *key, const char *value)
         return -FSAERR_ENOMEM;
     }
     snprintf(lnew->key, keylen+1, "%s", key);
-    if (vallen>0) // value not empty
-    {
-        if ((lnew->value=malloc(vallen+1))==NULL)
-        {   errprintf("malloc(%d) failed: out of memory\n", vallen+1);
-            return -FSAERR_ENOMEM;
-        }
-        snprintf(lnew->value, vallen+1, "%s", value);
+    if ((lnew->value=malloc(vallen+1))==NULL)
+    {   errprintf("malloc(%d) failed: out of memory\n", vallen+1);
+        return -FSAERR_ENOMEM;
     }
-    else // value may be an empty string
-    {
-        lnew->value=NULL;
-    }
+    snprintf(lnew->value, vallen+1, "%s", value);
     lnew->next=d->head;
     d->head=lnew;
     
