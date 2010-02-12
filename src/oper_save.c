@@ -27,6 +27,7 @@
 #include <sys/time.h>
 #include <sys/mount.h>
 #include <sys/statvfs.h>
+#include <sys/stat.h>
 #include <attr/xattr.h>
 #include <zlib.h>
 #include <assert.h>

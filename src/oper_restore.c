@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <attr/xattr.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <gcrypt.h>
 
 #include "fsarchiver.h"

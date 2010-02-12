@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/statvfs.h>
+#include <sys/stat.h>
 #include <assert.h>
 
 #include "fsarchiver.h"

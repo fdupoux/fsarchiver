@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <execinfo.h>
