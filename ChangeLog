@@ -2,6 +2,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.6.8:
   - Fixed compilation error on systems with recent kernel headers by including <sys/stat.h>
+  - Don't allow archives to be written on a smbfs/cifs filesystem (high risk of corruption)
 * 0.6.7 (2010-01-31):
   - Added support for sparse files (sparse file on the original disk will be recreated as sparse file)
   - Added per-archive minimum fsarchiver version requirement (MAINHEADKEY_MINFSAVERSION)

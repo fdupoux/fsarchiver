@@ -26,6 +26,7 @@
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <sys/vfs.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
@@ -37,6 +38,9 @@
 #include "comp_gzip.h"
 #include "comp_bzip2.h"
 #include "error.h"
+
+#define FSA_SMB_SUPER_MAGIC 0x517B
+#define FSA_CIFS_MAGIC_NUMBER 0xFF534D42
 
 int archwriter_init(carchwriter *ai)
 {
@@ -64,15 +68,24 @@ int archwriter_generate_id(carchwriter *ai)
 
 int archwriter_create(carchwriter *ai)
 {
+    char testpath[PATH_MAX];
+    struct statfs svfs;
     struct stat64 st;
+    long basicflags=0;
+    long extraflags=0;
+    long archperm;
+    int tempfd;
     int res;
     
     assert(ai);
     
+    // init
     memset(&st, 0, sizeof(st));
-    res=stat64(ai->volpath, &st);
+    basicflags=O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE;
+    archperm=S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH;
     
     // if the archive already exists and is a not regular file
+    res=stat64(ai->volpath, &st);
     if (res==0 && !S_ISREG(st.st_mode))
     {   errprintf("%s already exists, and is not a regular file.\n", ai->basepath);
         return -1;
@@ -82,7 +95,29 @@ int archwriter_create(carchwriter *ai)
         return -1;
     }
     
-    ai->archfd=open64(ai->volpath, O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+    // check if it's a network filesystem
+    snprintf(testpath, sizeof(testpath), "%s.test", ai->volpath);
+    if (((tempfd=open64(testpath, basicflags, archperm))<0) ||
+        (fstatfs(tempfd, &svfs)!=0) ||
+        (close(tempfd)!=0) ||
+        (unlink(testpath)!=0))
+    {   errprintf("Cannot check the filesystem type on file %s\n", testpath);
+        return -1;
+    }
+    
+    if (svfs.f_type==FSA_CIFS_MAGIC_NUMBER || svfs.f_type==FSA_SMB_SUPER_MAGIC)
+    {   sysprintf ("writing an archive on a smbfs/cifs filesystem is "
+            "not allowed, since it can produce corrupt archives.\n");
+        return -1;
+    }
+    
+    /* This workaround is not really possible: writes would be extremly slow on smbfs/cifs
+    if (svfs.f_type==FSA_CIFS_MAGIC_NUMBER || svfs.f_type==FSA_SMB_SUPER_MAGIC)
+    {   msgprintf(MSG_DEBUG1, "Archive %s is on a network filesystem\n", ai->volpath);
+        extraflags=O_SYNC;
+    }*/
+    
+    ai->archfd=open64(ai->volpath, basicflags|extraflags, archperm);
     if (ai->archfd < 0)
     {   sysprintf ("cannot create archive %s\n", ai->volpath);
         return -1;
