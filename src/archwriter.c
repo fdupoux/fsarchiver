@@ -26,7 +26,6 @@
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <assert.h>
-#include <sys/vfs.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
@@ -68,20 +67,19 @@ int archwriter_generate_id(carchwriter *ai)
 
 int archwriter_create(carchwriter *ai)
 {
-    char testpath[PATH_MAX];
-    struct statfs svfs;
+    //char testpath[PATH_MAX];
+    //struct statfs svfs;
+    //int tempfd;
     struct stat64 st;
-    long basicflags=0;
-    long extraflags=0;
+    long archflags=0;
     long archperm;
-    int tempfd;
     int res;
     
     assert(ai);
     
     // init
     memset(&st, 0, sizeof(st));
-    basicflags=O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE;
+    archflags=O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE;
     archperm=S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH;
     
     // if the archive already exists and is a not regular file
@@ -96,7 +94,7 @@ int archwriter_create(carchwriter *ai)
     }
     
     // check if it's a network filesystem
-    snprintf(testpath, sizeof(testpath), "%s.test", ai->volpath);
+    /*snprintf(testpath, sizeof(testpath), "%s.test", ai->volpath);
     if (((tempfd=open64(testpath, basicflags, archperm))<0) ||
         (fstatfs(tempfd, &svfs)!=0) ||
         (close(tempfd)!=0) ||
@@ -109,40 +107,39 @@ int archwriter_create(carchwriter *ai)
     {   sysprintf ("writing an archive on a smbfs/cifs filesystem is "
             "not allowed, since it can produce corrupt archives.\n");
         return -1;
-    }
+    }*/
     
     /* This workaround is not really possible: writes would be extremly slow on smbfs/cifs
     if (svfs.f_type==FSA_CIFS_MAGIC_NUMBER || svfs.f_type==FSA_SMB_SUPER_MAGIC)
     {   msgprintf(MSG_DEBUG1, "Archive %s is on a network filesystem\n", ai->volpath);
-        extraflags=O_SYNC;
+        archflags|=O_SYNC;
     }*/
     
-    ai->archfd=open64(ai->volpath, basicflags|extraflags, archperm);
+    ai->archfd=open64(ai->volpath, archflags, archperm);
     if (ai->archfd < 0)
     {   sysprintf ("cannot create archive %s\n", ai->volpath);
         return -1;
     }
     ai->newarch=true;
     
-    if (lockf(ai->archfd, F_LOCK, 0)!=0)
+    /* lockf is causing corruption when the archive is written on a smbfs/cifs filesystem */
+    /*if (lockf(ai->archfd, F_LOCK, 0)!=0)
     {   sysprintf("Cannot lock archive file: %s\n", ai->volpath);
         close(ai->archfd);
         return -1;
-    }
+    }*/
     
     return 0;
 }
 
 int archwriter_close(carchwriter *ai)
 {
-    int res;
-    
     assert(ai);
     
     if (ai->archfd<0)
         return -1;
     
-    res=lockf(ai->archfd, F_ULOCK, 0);
+    //res=lockf(ai->archfd, F_ULOCK, 0);
     fsync(ai->archfd); // just in case the user reboots after it exits
     close(ai->archfd);
     ai->archfd=-1;
