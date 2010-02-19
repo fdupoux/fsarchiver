@@ -1386,11 +1386,6 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
         goto do_extract_error;
     }
     
-    if (oper==OPER_ARCHINFO && archinfo_show_mainhead(&exar.ai, dicomainhead)!=0)
-    {   errprintf("archinfo_show_mainhead(%s) failed\n", archive);
-        goto do_extract_error;
-    }
-    
     // check that the minimum fsarchiver version required is ok
     curver=FSA_VERSION_BUILD(PACKAGE_VERSION_A, PACKAGE_VERSION_B, PACKAGE_VERSION_C, PACKAGE_VERSION_D);
     if (exar.ai.minfsaver > 0)
@@ -1404,6 +1399,12 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     {   errprintf("This archive can only be restored with fsarchiver %d.%d.%d.%d or more recent\n",
         (int)FSA_VERSION_GET_A(exar.ai.minfsaver), (int)FSA_VERSION_GET_B(exar.ai.minfsaver), 
         (int)FSA_VERSION_GET_C(exar.ai.minfsaver), (int)FSA_VERSION_GET_D(exar.ai.minfsaver));
+        goto do_extract_error;
+    }
+    
+    // show archive information if command is OPER_ARCHINFO
+    if (oper==OPER_ARCHINFO && archinfo_show_mainhead(&exar.ai, dicomainhead)!=0)
+    {   errprintf("archinfo_show_mainhead(%s) failed\n", archive);
         goto do_extract_error;
     }
     
