@@ -109,12 +109,6 @@ int archwriter_create(carchwriter *ai)
         return -1;
     }*/
     
-    /* This workaround is not really possible: writes would be extremly slow on smbfs/cifs
-    if (svfs.f_type==FSA_CIFS_MAGIC_NUMBER || svfs.f_type==FSA_SMB_SUPER_MAGIC)
-    {   msgprintf(MSG_DEBUG1, "Archive %s is on a network filesystem\n", ai->volpath);
-        archflags|=O_SYNC;
-    }*/
-    
     ai->archfd=open64(ai->volpath, archflags, archperm);
     if (ai->archfd < 0)
     {   sysprintf ("cannot create archive %s\n", ai->volpath);
