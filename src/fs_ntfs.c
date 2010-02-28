@@ -94,7 +94,7 @@ int ntfs_getinfo(cdico *d, char *devname)
     }
     
     // get device label from common code in libbklid
-    if (get_devinfo(&devinfo, devname)!=0)
+    if (get_devinfo(&devinfo, devname, -1, -1)!=0)
     {   errprintf("get_devinfo(%s) failed\n", devname);
         return -1;
     }

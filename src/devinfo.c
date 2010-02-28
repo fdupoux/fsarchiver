@@ -35,7 +35,7 @@
 #include "fs_ext2.h"
 #include "error.h"
 
-int get_devinfo(struct s_devinfo *outdev, char *indevname)
+int get_devinfo(struct s_devinfo *outdev, char *indevname, int min, int maj)
 {
     char sysblkdevname[512];
     blkid_tag_iterate iter;
@@ -67,10 +67,28 @@ int get_devinfo(struct s_devinfo *outdev, char *indevname)
     // get short name ("/dev/sda1" -> "sda1")
     snprintf(outdev->devname, sizeof(outdev->devname), "%s", indevname+5); // skip "/dev/"
     
+    // get long name if there is one (eg: LVM / devmapper)
+    snprintf(outdev->longname, sizeof(outdev->longname), "%s", indevname);
+    if ((dirdesc=opendir("/dev/mapper"))!=NULL)
+    {
+        found=false;
+        while (((dir=readdir(dirdesc)) != NULL) && found==false)
+        {
+            snprintf(temp, sizeof(temp), "/dev/mapper/%s", dir->d_name);
+            if ((stat64(temp, &statbuf)==0) && S_ISBLK(statbuf.st_mode) && 
+                (major(statbuf.st_rdev)==maj) && (minor(statbuf.st_rdev)==min))
+            {
+                snprintf(outdev->longname, sizeof(outdev->longname), "%s", temp);
+                found=true;
+            }
+        }
+        closedir(dirdesc);
+    }
+    
     // get device basic info (size, major, minor)
-    if (((fd=open64(indevname, O_RDONLY|O_LARGEFILE))<0) ||
+    if (((fd=open64(outdev->longname, O_RDONLY|O_LARGEFILE))<0) || 
         ((outdev->devsize=lseek64(fd, 0, SEEK_END))<0) ||
-        (stat64(indevname, &statbuf)!=0) ||
+        (fstat64(fd, &statbuf)!=0) ||
         (!S_ISBLK(statbuf.st_mode)) ||
         (close(fd)<0))
         return -1;
@@ -106,7 +124,7 @@ int get_devinfo(struct s_devinfo *outdev, char *indevname)
     blkid_cache cache = NULL;
     if (blkid_get_cache(&cache, NULL) < 0)
         return -1;
-    if ((dev=blkid_get_dev(cache, indevname, BLKID_DEV_NORMAL))!=NULL)
+    if ((dev=blkid_get_dev(cache, outdev->longname, BLKID_DEV_NORMAL))!=NULL)
     {
         iter = blkid_tag_iterate_begin(dev);
         while (blkid_tag_next(iter, &type, &value)==0)
@@ -123,30 +141,13 @@ int get_devinfo(struct s_devinfo *outdev, char *indevname)
         // workaround: blkid < 1.41 don't know ext4 and say it is ext3 instead
         if (strcmp(outdev->fsname, "ext3")==0)
         {
-            if (ext3_test(indevname)==true)
+            if (ext3_test(outdev->longname)==true)
                 snprintf(outdev->fsname, sizeof(outdev->fsname), "ext3");
             else // cannot run ext4_test(): it would fail on an ext4 when e2fsprogs < 1.41
                 snprintf(outdev->fsname, sizeof(outdev->fsname), "ext4");
         }
     }
     blkid_put_cache(cache); // free memory allocated by blkid_get_cache
-    
-    // get long name if there is one (eg: LVM / devmapper)
-    snprintf(outdev->longname, sizeof(outdev->longname), "%s", indevname);
-    if ((dirdesc=opendir("/dev/mapper"))!=NULL)
-    {
-        found=false;
-        while (((dir=readdir(dirdesc)) != NULL) && found==false)
-        {
-            snprintf(temp, sizeof(temp), "/dev/mapper/%s", dir->d_name);
-            if ((stat64(temp, &statbuf)==0) && S_ISBLK(statbuf.st_mode) && (statbuf.st_rdev==outdev->rdev))
-            {   
-                snprintf(outdev->longname, sizeof(outdev->longname), "%s", temp);
-                found=true;
-            }
-        }
-        closedir(dirdesc);
-    }
     
     return 0;
 }

@@ -89,7 +89,7 @@ int partlist_getlist(struct s_devinfo *blkdev, int maxblkdev, int *diskcount, in
             if ((strlen(devname)==0) || (atoi(major)==0 && atoi(minor)==0))
                 continue;
             snprintf(longname, sizeof(longname), "/dev/%s", devname);
-            if (get_devinfo(&tmpdev, longname)!=0)
+            if (get_devinfo(&tmpdev, longname, atoi(minor), atoi(major))!=0)
                continue; // to to the next part
             
             // check that this device is not already in the list
@@ -136,8 +136,8 @@ int partlist_getlist(struct s_devinfo *blkdev, int maxblkdev, int *diskcount, in
 struct s_diskinfo partinfo[]=
 {
     {false,    "[%-16s] ",    "[=====DEVICE=====] "},
-    {false,    "[%-11s] ",    "[==FILESYS==] "},
-    {false,    "[%-17s] ",    "[======LABEL======] "},
+    {false,    "[%-11.11s] ", "[==FILESYS==] "},
+    {false,    "[%-17.17s] ", "[======LABEL======] "},
     {false,    "[%12s] ",     "[====SIZE====] "},
     {false,    "[%3s] ",      "[MAJ] "},
     {false,    "[%3s] ",      "[MIN] "},

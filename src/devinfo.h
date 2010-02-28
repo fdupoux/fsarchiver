@@ -36,6 +36,6 @@ struct s_devinfo
     u64  rdev;
 };
 
-int get_devinfo(struct s_devinfo *outdev, char *indevname);
+int get_devinfo(struct s_devinfo *outdev, char *indevname, int min, int maj);
 
 #endif // __DEVINFO_H__

@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.9:
+  - Fix in probe: show devmapper/lvm volumes even when /dev/dm-xx does not exist
 * 0.6.8 (2010-02-20):
   - Fixed compilation error on systems with recent kernel headers by including <sys/stat.h>
   - Fixed critial bug: there was a risk of corruption when the archive was written on a smbfs/cifs filesystem
