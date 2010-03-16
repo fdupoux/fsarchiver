@@ -403,7 +403,7 @@ int main(int argc, char **argv)
     }
     
     // init
-    options_init(&g_options);
+    options_init();
     queue_init(&g_queue, FSA_MAX_QUEUESIZE);
     
     // bulk of the program
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
 
     // cleanup
     queue_destroy(&g_queue);
-    options_destroy(&g_options);
+    options_destroy();
     
     // cleanup libgcrypt
     crypto_cleanup();
