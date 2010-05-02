@@ -122,7 +122,7 @@ int datafile_write(cdatafile *f, char *data, u64 len)
     
     if (!f->open)
     {   errprintf("File is not open\n");
-        return -1;
+        return FSAERR_NOTOPEN;
     }
     
     if (f->simul==false)
@@ -131,7 +131,7 @@ int datafile_write(cdatafile *f, char *data, u64 len)
         {
             if (lseek64(f->fd, len, SEEK_CUR)<0)
             {   sysprintf("Can't lseek64() in file [%s]\n", f->path);
-                return -1; // fatal error
+                return FSAERR_SEEK;
             }
         }
         else
@@ -141,11 +141,11 @@ int datafile_write(cdatafile *f, char *data, u64 len)
             {
                 if ((errno==ENOSPC) || ((lres>0) && (lres < len)))
                 {   sysprintf("Can't write file [%s]: no space left on device\n", f->path);
-                    return -1; // fatal error
+                    return FSAERR_ENOSPC;
                 }
                 else // another error
                 {   sysprintf("cannot write %s: size=%ld\n", f->path, (long)len);
-                    return -1;
+                    return FSAERR_WRITE;
                 }
             }
         }
@@ -153,7 +153,7 @@ int datafile_write(cdatafile *f, char *data, u64 len)
     
     gcry_md_write(f->md5ctx, data, len);
     
-    return 0;
+    return FSAERR_SUCCESS;
 }
 
 int datafile_close(cdatafile *f, u8 *md5bufdat, int md5bufsize)

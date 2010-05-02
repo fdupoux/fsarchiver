@@ -694,12 +694,16 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
             if (datafile_open_write(datafile, fullpath, false, false)<0)
                 goto extractar_restore_obj_regfile_multi_err;
             
-            if (datafile_write(datafile, databuf, datsize)!=0)
-                goto extractar_restore_obj_regfile_multi_err;
+            res=datafile_write(datafile, databuf, datsize);
             
-            if (datafile_close(datafile, md5sumcalc, sizeof(md5sumcalc))!=0)
-                goto extractar_restore_obj_regfile_multi_err;
-                
+            datafile_close(datafile, md5sumcalc, sizeof(md5sumcalc));
+            
+            if (res!=FSAERR_SUCCESS)
+            {   errprintf("removing %s\n", fullpath);
+                unlink(fullpath);
+                return -1;
+            }
+            
             if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
             {   errprintf("cannot restore file %s, the data block (which is shared by multiple files) is corrupt\n", relpath);
                 res=truncate(fullpath, 0); // don't leave corrupt data in the file
@@ -739,6 +743,7 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     char parentdir[PATH_MAX];
     cdatafile *datafile=NULL;
     cdico *footerdico=NULL;
+    bool fatalerr=false;
     struct timeval tv[2];
     u8 md5sumcalc[16];
     u8 md5sumorig[16];
@@ -791,7 +796,7 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
         goto restore_obj_regfile_unique_error;
     
     msgprintf(MSG_DEBUG2, "restore_obj_regfile_unique(file=%s, size=%lld)\n", relpath, (long long)filesize);
-    for (filepos=0; (filesize>0) && (filepos < filesize) && (get_interrupted()==false); filepos+=blkinfo.blkrealsize)
+    for (filepos=0; (fatalerr==false) && (filesize>0) && (filepos < filesize) && (get_interrupted()==false); filepos+=blkinfo.blkrealsize)
     {
         if ((lres=queue_dequeue_block(&g_queue, &blkinfo))<=0)
         {   errprintf("queue_dequeue_block()=%ld=%s for file(%s) failed\n", (long)lres, error_int_to_string(lres), relpath);
@@ -807,8 +812,8 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
             goto restore_obj_regfile_unique_error;
         }
         
-        if (datafile_write(datafile, blkinfo.blkdata, blkinfo.blkrealsize)!=0)
-            goto restore_obj_regfile_unique_error;
+        if (datafile_write(datafile, blkinfo.blkdata, blkinfo.blkrealsize)!=FSAERR_SUCCESS)
+            fatalerr=true;
         
         free(blkinfo.blkdata);
     }
@@ -818,6 +823,12 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     
     msgprintf(MSG_DEBUG2, "--> finished loop for file=%s, size=%lld, md5sumcalc=[%s]\n", relpath, 
         (long long)filesize, format_md5(text, sizeof(text), md5sumcalc));
+    
+    if (fatalerr==true)
+    {   errprintf("removing %s\n", fullpath);
+        unlink(fullpath);
+        return -1;
+    }
     
     if (excluded!=true)
     {
