@@ -45,6 +45,7 @@ int archwriter_init(carchwriter *ai)
 {
     assert(ai);
     memset(ai, 0, sizeof(struct s_archwriter));
+    strlist_init(&ai->vollist);
     ai->newarch=false;
     ai->archfd=-1;
     ai->archid=0;
@@ -55,6 +56,7 @@ int archwriter_init(carchwriter *ai)
 int archwriter_destroy(carchwriter *ai)
 {
     assert(ai);
+    strlist_destroy(&ai->vollist);
     return 0;
 }
 
@@ -116,6 +118,8 @@ int archwriter_create(carchwriter *ai)
     }
     ai->newarch=true;
     
+    strlist_add(&ai->vollist, ai->volpath);
+    
     /* lockf is causing corruption when the archive is written on a smbfs/cifs filesystem */
     /*if (lockf(ai->archfd, F_LOCK, 0)!=0)
     {   sysprintf("Cannot lock archive file: %s\n", ai->volpath);
@@ -143,16 +147,30 @@ int archwriter_close(carchwriter *ai)
 
 int archwriter_remove(carchwriter *ai)
 {
+    char volpath[PATH_MAX];
+    int count;
+    int i;
+    
     assert(ai);
     
     if (ai->archfd >= 0)
     {
         archwriter_close(ai);
     }
+    
     if (ai->newarch==true)
     {
-        unlink(ai->basepath);
-        msgprintf(MSG_FORCE, "removed %s\n", ai->basepath);
+        count=strlist_count(&ai->vollist);
+        for (i=0; i < count; i++)
+        {
+            if (strlist_getitem(&ai->vollist, i, volpath, sizeof(volpath))==0)
+            {
+                if (unlink(volpath)==0)
+                    msgprintf(MSG_FORCE, "removed %s\n", volpath);
+                else
+                    errprintf("cannot remove %s\n", volpath);
+            }
+        }
     }
     return 0;
 }

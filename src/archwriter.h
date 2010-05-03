@@ -19,10 +19,12 @@
 #define __ARCHWRITER_H__
 
 #include <limits.h>
+#include "strlist.h"
 
 struct s_writebuf;
 struct s_blockinfo;
 struct s_headinfo;
+struct s_strlist;
 
 struct s_archwriter;
 typedef struct s_archwriter carchwriter;
@@ -37,6 +39,7 @@ struct s_archwriter
     char   label[FSA_MAX_LABELLEN]; // archive label defined by the user
     char   basepath[PATH_MAX]; // path of the first volume of an archive
     char   volpath[PATH_MAX]; // path of the current volume of an archive
+    cstrlist vollist; // paths to all volumes of an archive
 };
 
 int archwriter_init(carchwriter *ai);
