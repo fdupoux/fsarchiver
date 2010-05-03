@@ -743,18 +743,18 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     char parentdir[PATH_MAX];
     cdatafile *datafile=NULL;
     cdico *footerdico=NULL;
-    bool fatalerr=false;
+    bool fatalerr=false; // error for restoration globally
+    bool minorerr=false; // error for current file only
+    bool delfile=false;
     struct timeval tv[2];
     u8 md5sumcalc[16];
     u8 md5sumorig[16];
-    char text[256];
-    int excluded;
-    bool sparse;
-    u64 filesize;
-    u64 filepos;
+    int excluded=false;
+    bool sparse=false;
+    u64 filesize=0;
+    u64 filepos=0;
     u64 flags=0;
     s64 lres;
-    int res;
     
     // init
     memset(&blkinfo, 0, sizeof(blkinfo));
@@ -763,7 +763,7 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     
     if (dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SIZE, &filesize)!=0)
     {   errprintf("Cannot read filesize DISKITEMKEY_SIZE from archive for file=[%s]\n", relpath);
-        goto restore_obj_regfile_unique_error;
+        minorerr=true;
     }
     
     sparse=((dico_get_u64(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_FLAGS, &flags)==0) && (flags&FSA_FILEFLAGS_SPARSE));
@@ -777,10 +777,8 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
     {
         excluded=true;
     }
-    else // file not excluded
+    else if (minorerr==false) // file not excluded and no error yet
     {
-        excluded=false;
-        
         // create parent directory first
         extract_dirpath(fullpath, parentdir, sizeof(parentdir));
         mkdir_recursive(parentdir);
@@ -792,104 +790,109 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
         extractar_listing_print_file(exar, objtype, relpath);
     }
     
-    if (datafile_open_write(datafile, fullpath, excluded, sparse)<0)
-        goto restore_obj_regfile_unique_error;
+    if ((minorerr==false) && (datafile_open_write(datafile, fullpath, excluded, sparse)<0))
+        minorerr=true;
     
     msgprintf(MSG_DEBUG2, "restore_obj_regfile_unique(file=%s, size=%lld)\n", relpath, (long long)filesize);
-    for (filepos=0; (fatalerr==false) && (filesize>0) && (filepos < filesize) && (get_interrupted()==false); filepos+=blkinfo.blkrealsize)
+    for (filepos=0; (minorerr==false) && (filesize>0) && (filepos < filesize) && (get_interrupted()==false); filepos+=blkinfo.blkrealsize)
     {
         if ((lres=queue_dequeue_block(&g_queue, &blkinfo))<=0)
         {   errprintf("queue_dequeue_block()=%ld=%s for file(%s) failed\n", (long)lres, error_int_to_string(lres), relpath);
-            goto restore_obj_regfile_unique_error;
+            delfile=true;
+            minorerr=true;
+            break;
         }
-        
-        msgprintf(MSG_DEBUG2, "----> filepos=%lld, blkinfo.blkoffset=%lld, blkinfo.blkrealsize=%lld\n", 
-            (long long)filepos, (long long)blkinfo.blkoffset, (long long)blkinfo.blkrealsize);
         
         if (blkinfo.blkoffset!=filepos)
         {   errprintf("file offset do not match for file(%s) failed: filepos=%lld, blkinfo.blkoffset=%lld, blkinfo.blkrealsize=%lld\n", 
                 relpath, (long long)filepos, (long long)blkinfo.blkoffset, (long long)blkinfo.blkrealsize);
-            goto restore_obj_regfile_unique_error;
+            free(blkinfo.blkdata);
+            delfile=true;
+            minorerr=true;
+            break;
         }
         
         if (datafile_write(datafile, blkinfo.blkdata, blkinfo.blkrealsize)!=FSAERR_SUCCESS)
+        {   free(blkinfo.blkdata);
+            delfile=true;
+            minorerr=true;
             fatalerr=true;
+            break;
+        }
         
         free(blkinfo.blkdata);
     }
     
-    if (datafile_close(datafile, md5sumcalc, sizeof(md5sumcalc))!=0)
-        goto restore_obj_regfile_unique_error;
+    if ((minorerr==false) && (datafile_close(datafile, md5sumcalc, sizeof(md5sumcalc))!=0))
+        minorerr=true;
     
-    msgprintf(MSG_DEBUG2, "--> finished loop for file=%s, size=%lld, md5sumcalc=[%s]\n", relpath, 
-        (long long)filesize, format_md5(text, sizeof(text), md5sumcalc));
-    
-    if (fatalerr==true)
-    {   errprintf("removing %s\n", fullpath);
-        unlink(fullpath);
-        return -1;
-    }
-    
-    if (excluded!=true)
+    if ((minorerr==false) && (excluded==false))
     {
         if (extractar_restore_attr_everything(exar, objtype, fullpath, relpath, d)!=0)
         {   msgprintf(MSG_STACK, "cannot restore file attributes for file [%s]\n", relpath);
-            goto restore_obj_regfile_unique_error;
+            minorerr=true;
         }
     
         // restore parent dir mtime/atime
         if (utimes(parentdir, tv)!=0)
         {   sysprintf("utimes(%s) failed\n", parentdir);
-            goto restore_obj_regfile_unique_error;
+            minorerr=true;
         }
     }
     
     // empty files have no footer (no need for a checksum)
-    if (filesize>0)
+    if ((fatalerr==false) && (filesize>0))
     {
         if (queue_dequeue_header(&g_queue, &footerdico, magic, NULL)<=0)
         {   errprintf("queue_dequeue_header() failed: cannot read footer dico\n");
-            goto restore_obj_regfile_unique_error;
+            minorerr=true;
+            goto restore_obj_regfile_unique_end;
         }
         
         if (excluded!=true)
         {
             if (memcmp(magic, FSA_MAGIC_FILF, FSA_SIZEOF_MAGIC)!=0)
             {   errprintf("header is not what we expected: found=[%s] and expected=[%s]\n", magic, FSA_MAGIC_FILF);
-                goto restore_obj_regfile_unique_error;
+                minorerr=true;
+                goto restore_obj_regfile_unique_end;
             }
             
             if (dico_get_data(footerdico, 0, BLOCKFOOTITEMKEY_MD5SUM, md5sumorig, 16, NULL))
             {   errprintf("cannot get md5sum from file footer for file=[%s]\n", relpath);
-                dico_show(footerdico, 0, "footerdico");
-                goto restore_obj_regfile_unique_error;
+                minorerr=true;
+                goto restore_obj_regfile_unique_end;
             }
             
             if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
             {   errprintf("cannot restore file %s, file is corrupt\n", relpath);
-                res=truncate(fullpath, 0); // don't leave corrupt data in the file
-                goto restore_obj_regfile_unique_error;
+                delfile=true; // don't leave corrupt data in the file
+                minorerr=true;
+                goto restore_obj_regfile_unique_end;
             }
         }
     }
-    
-    if (get_interrupted()==true)
-    {   errprintf("operation has been interrupted\n");
-        goto restore_obj_regfile_unique_error;
-    } 
+
+restore_obj_regfile_unique_end:
+    if (delfile==true)
+    {   errprintf("removing %s\n", fullpath);
+        unlink(fullpath);
+    }
     
     if (excluded!=true)
-        exar->stats.cnt_regfile++;
-    
-    goto restore_obj_regfile_cleanup;
-    
-restore_obj_regfile_unique_error:
-    exar->stats.err_regfile++;
-restore_obj_regfile_cleanup:
+    {
+        if (minorerr==true)
+            exar->stats.err_regfile++;
+        else
+            exar->stats.cnt_regfile++;
+    }
+
+    if (get_interrupted()==true)
+        errprintf("operation has been interrupted\n");
+
     dico_destroy(footerdico);
     dico_destroy(d);
     datafile_destroy(datafile);
-    return 0; // error is not fatal
+    return (fatalerr==false)?(0):(-1);
 }
 
 int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico *dicoattr, int fstype)
