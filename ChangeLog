@@ -1,7 +1,8 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
-* 0.6.9:
+* 0.6.9 (2010-05-04):
   - Fix in probe: show devmapper/lvm volumes even when /dev/dm-xx does not exist
+  - Fixed restoration of very small archives (archive < 4K)
   - Fix error handling in restoration: consider ENOSPC as a fatal error and other fixes
   - Fix: remove all volumes of the archive instead of just the first one if save fails
 * 0.6.8 (2010-02-20):
