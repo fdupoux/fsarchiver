@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.10:
+  - Fixed support of symbolic links on ntfs filesystems for ntfs3g >= 2010.3.6
 * 0.6.9 (2010-05-04):
   - Fix in probe: show devmapper/lvm volumes even when /dev/dm-xx does not exist
   - Fixed restoration of very small archives (archive < 4K)

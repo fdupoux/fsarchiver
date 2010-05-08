@@ -403,8 +403,10 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
     char buffer[PATH_MAX];
     char buffer2[PATH_MAX];
     char directory[PATH_MAX];
+    char *linktarget=NULL;
     u64 flags;
     int res;
+    int i;
     
     // init
     flags=0;
@@ -456,16 +458,40 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
             // save path of the target of the symlink
             *objtype=OBJTYPE_SYMLINK;
             memset(buffer, 0, sizeof(buffer));
+            memset(buffer2, 0, sizeof(buffer2));
             if ((readlink(fullpath, buffer, sizeof(buffer)))<0)
             {   sysprintf("readlink(%s) failed\n", fullpath);
                 return -1;
             }
-            dico_add_string(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SYMLINK, buffer);
+            // fix path as ntfs-3g>=2010.3.6 may return an absolute path that includes the mount directory
+            linktarget=buffer;
+            if (memcmp(linktarget, "/tmp/fsa/", 9)==0)
+            {
+                for (i=0; i<3; i++)
+                {
+                    if (linktarget[0]=='/')
+                        linktarget++;
+                    while (linktarget[0]!=0 && linktarget[0]!='/')
+                        linktarget++;
+                }
+            }
+            msgprintf(MSG_DEBUG1, "fixed-readlink([%s])=[%s]\n", fullpath, linktarget);
+            dico_add_string(d, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SYMLINK, linktarget);
+            
             // save type of the target of the symlink (required to recreate ntfs symlinks)
             if (filesys[save->fstype].savesymtargettype==true)
             {
-                extract_dirpath(fullpath, directory, sizeof(directory));
-                concatenate_paths(buffer2, sizeof(buffer2), directory, buffer);
+                if (linktarget[0]=='/') // absolute symbolic link
+                {
+                    snprintf(buffer2, sizeof(buffer2), "%s", buffer);
+                    msgprintf(MSG_DEBUG1, "absolute-symlink: fullpath=[%s] --> lstat64=[%s]\n", fullpath, buffer2);
+                }
+                else // relative symbolic link
+                {
+                    extract_dirpath(fullpath, directory, sizeof(directory));
+                    concatenate_paths(buffer2, sizeof(buffer2), directory, linktarget);
+                    msgprintf(MSG_DEBUG1, "relative-symlink: fullpath=[%s] --> lstat64=[%s]\n", fullpath, buffer2);
+                }
                 if (lstat64(buffer2, &stattarget)==0)
                 {
                     switch (stattarget.st_mode & S_IFMT)
