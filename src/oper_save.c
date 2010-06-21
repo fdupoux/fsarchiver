@@ -1029,7 +1029,7 @@ int filesystem_mount_partition(cdevinfo *devinfo, cdico *dicofsinfo, u16 fsid)
             }
         }
         if (tmptype==-1)
-        {   errprintf("can't detect and mount filesystem of partition [%s], cannot continue.\n", devinfo->devpath);
+        {   errprintf("cannot mount partition [%s]: filesystem may not be supported by either fsarchiver or the kernel.\n", devinfo->devpath);
             return -1;
         }
         devinfo->fstype=tmptype;
