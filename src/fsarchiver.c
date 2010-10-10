@@ -81,7 +81,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -V: show program version and exit\n");
     msgprintf(MSG_FORCE, "<information>\n");
     msgprintf(MSG_FORCE, " * Support included for: lzo=%s, lzma=%s\n", (lzo==true)?"yes":"no", (lzma==true)?"yes":"no");
-    msgprintf(MSG_FORCE, " * fsarchiver is still in development, don't use it for production.\n");
+    msgprintf(MSG_FORCE, " * support for ntfs filesystems is unstable: don't use it for production.\n");
     
     if (examples==true)
     {
