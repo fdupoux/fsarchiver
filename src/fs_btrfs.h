@@ -29,10 +29,16 @@ int btrfs_check_support_for_features(u64 compat, u64 incompat, u64 ro_compat);
 int btrfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
 int btrfs_test(char *devname);
 
-// compat flags: features that fsa knows
-#define FSA_BTRFS_FEATURE_COMPAT_SUPP       0x0
-#define FSA_BTRFS_FEATURE_COMPAT_RO_SUPP    0x0
-#define FSA_BTRFS_FEATURE_INCOMPAT_SUPP     0x0
+// compat flags: official definition from linux-2.6.35/fs/btrfs/ctree.h
+#define BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF    (1ULL << 0)
+#define BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL   (2ULL << 0)
+
+// compat flags: btrfs features that this fsarchiver version supports
+#define FSA_BTRFS_FEATURE_COMPAT_SUPP           0ULL
+#define FSA_BTRFS_FEATURE_COMPAT_RO_SUPP        0ULL
+#define FSA_BTRFS_FEATURE_INCOMPAT_SUPP         \
+        (BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF | \
+         BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL)
 
 // disk layout definitions
 #define BTRFS_SUPER_MAGIC 0x9123683E
