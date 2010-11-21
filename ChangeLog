@@ -2,6 +2,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.6.11
   - Updated supported btrfs compat flags to make it work with btrfs-2.6.35
+  - The -c/--cryptpass option now supports interactive passwords: use "-c -"
 * 0.6.10 (2010-05-09):
   - Fixed support of symbolic links on ntfs filesystems with ntfs3g >= 2010.3.6
 * 0.6.9 (2010-05-04):

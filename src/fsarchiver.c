@@ -76,7 +76,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -z <level>: compression level from 1 (very fast)  to  9 (very good) default=3\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one compression thread. useful on multi-core cpu\n");
-    msgprintf(MSG_FORCE, " -c <password>: encrypt/decrypt data in archive. password length: %d to %d chars\n", FSA_MIN_PASSLEN, FSA_MAX_PASSLEN);
+    msgprintf(MSG_FORCE, " -c <password>: encrypt/decrypt data in archive, \"-c -\" for interactive password\n");
     msgprintf(MSG_FORCE, " -h: show help and information about how to use fsarchiver with examples\n");
     msgprintf(MSG_FORCE, " -V: show program version and exit\n");
     msgprintf(MSG_FORCE, "<information>\n");
@@ -110,6 +110,8 @@ void usage(char *progname, bool examples)
         msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive.fsa --exclude=/usr/share\n");
         msgprintf(MSG_FORCE, " * \e[1msave a filesystem (/dev/sda1) to an encrypted archive:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -c mypassword /data/myarchive1.fsa /dev/sda1\n");
+        msgprintf(MSG_FORCE, " * \e[1mSame as before but prompt for password in the terminal:\e[0m\n");
+        msgprintf(MSG_FORCE, "   fsarchiver savefs -c - /data/myarchive1.fsa /dev/sda1\n");
         msgprintf(MSG_FORCE, " * \e[1mextract an archive made of simple files to /tmp/extract:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restdir /data/linux-sources.fsa /tmp/extract\n");
         msgprintf(MSG_FORCE, " * \e[1mshow information about an archive and its file systems:\e[0m\n");
@@ -234,8 +236,8 @@ int process_cmdline(int argc, char **argv)
                 break;
             case 'c': // encryption
                 g_options.encryptalgo=ENCRYPT_BLOWFISH;
-                if (strlen(optarg)<FSA_MIN_PASSLEN || strlen(optarg)>FSA_MAX_PASSLEN)
-                {   errprintf("the password lenght is incorrect, it must between %d and %d chars.\n", FSA_MIN_PASSLEN, FSA_MAX_PASSLEN);
+                if ((strlen(optarg)<FSA_MIN_PASSLEN || strlen(optarg)>FSA_MAX_PASSLEN) && strcmp(optarg, "-")!=0)
+                {   errprintf("the password lenght is incorrect, it must between %d and %d chars, or \"-\" for interactive password prompt.\n", FSA_MIN_PASSLEN, FSA_MAX_PASSLEN);
                     usage(progname, false);
                     return -1;
                 }
@@ -319,6 +321,36 @@ int process_cmdline(int argc, char **argv)
     if (runasroot==true && geteuid()!=0)
     {   errprintf("\"fsarchiver %s\" must be run as root. cannot continue.\n", command);
         return -1;
+    }
+    
+    // interactive password
+    if (strcmp((char*)g_options.encryptpass, "-")==0)
+    {
+        int passconfirm;
+        char *passtmp=NULL;
+         
+        passconfirm = (cmd==OPER_SAVEFS || cmd==OPER_SAVEDIR);
+        if ((passtmp=getpass("Enter password: "))==NULL)
+        {   errprintf("failed to get interactive password from the console\n");
+            return -1;
+        }
+        if (strlen(passtmp)<FSA_MIN_PASSLEN || strlen(passtmp)>FSA_MAX_PASSLEN)
+        {   errprintf("the password lenght is incorrect, it must between %d and %d chars\n", FSA_MIN_PASSLEN, FSA_MAX_PASSLEN);
+            return -1;
+        }
+        snprintf((char*)g_options.encryptpass, FSA_MAX_PASSLEN, "%s", passtmp);
+        
+        if (passconfirm==true)
+        {
+            if ((passtmp=getpass("Confirm password: "))==NULL)
+            {   errprintf("failed to get interactive password from the console\n");
+                return -1;
+            }
+            if (strcmp((char*)g_options.encryptpass, passtmp)!=0)
+            {   errprintf("the passwords do not match\n");
+                return -1;
+            }
+        }
     }
     
     // commands that require an archive as the first argument
