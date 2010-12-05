@@ -24,7 +24,6 @@
 #include <sys/vfs.h>
 #include <sys/utsname.h>
 #include <sys/mount.h>
-#include <sys/statvfs.h>
 #include <errno.h>
 
 #include "fsarchiver.h"
@@ -142,6 +141,9 @@ int devcmp(char *dev1, char *dev2)
 int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntbuf, char *optbuf, int maxoptbuf, char *fsbuf, int maxfsbuf)
 {
     char col_fs[FSA_MAX_FSNAMELEN];
+    int devisroot=false;
+    struct stat64 devstat;
+    struct stat64 rootstat;
     char delims[]=" \t\n";
     struct utsname suname;
     char col_dev[128];
@@ -154,7 +156,7 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
     int res;
     FILE *f;
     int i;
-    
+
     // init
     res=uname(&suname);
     *readwrite=-1; // unknown
@@ -170,20 +172,18 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
     // same as "/dev/root" and that it is actually mounted. This 
     // function would then say that the "/dev/sda1" device is not mounted
     // and fsarchiver would try to mount it and mount() fails with EBUSY
-    /*struct stat64 devstat;
-    struct statvfs stvfs;
-    if (stat64(devname, &devstat)==0 && statvfs("/", &stvfs)==0)
+    if (stat64(devname, &devstat)==0 && stat64("/", &rootstat)==0 && (devstat.st_rdev==rootstat.st_dev))
     {
-        printf("file[/] has f_fsid=%ld\n", (long)stvfs.f_fsid);
-        printf("device[%s] has st_rdev=%ld\n", devname, (long)devstat.st_rdev);
-    }*/
+        devisroot=true;
+        msgprintf(MSG_VERB1, "device [%s] is the root device\n", devname);
+    }
 
     // 2. check device in "/proc/mounts" (typical case)
     if ((f=fopen("/proc/mounts","rb"))==NULL)
     {   sysprintf("Cannot open /proc/mounts\n");
         return 1;
     }
-    
+
     while(!feof(f))
     {
         if (stream_readline(f, line, 1024)>1)
@@ -209,15 +209,24 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
                 }
                 result = strtok_r(NULL, delims, &saveptr);
             }
-            
-            if ((devcmp(col_dev, devname)==0) && (generic_get_spacestats(col_dev, col_mnt, temp, sizeof(temp))==0))
+
+            if ((devisroot==true) && (strcmp(col_mnt, "/")==0) && (strcmp(col_fs, "rootfs")!=0))
+                snprintf(col_dev, sizeof(col_dev), "%s", devname);
+
+            msgprintf(MSG_DEBUG1, "mount entry: col_dev=[%s] col_mnt=[%s] col_fs=[%s] col_opt=[%s]\n", col_dev, col_mnt, col_fs, col_opt);
+
+            if (devcmp(col_dev, devname)==0)
             {
-                *readwrite=generic_get_fsrwstatus(col_opt);
-                snprintf(mntbuf, maxmntbuf, "%s", col_mnt);
-                snprintf(optbuf, maxoptbuf, "%s", col_opt);
-                snprintf(fsbuf, maxfsbuf, "%s", col_fs);
-                fclose(f);
-                return 0;
+                if (generic_get_spacestats(col_dev, col_mnt, temp, sizeof(temp))==0)
+                {
+                    msgprintf(MSG_DEBUG1, "found mount entry for device=[%s]: mnt=[%s] fs=[%s] opt=[%s]\n", devname, col_mnt, col_fs, col_opt);
+                    *readwrite=generic_get_fsrwstatus(col_opt);
+                    snprintf(mntbuf, maxmntbuf, "%s", col_mnt);
+                    snprintf(optbuf, maxoptbuf, "%s", col_opt);
+                    snprintf(fsbuf, maxfsbuf, "%s", col_fs);
+                    fclose(f);
+                    return 0;
+                }
             }
         }
     }
