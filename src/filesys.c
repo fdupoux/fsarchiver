@@ -24,6 +24,8 @@
 #include <sys/vfs.h>
 #include <sys/utsname.h>
 #include <sys/mount.h>
+#include <sys/statvfs.h>
+#include <errno.h>
 
 #include "fsarchiver.h"
 #include "common.h"
@@ -108,15 +110,33 @@ int generic_get_fsrwstatus(char *options)
 
 int devcmp(char *dev1, char *dev2)
 {
-    struct stat64 st1, st2;
-    
-    if (stat64(dev1, &st1)!=0 || stat64(dev2, &st2)!=0)
-        return -1;
-    
-    if (!S_ISBLK(st1.st_mode) || !S_ISBLK(st2.st_mode))
-        return -1;
-    
-    return  (st1.st_rdev==st2.st_rdev) ? 0 : 1;
+    struct stat64 devstat[2];
+    char *devname[]={dev1, dev2};
+    int i;
+
+    for (i=0; i<2; i++)
+    {
+        if (strncmp(devname[i], "/dev/", 5)!=0)
+            return -1;
+
+        errno=0;
+        if (stat64(devname[i], &devstat[i]) != 0)
+        {
+            if (errno == ENOENT)
+                errprintf("Warning: node for device [%s] does not exist in /dev/\n", devname[i]);
+            else
+                errprintf("Warning: cannot get details for device [%s]\n", devname[i]);
+            return -1;
+        }
+        
+        if (!S_ISBLK(devstat[0].st_mode))
+        {
+            errprintf("Warning: [%s] is not a block device\n", devname[i]);
+            return -1;
+        }
+    }
+
+    return  (devstat[0].st_rdev==devstat[1].st_rdev) ? 0 : 1;
 }
 
 int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntbuf, char *optbuf, int maxoptbuf, char *fsbuf, int maxfsbuf)
@@ -140,7 +160,25 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
     *readwrite=-1; // unknown
     memset(mntbuf, 0, sizeof(mntbuf));
     memset(optbuf, 0, sizeof(optbuf));
-    
+
+    // 1. workaround for systems not having the "/dev/root" node entry.
+
+    // There are systems showing "/dev/root" in "/proc/mounts" instead
+    // of the actual root partition such as "/dev/sda1".
+    // The consequence is that fsarchiver won't be able to realize
+    // that the device it is archiving (such as "/dev/sda1") is the
+    // same as "/dev/root" and that it is actually mounted. This 
+    // function would then say that the "/dev/sda1" device is not mounted
+    // and fsarchiver would try to mount it and mount() fails with EBUSY
+    /*struct stat64 devstat;
+    struct statvfs stvfs;
+    if (stat64(devname, &devstat)==0 && statvfs("/", &stvfs)==0)
+    {
+        printf("file[/] has f_fsid=%ld\n", (long)stvfs.f_fsid);
+        printf("device[%s] has st_rdev=%ld\n", devname, (long)devstat.st_rdev);
+    }*/
+
+    // 2. check device in "/proc/mounts" (typical case)
     if ((f=fopen("/proc/mounts","rb"))==NULL)
     {   sysprintf("Cannot open /proc/mounts\n");
         return 1;
