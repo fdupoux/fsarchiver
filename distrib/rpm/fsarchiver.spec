@@ -1,5 +1,5 @@
 Name:		fsarchiver
-Version:	0.6.11
+Version:	0.6.12
 Release:	1%{?dist}
 Summary:	Safe and flexible file-system backup/deployment tool
 
@@ -53,77 +53,3 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING README THANKS NEWS
 
 %changelog
-* Sun Jan 24 2010 Francois Dupoux <fdupoux@free.fr> - 0.6.6-1
-- Update to 0.6.6
-
-* Thu Jan 07 2010 Francois Dupoux <fdupoux@free.fr> - 0.6.5-1
-- Update to 0.6.5
-
-* Sun Jan 03 2010 Francois Dupoux <fdupoux@free.fr> - 0.6.4-1
-- Update to 0.6.4
-
-* Mon Dec 28 2009 Francois Dupoux <fdupoux@free.fr> - 0.6.3-1
-- Update to 0.6.3
-
-* Sat Oct 10 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.6.1-1
-- Update to 0.6.1
-
-* Sun Sep 27 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.6.0-1
-- Update to 0.6.0
-- Fixes licensing issue (no longer links against openssl)
-
-* Thu Sep 03 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.9-1
-- Update to 0.5.9
-
-* Fri Aug 21 2009 Tomas Mraz <tmraz@redhat.com> - 0.5.8-5
-- rebuilt with new openssl
-
-* Mon Aug 17 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.8-4
-- Enable XZ support
-
-* Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.5.8-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
-
-* Sun Jul 12 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.8-2
-- BR libblkid-devel
-
-* Sun Jul 12 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.8-1
-- Update to 0.5.8
-
-* Tue May 19 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.6-1
-- Update to 0.5.6
-
-* Tue May 19 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.5-2
-- BR e2fsprogs
-
-* Tue May 19 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.5-1
-- Update to 0.5.5
-
-* Fri May 01 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.5.2-1
-- Update to 0.5.2
-
-* Sat Mar 28 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.4.6-1
-- Update to 0.4.6
-
-* Sun Mar 22 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.4.5-1
-- Update to 0.4.5
-
-* Sun Mar 07 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.4.4-2
-- Fix file section
-- Fix changelog
-
-* Sun Mar 07 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.4.4-1
-- Update to 0.4.4
-
-* Sat Feb 28 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.4.3-1
-- 0.4.3
-- Drop build patch, no longer needed
-
-* Tue Feb 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.4.1-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
-
-* Sun Feb 15 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.4.1-2
-- Fix description
-
-* Thu Feb 12 2009 Adel Gadllah <adel.gadllah@gmail.com> - 0.4.1-1
-- Initial package

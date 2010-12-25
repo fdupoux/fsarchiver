@@ -1,6 +1,6 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
-* 0.6.12
+* 0.6.12 (2010-12-25):
   - Fix: get correct mount info for root device when not listed in /proc/mounts (eg: missing "/dev/root")
 * 0.6.11 (2010-12-01):
   - Updated supported btrfs compat flags to make it work with btrfs-2.6.35
