@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.13 (2012-03-04):
+  - Fixed detection of the root filesystem using "/proc/self/mountinfo" instead of "/proc/mounts"
 * 0.6.12 (2010-12-25):
   - Fix: get correct mount info for root device when not listed in /proc/mounts (eg: missing "/dev/root")
 * 0.6.11 (2010-12-01):

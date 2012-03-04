@@ -20,10 +20,12 @@
 #endif
 
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/vfs.h>
 #include <sys/utsname.h>
 #include <sys/mount.h>
+#include <sys/types.h>
 #include <errno.h>
 
 #include "fsarchiver.h"
@@ -144,7 +146,8 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
     int devisroot=false;
     struct stat64 devstat;
     struct stat64 rootstat;
-    char delims[]=" \t\n";
+    long major, minor;
+    char delims[]=" \t\n:";
     struct utsname suname;
     char col_dev[128];
     char col_mnt[128];
@@ -163,7 +166,65 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
     memset(mntbuf, 0, sizeof(mntbuf));
     memset(optbuf, 0, sizeof(optbuf));
 
-    // 1. workaround for systems not having the "/dev/root" node entry.
+    // ---- 1. attempt to find device in "/proc/self/mountinfo"
+    if ((stat64(devname, &devstat)==0) && ((f=fopen("/proc/self/mountinfo","rb"))!=NULL))
+    {
+        msgprintf(MSG_DEBUG1, "device=[%s] has major=[%ld] and minor=[%ld]\n", devname, (long)major(devstat.st_rdev), (long)minor(devstat.st_rdev));
+
+        while(!feof(f))
+        {
+            if (stream_readline(f, line, 1024)>1)
+            {
+                result=strtok_r(line, delims, &saveptr);
+                major = -1; minor = -1;
+                col_dev[0]=col_mnt[0]=col_fs[0]=col_opt[0]=0;
+                for(i=0; result != NULL && i<=10; i++)
+                {
+                    switch (i)
+                    {
+                        case 2:
+                            major = atol(result);
+                            break;
+                        case 3:
+                            minor = atol(result);
+                            break;
+                        case 5:
+                            snprintf(col_mnt, sizeof(col_mnt), "%s", result);
+                            break;
+                        case 8:
+                            snprintf(col_fs, sizeof(col_fs), "%s", result);
+                            break;
+                        case 10:
+                            snprintf(col_opt, sizeof(col_opt), "%s", result);
+                            break;
+                    }
+                    result = strtok_r(NULL, delims, &saveptr);
+                }
+
+                msgprintf(MSG_DEBUG1, "mountinfo entry: major=[%ld] minor=[%ld] filesys=[%s] col_opt=[%s] col_mnt=[%s]\n", major, minor, col_fs, col_opt, col_mnt);
+
+                if ((major==major(devstat.st_rdev)) && (minor==minor(devstat.st_rdev)))
+                {
+                    if (generic_get_spacestats(devname, col_mnt, temp, sizeof(temp))==0)
+                    {
+                        msgprintf(MSG_DEBUG1, "found mountinfo entry for device=[%s]: mnt=[%s] fs=[%s] opt=[%s]\n", devname, col_mnt, col_fs, col_opt);
+                        *readwrite=generic_get_fsrwstatus(col_opt);
+                        snprintf(mntbuf, maxmntbuf, "%s", col_mnt);
+                        snprintf(optbuf, maxoptbuf, "%s", col_opt);
+                        snprintf(fsbuf, maxfsbuf, "%s", col_fs);
+                        fclose(f);
+                        return 0;
+                    }
+                }
+            }
+        }
+
+        fclose(f);
+    }
+
+    // ---- 2. if there is no /proc/self/mountinfo then use "/proc/mounts" instead
+
+    // workaround for systems not having the "/dev/root" node entry.
 
     // There are systems showing "/dev/root" in "/proc/mounts" instead
     // of the actual root partition such as "/dev/sda1".
