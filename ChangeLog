@@ -1,6 +1,6 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
-* 0.6.14
+* 0.6.14 (2012-06-02):
   - Added support for recent btrfs features (up to linux-3.4)
   - Fixed compilation warnings (variable ‘res’ set but not used)
 * 0.6.13 (2012-03-04):
