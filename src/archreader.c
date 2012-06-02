@@ -121,14 +121,12 @@ int archreader_open(carchreader *ai)
 
 int archreader_close(carchreader *ai)
 {
-    int res;
-    
     assert(ai);
     
     if (ai->archfd<0)
         return -1;
     
-    res=lockf(ai->archfd, F_ULOCK, 0);
+    lockf(ai->archfd, F_ULOCK, 0);
     close(ai->archfd);
     ai->archfd=-1;
 

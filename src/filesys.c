@@ -156,12 +156,11 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
     char temp[2048];
     char *saveptr;
     char *result;
-    int res;
     FILE *f;
     int i;
 
     // init
-    res=uname(&suname);
+    uname(&suname);
     *readwrite=-1; // unknown
     memset(mntbuf, 0, sizeof(mntbuf));
     memset(optbuf, 0, sizeof(optbuf));
