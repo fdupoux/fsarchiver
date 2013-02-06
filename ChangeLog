@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.16 (2013-02-06):
+  - Fixed mke2fs requirement for the "ext_attr" feature (affects RHLE5/CentOS5)
 * 0.6.15 (2012-06-02):
   - Added support for recent ext4 features (up to linux-3.4 / e2fsprogs-1.42)
 * 0.6.14 (2012-06-02):
