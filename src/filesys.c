@@ -157,6 +157,7 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
     char *saveptr;
     char *result;
     FILE *f;
+    int sep;
     int i;
 
     // init
@@ -175,10 +176,13 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
             if (stream_readline(f, line, 1024)>1)
             {
                 result=strtok_r(line, delims, &saveptr);
-                major = -1; minor = -1;
+                major = -1; minor = -1; sep = -1;
                 col_dev[0]=col_mnt[0]=col_fs[0]=col_opt[0]=0;
                 for(i=0; result != NULL && i<=10; i++)
                 {
+                    if (strcmp(result, "-") == 0) // found separator
+                        sep = i;
+
                     switch (i)
                     {
                         case 2:
@@ -190,13 +194,11 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
                         case 5:
                             snprintf(col_mnt, sizeof(col_mnt), "%s", result);
                             break;
-                        case 8:
-                            snprintf(col_fs, sizeof(col_fs), "%s", result);
-                            break;
-                        case 10:
-                            snprintf(col_opt, sizeof(col_opt), "%s", result);
-                            break;
                     }
+                    if ((sep != -1) && (i == sep + 1))
+                            snprintf(col_fs, sizeof(col_fs), "%s", result);
+                    if ((sep != -1) && (i == sep + 3))
+                            snprintf(col_opt, sizeof(col_opt), "%s", result);
                     result = strtok_r(NULL, delims, &saveptr);
                 }
 
