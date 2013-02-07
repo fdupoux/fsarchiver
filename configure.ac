@@ -3,12 +3,12 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([fsarchiver], 0.6.15)
-AC_DEFINE([PACKAGE_RELDATE], "2012-06-02", [Define the date of the release])
+AC_INIT([fsarchiver], 0.6.16)
+AC_DEFINE([PACKAGE_RELDATE], "2013-02-07", [Define the date of the release])
 AC_DEFINE([PACKAGE_FILEFMT], "FsArCh_002", [Define the version of the file format])
 AC_DEFINE([PACKAGE_VERSION_A], 0, [Major version number])
 AC_DEFINE([PACKAGE_VERSION_B], 6, [Medium version number])
-AC_DEFINE([PACKAGE_VERSION_C], 15, [Minor version number])
+AC_DEFINE([PACKAGE_VERSION_C], 16, [Minor version number])
 AC_DEFINE([PACKAGE_VERSION_D], 0, [Patch version number])
 
 AC_CANONICAL_HOST([])
