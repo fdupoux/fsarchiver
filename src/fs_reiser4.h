@@ -21,7 +21,7 @@
 struct s_dico;
 struct s_strlist;
 
-int reiser4_mkfs(struct s_dico *d, char *partition);
+int reiser4_mkfs(struct s_dico *d, char *partition, char *fsoptions);
 int reiser4_getinfo(struct s_dico *d, char *devname);
 int reiser4_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
 int reiser4_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);

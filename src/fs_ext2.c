@@ -84,19 +84,19 @@ char *format_fstype(int fstype)
     }
 }
 
-int ext2_mkfs(cdico *d, char *partition)
+int ext2_mkfs(cdico *d, char *partition, char *fsoptions)
 {
-    return extfs_mkfs(d, partition, EXTFSTYPE_EXT2);
+    return extfs_mkfs(d, partition, EXTFSTYPE_EXT2, fsoptions);
 }
 
-int ext3_mkfs(cdico *d, char *partition)
+int ext3_mkfs(cdico *d, char *partition, char *fsoptions)
 {
-    return extfs_mkfs(d, partition, EXTFSTYPE_EXT3);
+    return extfs_mkfs(d, partition, EXTFSTYPE_EXT3, fsoptions);
 }
 
-int ext4_mkfs(cdico *d, char *partition)
+int ext4_mkfs(cdico *d, char *partition, char *fsoptions)
 {
-    return extfs_mkfs(d, partition, EXTFSTYPE_EXT4);
+    return extfs_mkfs(d, partition, EXTFSTYPE_EXT4, fsoptions);
 }
 
 int extfs_get_fstype_from_compat_flags(u32 compat, u32 incompat, u32 ro_compat)
@@ -137,7 +137,7 @@ int extfs_check_compatibility(u64 compat, u64 incompat, u64 ro_compat)
     return 0;
 }
 
-int extfs_mkfs(cdico *d, char *partition, int extfstype)
+int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions)
 {
     cstrlist strfeatures;
     u64 features_tab[3];
@@ -178,6 +178,8 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype)
     
     // filesystem revision: good-old-rev or dynamic
     strlcatf(options, sizeof(options), " -r %d ", (int)fsextrevision);
+
+    strlcatf(options, sizeof(options), " %s ", fsoptions);
     
     // ---- set the advanced filesystem settings from the dico
     if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)

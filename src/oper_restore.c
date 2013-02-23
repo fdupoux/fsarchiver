@@ -121,7 +121,7 @@ int convert_argv_to_strdicos(cstrdico *dicoargv[], int argc, char *cmdargv[])
             return -1;
         
         // parse argument and write (key,value) pairs in the strdico object
-        if ((strdico_set_valid_keys(tmpdico, "id,dest,mkfs")!=0) ||
+        if ((strdico_set_valid_keys(tmpdico, "id,dest,mkfs,mkfsopt")!=0) ||
             (strdico_parse_string(tmpdico, cmdargv[i])!=0))
         {   strdico_destroy(tmpdico);
             return -1;
@@ -1177,6 +1177,7 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     char magic[FSA_SIZEOF_MAGIC+1];
     char mountinfo[4096];
     char partition[1024];
+    char mkfsoptions[1024];
     char tempbuf[1024];
     cdico *dicobegin=NULL;
     cdico *dicoend=NULL;
@@ -1246,6 +1247,12 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     {   errprintf("dico_get_string(FSYSHEADKEY_FILESYSTEM) failed\n");
         return -1;
     }
+
+    // read make file system options from dicocmdline
+    if (strdico_get_string(dicocmdline, mkfsoptions, sizeof(mkfsoptions), "mkfsopt")!=0)
+    {
+        msgprintf(MSG_VERB2,"strdico_get_string(dicocmdline, 'mkfsopt') doesn't exist\n");
+    }
        
     if (dico_get_u64(dicofs, 0, FSYSHEADKEY_BYTESTOTAL, &fsbytestotal)!=0)
     {   errprintf("dico_get_string(FSYSHEADKEY_BYTESTOTAL) failed\n");
@@ -1258,6 +1265,7 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     }
     
     msgprintf(MSG_VERB2, "filesystem=[%s]\n", filesystem);
+    msgprintf(MSG_VERB2, "filesystemoptions=[%s]\n", mkfsoptions);
     msgprintf(MSG_VERB2, "fsbytestotal=[%s]\n", format_size(fsbytestotal, text, sizeof(text), 'h'));
     msgprintf(MSG_VERB2, "fsbytesused=[%s]\n", format_size(fsbytesused, text, sizeof(text), 'h'));
     
@@ -1268,11 +1276,11 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     }
     
     // ---- make the filesystem
-    if (filesys[fstype].mkfs(dicofs, partition)!=0)
+    if (filesys[fstype].mkfs(dicofs, partition, mkfsoptions)!=0)
     {   errprintf("cannot format the filesystem %s on partition %s\n", filesystem, partition);
         return -1;
     }
-    
+
     // ---- mount the new filesystem
     mkdir_recursive(mntbuf);
     generate_random_tmpdir(mntbuf, sizeof(mntbuf), 0);

@@ -23,13 +23,13 @@ struct s_strlist;
 
 enum {EXTFSTYPE_EXT2, EXTFSTYPE_EXT3, EXTFSTYPE_EXT4};
 
-int ext2_mkfs(struct s_dico *d, char *partition);
-int ext3_mkfs(struct s_dico *d, char *partition);
-int ext4_mkfs(struct s_dico *d, char *partition);
+int ext2_mkfs(struct s_dico *d, char *partition, char *fsoptions);
+int ext3_mkfs(struct s_dico *d, char *partition, char *fsoptions);
+int ext4_mkfs(struct s_dico *d, char *partition, char *fsoptions);
 int extfs_getinfo(struct s_dico *d, char *devname);
 int extfs_get_fstype_from_compat_flags(u32 compat, u32 incompat, u32 ro_compat);
 int extfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
-int extfs_mkfs(struct s_dico *d, char *partition, int extfstype);
+int extfs_mkfs(struct s_dico *d, char *partition, int extfstype, char *fsoptions);
 int extfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
 int extfs_umount(char *partition, char *mntbuf);
 int extfs_test(char *partition, int extfstype);

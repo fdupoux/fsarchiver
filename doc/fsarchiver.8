@@ -34,7 +34,7 @@ http://www.fsarchiver.org/forums/viewforum.php?f=17
 .I options
 .B ] restfs
 .I archive
-.BI id= n ,dest= filesystem [,mkfs= fstype ]
+.BI id= n ,dest= filesystem [,mkfs= fstype, mkfsopt= options ]
 .B ...
 .PP
 .B fsarchiver [
@@ -179,6 +179,8 @@ fsarchiver restfs /data/myarchive2.fsa id=1,dest=/dev/sdb1
 fsarchiver restfs /data/arch2.fsa id=0,dest=/dev/sda1 id=1,dest=/dev/sdb1
 .SS restore a filesystem from an archive and convert it to reiserfs:
 fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs
+.SS restore a filesystem from an archive and specify extra mkfs options:
+fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=ext4,mkfsopt="-I 256"
 .SS save the contents of /usr/src/linux to an archive (similar to tar):
 fsarchiver savedir /data/linux-sources.fsa /usr/src/linux
 .SS save a /dev/sda1 to an archive split into volumes of 680MB:

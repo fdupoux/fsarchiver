@@ -21,7 +21,7 @@
 struct s_dico;
 struct s_strlist;
 
-int btrfs_mkfs(struct s_dico *d, char *partition);
+int btrfs_mkfs(struct s_dico *d, char *partition, char *fsoptions);
 int btrfs_getinfo(struct s_dico *d, char *devname);
 int btrfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
 int btrfs_umount(char *partition, char *mntbuf);

@@ -21,7 +21,7 @@
 struct s_dico;
 struct s_strlist;
 
-int reiserfs_mkfs(struct s_dico *d, char *partition);
+int reiserfs_mkfs(struct s_dico *d, char *partition, char *fsoptions);
 int reiserfs_getinfo(struct s_dico *d, char *devname);
 int reiserfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
 int reiserfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);

@@ -35,7 +35,7 @@
 #include "strlist.h"
 #include "error.h"
 
-int reiser4_mkfs(cdico *d, char *partition)
+int reiser4_mkfs(cdico *d, char *partition, char *fsoptions)
 {
     char command[2048];
     char buffer[2048];
@@ -51,6 +51,9 @@ int reiser4_mkfs(cdico *d, char *partition)
     
     // ---- set the advanced filesystem settings from the dico
     memset(options, 0, sizeof(options));
+
+    strlcatf(options, sizeof(options), " %s ", fsoptions);
+
     if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -L '%.16s' ", buffer);
     

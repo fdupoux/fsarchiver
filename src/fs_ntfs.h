@@ -33,7 +33,7 @@ struct s_ntfsinfo
     u64 uuid;
 };
 
-int ntfs_mkfs(struct s_dico *d, char *partition);
+int ntfs_mkfs(struct s_dico *d, char *partition, char *fsoptions);
 int ntfs_getinfo(struct s_dico *d, char *devname);
 int ntfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
 int ntfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);

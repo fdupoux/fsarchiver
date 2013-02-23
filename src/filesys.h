@@ -32,7 +32,7 @@ struct s_filesys
     int (*mount)(char *partition, char *mntbuf, char *fsname, int flags, char *mntinfo);
     int (*umount)(char *partition, char *mntbuf);
     int (*getinfo)(struct s_dico *d, char *devname);
-    int (*mkfs)(struct s_dico *d, char *partition);
+    int (*mkfs)(struct s_dico *d, char *partition, char *fsoptions);
     int (*test)(char *partition);
     int (*reqmntopt)(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
     bool winattr;

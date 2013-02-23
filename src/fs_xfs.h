@@ -23,7 +23,7 @@ struct s_strlist;
 
 #define XFS_SUPER_MAGIC 0x58465342
 
-int xfs_mkfs(struct s_dico *d, char *partition);
+int xfs_mkfs(struct s_dico *d, char *partition, char *fsoptions);
 int xfs_getinfo(struct s_dico *d, char *devname);
 int xfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
 int xfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
