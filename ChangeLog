@@ -2,6 +2,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.6.17:
   - Implemented "mkfsopt" restfs option to pass extra options to mkfs (Michael Moninski)
+  - Fixed parsing of "/proc/self/mountinfo" (mount options were not parsed on new systems)
 * 0.6.16 (2013-02-07):
   - Fixed mke2fs requirement for the "ext_attr" feature (affects RHLE5/CentOS5)
   - Fixed parsing of "/proc/self/mountinfo" for systemd based systems

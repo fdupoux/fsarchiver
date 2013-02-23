@@ -178,7 +178,7 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
                 result=strtok_r(line, delims, &saveptr);
                 major = -1; minor = -1; sep = -1;
                 col_dev[0]=col_mnt[0]=col_fs[0]=col_opt[0]=0;
-                for(i=0; result != NULL && i<=10; i++)
+                for(i=0; result != NULL; i++)
                 {
                     if (strcmp(result, "-") == 0) // found separator
                         sep = i;
