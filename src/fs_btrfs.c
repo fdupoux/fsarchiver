@@ -94,7 +94,7 @@ int btrfs_mkfs(cdico *d, char *partition, char *fsoptions)
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSBTRFSSECTORSIZE, &temp64)==0)
         strlcatf(options, sizeof(options), " -s %ld ", (long)temp64);
     
-    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.btrfs %s %s", partition, options)!=0 || exitst!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.btrfs -f %s %s", partition, options)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }
