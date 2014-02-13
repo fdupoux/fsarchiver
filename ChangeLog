@@ -2,6 +2,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.6.18:
   - Prepared release sources using autoconf-2.69 to add support for new architectures (RHBZ#925370)
+  - Applied patch from Berix to preserve the number of inode blocks per group on ext filesystems
 * 0.6.17 (2013-02-25):
   - Implemented "mkfsopt" restfs option to pass extra options to mkfs (Michael Moninski)
   - Fixed parsing of "/proc/self/mountinfo" (mount options were not parsed on new systems)
