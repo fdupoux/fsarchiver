@@ -191,9 +191,6 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions)
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSINODESIZE, &temp64)==0)
         strlcatf(options, sizeof(options), " -I %ld ", (long)temp64);
     
-    if (dico_get_u64(d, 0, FSYSHEADKEY_FSINODEBLOCKSPERGROUP, &temp64)==0)
-        strlcatf(options, sizeof(options), " -i %ld ", (long)temp64);
-
     // ---- get original filesystem features (if the original filesystem was an ext{2,3,4})
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATURECOMPAT, &features_tab[E2P_FEATURE_COMPAT])!=0 ||
         dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREINCOMPAT, &features_tab[E2P_FEATURE_INCOMPAT])!=0 ||
@@ -368,13 +365,6 @@ int extfs_getinfo(cdico *d, char *devname)
     // ---- filesystem revision (good-old-rev or dynamic)
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTREVISION, super->s_rev_level);
     
-    // ---- inode blocks per group
-    u64 inode_blocks_per_group = (((super->s_inodes_per_group *
-                                     super->s_inode_size) +
-                                     EXT2_BLOCK_SIZE(super) - 1) /
-                                     EXT2_BLOCK_SIZE(super));
-    dico_add_u64(d, 0, FSYSHEADKEY_FSINODEBLOCKSPERGROUP, inode_blocks_per_group);
-
     // ---- inode size
     if (super->s_rev_level >= EXT2_DYNAMIC_REV)
         dico_add_u64(d, 0, FSYSHEADKEY_FSINODESIZE, super->s_inode_size);

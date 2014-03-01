@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.19 (2014-03-01):
+  - Reverted "number of inode blocks per group" patch which caused a regression in release 0.6.18
 * 0.6.18 (2014-02-13):
   - Prepared release sources using autoconf-2.69 to add support for new architectures (RHBZ#925370)
   - Applied patch from Berix to preserve the number of inode blocks per group on ext filesystems
