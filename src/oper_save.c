@@ -32,6 +32,7 @@
 #include <zlib.h>
 #include <assert.h>
 #include <gcrypt.h>
+#include <uuid.h>
 
 #include "fsarchiver.h"
 #include "dico.h"

@@ -27,6 +27,7 @@
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <uuid.h>
 
 #include "fsarchiver.h"
 #include "common.h"

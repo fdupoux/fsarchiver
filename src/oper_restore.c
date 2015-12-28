@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <gcrypt.h>
+#include <uuid.h>
 
 #include "fsarchiver.h"
 #include "strdico.h"

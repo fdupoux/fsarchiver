@@ -62,9 +62,9 @@ typedef __uint16_t      xfs_prid_t;     /* prid_t truncated to 16bits in XFS */
  * These types are 64 bits on disk but are either 32 or 64 bits in memory.
  * Disk based types:
  */
-typedef __uint64_t      xfs_dfsbno_t;   /* blockno in filesystem (agno|agbno) */
-typedef __uint64_t      xfs_drfsbno_t;  /* blockno in filesystem (raw) */
-typedef __uint64_t      xfs_drtbno_t;   /* extent (block) in realtime area */
+typedef __uint64_t      xfs_fsblock_t;  /* blockno in filesystem (agno|agbno) */
+typedef __uint64_t      xfs_rfsblock_t; /* blockno in filesystem (raw) */
+typedef __uint64_t      xfs_rtblock_t;  /* extent (block) in realtime area */
 typedef __uint64_t      xfs_dfiloff_t;  /* block number in a file */
 typedef __uint64_t      xfs_dfilblks_t; /* number of blocks in a file */
 
@@ -75,22 +75,19 @@ typedef char *          xfs_caddr_t;    /* <core address> type */
 typedef __u32           xfs_dev_t;
 typedef __u32           xfs_nlink_t;
 
-typedef struct { unsigned char   __u_bits[16]; } xfs_uuid_t;
-
-
 /*
  * Superblock - in core version.  Must match the ondisk version below.
  * Must be padded to 64 bit alignment.
  */
-struct xfs_sb 
+struct xfs_sb
 {
         __uint32_t      sb_magicnum;    /* magic number == XFS_SB_MAGIC */
         __uint32_t      sb_blocksize;   /* logical block size, bytes */
-        xfs_drfsbno_t   sb_dblocks;     /* number of data blocks */
-        xfs_drfsbno_t   sb_rblocks;     /* number of realtime blocks */
-        xfs_drtbno_t    sb_rextents;    /* number of realtime extents */
-        xfs_uuid_t      sb_uuid;        /* file system unique id */
-        xfs_dfsbno_t    sb_logstart;    /* starting block of log if internal */
+        xfs_rfsblock_t  sb_dblocks;     /* number of data blocks */
+        xfs_rfsblock_t  sb_rblocks;     /* number of realtime blocks */
+        xfs_rtblock_t   sb_rextents;    /* number of realtime extents */
+        uuid_t          sb_uuid;        /* user-visible file system unique id */
+        xfs_fsblock_t   sb_logstart;    /* starting block of log if internal */
         xfs_ino_t       sb_rootino;     /* root inode number */
         xfs_ino_t       sb_rbmino;      /* bitmap inode for realtime extents */
         xfs_ino_t       sb_rsumino;     /* summary inode for rt bitmap */
@@ -112,6 +109,7 @@ struct xfs_sb
         __uint8_t       sb_rextslog;    /* log2 of sb_rextents */
         __uint8_t       sb_inprogress;  /* mkfs is in progress, don't mount */
         __uint8_t       sb_imax_pct;    /* max % of fs for inode space */
+                                        /* statistics */
         /*
          * These fields must remain contiguous.  If you really
          * want to change their layout, make sure you fix the
@@ -137,13 +135,32 @@ struct xfs_sb
         __uint16_t      sb_logsectsize; /* sector size for the log, bytes */
         __uint32_t      sb_logsunit;    /* stripe unit size for the log */
         __uint32_t      sb_features2;   /* additional feature bits */
+
         /*
-         * bad features2 field as a result of failing to pad the sb
-         * structure to 64 bits. Some machines will be using this field
-         * for features2 bits. Easiest just to mark it bad and not use
-         * it for anything else.
+         * bad features2 field as a result of failing to pad the sb structure to
+         * 64 bits. Some machines will be using this field for features2 bits.
+         * Easiest just to mark it bad and not use it for anything else.
+         *
+         * This is not kept up to date in memory; it is always overwritten by
+         * the value in sb_features2 when formatting the incore superblock to
+         * the disk buffer.
          */
         __uint32_t      sb_bad_features2;
+
+        /* version 5 superblock fields start here */
+
+        /* feature masks */
+        __uint32_t      sb_features_compat;
+        __uint32_t      sb_features_ro_compat;
+        __uint32_t      sb_features_incompat;
+        __uint32_t      sb_features_log_incompat;
+
+        __uint32_t      sb_crc;         /* superblock crc */
+        xfs_extlen_t    sb_spino_align; /* sparse inode chunk alignment */
+
+        xfs_ino_t       sb_pquotino;    /* project quota inode */
+        xfs_lsn_t       sb_lsn;         /* last write sequence */
+        uuid_t          sb_meta_uuid;   /* metadata file system unique id */
 
         /* must be padded to 64 bit alignment */
 };
