@@ -163,8 +163,8 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
     // init
     uname(&suname);
     *readwrite=-1; // unknown
-    memset(mntbuf, 0, sizeof(mntbuf));
-    memset(optbuf, 0, sizeof(optbuf));
+    memset(mntbuf, 0, maxmntbuf);
+    memset(optbuf, 0, maxoptbuf);
 
     // ---- 1. attempt to find device in "/proc/self/mountinfo"
     if ((stat64(devname, &devstat)==0) && ((f=fopen("/proc/self/mountinfo","rb"))!=NULL))
