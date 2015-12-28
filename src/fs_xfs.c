@@ -82,6 +82,7 @@ int xfs_getinfo(cdico *d, char *devname)
 {
     struct xfs_sb sb;
     char uuid[512];
+    u64 xfsver;
     u32 temp32;
     int ret=0;
     int fd;
@@ -99,12 +100,28 @@ int xfs_getinfo(cdico *d, char *devname)
     }
     
     // ---- check it's an XFS file system
-    if (be32_to_cpu(sb.sb_magicnum) != XFS_SUPER_MAGIC)
+    if (be32_to_cpu(sb.sb_magicnum) != XFS_SB_MAGIC)
     {   ret=-1;
-        msgprintf(3, "sb.sb_magicnum!=XFS_SUPER_MAGIC\n");
+        msgprintf(3, "sb.sb_magicnum!=XFS_SB_MAGIC\n");
         goto xfs_read_sb_close;
     }
-    
+
+    // ---- check XFS filesystem version
+    xfsver=be16_to_cpu(sb.sb_versionnum) & XFS_SB_VERSION_NUMBITS;
+    switch (xfsver)
+    {
+        case XFS_SB_VERSION_4:
+        case XFS_SB_VERSION_5:
+            msgprintf(MSG_VERB2, "Detected XFS filesystem version %d\n", (int)xfsver);
+            dico_add_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, xfsver);
+            break;
+        default:
+            ret=-1;
+            msgprintf(MSG_STACK, "Invalid XFS filesystem version: version=[%d]\n", (int)xfsver);
+            goto xfs_read_sb_close;
+            break;
+    }
+
     // ---- label
     msgprintf(MSG_DEBUG1, "xfs_label=[%s]\n", sb.sb_fname);
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, (char*)sb.sb_fname);
@@ -128,7 +145,7 @@ int xfs_getinfo(cdico *d, char *devname)
     msgprintf(MSG_DEBUG1, "xfs_blksize=[%ld]\n", (long)temp32);
     
     // ---- minimum fsarchiver version required to restore
-    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
+    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 20, 0));
     
 xfs_read_sb_close:
     close(fd);
@@ -165,9 +182,9 @@ int xfs_test(char *devname)
     }
     
     // ---- check it's an XFS file system
-    if (be32_to_cpu(sb.sb_magicnum) != XFS_SUPER_MAGIC)
+    if (be32_to_cpu(sb.sb_magicnum) != XFS_SB_MAGIC)
     {   close(fd);
-        msgprintf(MSG_DEBUG1, "(be32_to_cpu(sb.sb_magicnum)=%.8x) != (XFS_SUPER_MAGIC=%.8x)\n", be32_to_cpu(sb.sb_magicnum), XFS_SUPER_MAGIC);
+        msgprintf(MSG_DEBUG1, "(be32_to_cpu(sb.sb_magicnum)=%.8x) != (XFS_SB_MAGIC=%.8x)\n", be32_to_cpu(sb.sb_magicnum), XFS_SB_MAGIC);
         return false;
     }
     

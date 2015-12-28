@@ -21,7 +21,31 @@
 struct s_dico;
 struct s_strlist;
 
-#define XFS_SUPER_MAGIC 0x58465342
+/*
+ * Super block
+ * Fits into a sector-sized buffer at address 0 of each allocation group.
+ * Only the first of these is ever updated except during growfs.
+ */
+#define XFS_SB_MAGIC        0x58465342  /* 'XFSB' */
+#define XFS_SB_VERSION_1    1       /* 5.3, 6.0.1, 6.1 */
+#define XFS_SB_VERSION_2    2       /* 6.2 - attributes */
+#define XFS_SB_VERSION_3    3       /* 6.2 - new inode version */
+#define XFS_SB_VERSION_4    4       /* 6.2+ - bitmask version */
+#define XFS_SB_VERSION_5    5       /* CRC enabled filesystem */
+#define XFS_SB_VERSION_NUMBITS      0x000f
+#define XFS_SB_VERSION_ALLFBITS     0xfff0
+#define XFS_SB_VERSION_ATTRBIT      0x0010
+#define XFS_SB_VERSION_NLINKBIT     0x0020
+#define XFS_SB_VERSION_QUOTABIT     0x0040
+#define XFS_SB_VERSION_ALIGNBIT     0x0080
+#define XFS_SB_VERSION_DALIGNBIT    0x0100
+#define XFS_SB_VERSION_SHAREDBIT    0x0200
+#define XFS_SB_VERSION_LOGV2BIT     0x0400
+#define XFS_SB_VERSION_SECTORBIT    0x0800
+#define XFS_SB_VERSION_EXTFLGBIT    0x1000
+#define XFS_SB_VERSION_DIRV2BIT     0x2000
+#define XFS_SB_VERSION_BORGBIT      0x4000  /* ASCII only case-insens. */
+#define XFS_SB_VERSION_MOREBITSBIT  0x8000
 
 int xfs_mkfs(struct s_dico *d, char *partition, char *fsoptions);
 int xfs_getinfo(struct s_dico *d, char *devname);
