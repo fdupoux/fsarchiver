@@ -36,17 +36,30 @@
 
 int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
 {
+    char stdoutbuf[2048];
     char command[2048];
     char buffer[2048];
     char options[2048];
+    u64 xfstoolsver;
     int exitst;
     u64 temp64;
-    
-    if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "mkfs.xfs -V")!=0)
+    u64 xfsver;
+    int x, y, z;
+
+    // ---- check that mkfs is installed and get its version
+    if (exec_command(command, sizeof(command), NULL, stdoutbuf, sizeof(stdoutbuf), NULL, 0, "mkfs.xfs -V")!=0)
     {   errprintf("mkfs.xfs not found. please install xfsprogs on your system or check the PATH.\n");
         return -1;
     }
-    
+    x=y=z=0;
+    sscanf(stdoutbuf, "mkfs.xfs version %d.%d.%d", &x, &y, &z);
+    if (x==0 && y==0)
+    {   errprintf("Can't parse mkfs.xfs version number: x=y=0\n");
+        return -1;
+    }
+    xfstoolsver=PROGVER(x,y,z);
+    msgprintf(MSG_VERB2, "Detected mkfs.xfs version %d.%d.%d\n", x, y, z);
+
     memset(options, 0, sizeof(options));
 
     strlcatf(options, sizeof(options), " %s ", fsoptions);
@@ -57,6 +70,11 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, &temp64)==0) && (temp64%512==0) && (temp64>=512) && (temp64<=65536))
         strlcatf(options, sizeof(options), " -b size=%ld ", (long)temp64);
     
+    // specify mkfs options to preserve version 4 of XFS if version is known
+    // and a version of mkfs.xfs which uses XFS v5 by default is installed
+    if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, &xfsver)==0) && (xfsver == XFS_SB_VERSION_4) && (xfstoolsver >= PROGVER(3,2,0)))
+        strlcatf(options, sizeof(options), " -m crc=0 -n ftype=0 ");
+
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, options)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
