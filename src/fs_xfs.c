@@ -36,17 +36,30 @@
 
 int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
 {
+    char stdoutbuf[2048];
     char command[2048];
     char buffer[2048];
     char options[2048];
+    u64 xfstoolsver;
     int exitst;
     u64 temp64;
-    
-    if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "mkfs.xfs -V")!=0)
+    u64 xfsver;
+    int x, y, z;
+
+    // ---- check that mkfs is installed and get its version
+    if (exec_command(command, sizeof(command), NULL, stdoutbuf, sizeof(stdoutbuf), NULL, 0, "mkfs.xfs -V")!=0)
     {   errprintf("mkfs.xfs not found. please install xfsprogs on your system or check the PATH.\n");
         return -1;
     }
-    
+    x=y=z=0;
+    sscanf(stdoutbuf, "mkfs.xfs version %d.%d.%d", &x, &y, &z);
+    if (x==0 && y==0)
+    {   errprintf("Can't parse mkfs.xfs version number: x=y=0\n");
+        return -1;
+    }
+    xfstoolsver=PROGVER(x,y,z);
+    msgprintf(MSG_VERB2, "Detected mkfs.xfs version %d.%d.%d\n", x, y, z);
+
     memset(options, 0, sizeof(options));
 
     strlcatf(options, sizeof(options), " %s ", fsoptions);
@@ -57,6 +70,13 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, &temp64)==0) && (temp64%512==0) && (temp64>=512) && (temp64<=65536))
         strlcatf(options, sizeof(options), " -b size=%ld ", (long)temp64);
     
+    // Specify mkfs.xfs options to preserve version 4 of XFS if the original
+    // filesystem was an XFS v4 or if the original filesystem was saved with
+    // fsarchiver <= 0.6.19 which does not store the XFS version in the metadata
+    // Only pass these options to new versions of mkfs.xfs which support it
+    if (((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, &xfsver)!=0) || (xfsver == XFS_SB_VERSION_4)) && (xfstoolsver >= PROGVER(3,2,0)))
+        strlcatf(options, sizeof(options), " -m crc=0 -n ftype=0 ");
+
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, options)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
@@ -82,6 +102,7 @@ int xfs_getinfo(cdico *d, char *devname)
 {
     struct xfs_sb sb;
     char uuid[512];
+    u64 xfsver;
     u32 temp32;
     int ret=0;
     int fd;
@@ -99,12 +120,28 @@ int xfs_getinfo(cdico *d, char *devname)
     }
     
     // ---- check it's an XFS file system
-    if (be32_to_cpu(sb.sb_magicnum) != XFS_SUPER_MAGIC)
+    if (be32_to_cpu(sb.sb_magicnum) != XFS_SB_MAGIC)
     {   ret=-1;
-        msgprintf(3, "sb.sb_magicnum!=XFS_SUPER_MAGIC\n");
+        msgprintf(3, "sb.sb_magicnum!=XFS_SB_MAGIC\n");
         goto xfs_read_sb_close;
     }
-    
+
+    // ---- check XFS filesystem version
+    xfsver=be16_to_cpu(sb.sb_versionnum) & XFS_SB_VERSION_NUMBITS;
+    switch (xfsver)
+    {
+        case XFS_SB_VERSION_4:
+        case XFS_SB_VERSION_5:
+            msgprintf(MSG_VERB2, "Detected XFS filesystem version %d\n", (int)xfsver);
+            dico_add_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, xfsver);
+            break;
+        default:
+            ret=-1;
+            msgprintf(MSG_STACK, "Invalid XFS filesystem version: version=[%d]\n", (int)xfsver);
+            goto xfs_read_sb_close;
+            break;
+    }
+
     // ---- label
     msgprintf(MSG_DEBUG1, "xfs_label=[%s]\n", sb.sb_fname);
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, (char*)sb.sb_fname);
@@ -128,7 +165,7 @@ int xfs_getinfo(cdico *d, char *devname)
     msgprintf(MSG_DEBUG1, "xfs_blksize=[%ld]\n", (long)temp32);
     
     // ---- minimum fsarchiver version required to restore
-    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
+    dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 20, 0));
     
 xfs_read_sb_close:
     close(fd);
@@ -165,9 +202,9 @@ int xfs_test(char *devname)
     }
     
     // ---- check it's an XFS file system
-    if (be32_to_cpu(sb.sb_magicnum) != XFS_SUPER_MAGIC)
+    if (be32_to_cpu(sb.sb_magicnum) != XFS_SB_MAGIC)
     {   close(fd);
-        msgprintf(MSG_DEBUG1, "(be32_to_cpu(sb.sb_magicnum)=%.8x) != (XFS_SUPER_MAGIC=%.8x)\n", be32_to_cpu(sb.sb_magicnum), XFS_SUPER_MAGIC);
+        msgprintf(MSG_DEBUG1, "(be32_to_cpu(sb.sb_magicnum)=%.8x) != (XFS_SB_MAGIC=%.8x)\n", be32_to_cpu(sb.sb_magicnum), XFS_SB_MAGIC);
         return false;
     }
     
