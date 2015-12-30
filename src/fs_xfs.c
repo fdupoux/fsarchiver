@@ -36,20 +36,33 @@
 
 int xfs_check_compatibility(u64 compat, u64 ro_compat, u64 incompat, u64 log_incompat)
 {
+    int errors=0;
+
+    msgprintf(MSG_DEBUG1, "xfs features: compat=[%ld]\n", (long)compat);
+    msgprintf(MSG_DEBUG1, "xfs features: ro_compat=[%ld]\n", (long)ro_compat);
+    msgprintf(MSG_DEBUG1, "xfs features: incompat=[%ld]\n", (long)incompat);
+    msgprintf(MSG_DEBUG1, "xfs features: log_incompat=[%ld]\n", (long)log_incompat);
+
     // to preserve the filesystem attributes, fsa must know all the features including the COMPAT ones
     if (compat & ~FSA_XFS_FEATURE_COMPAT_SUPP)
-        return -1;
+        errors++;
 
     if (ro_compat & ~FSA_XFS_FEATURE_RO_COMPAT_SUPP)
-        return -1;
+        errors++;
 
     if (incompat & ~FSA_XFS_FEATURE_INCOMPAT_SUPP)
-        return -1;
+        errors++;
 
     if (log_incompat & ~FSA_XFS_FEATURE_LOG_INCOMPAT_SUPP)
-        return -1;
+        errors++;
 
-    return 0;
+    if (errors > 0)
+    {   errprintf("this filesystem has XFS features which are not supported by this fsarchiver version.\n");
+        return -1;
+    }
+    else
+    {   return 0;
+    }
 }
 
 int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
@@ -63,6 +76,12 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     u64 temp64;
     u64 xfsver;
     int x, y, z;
+    int optval;
+
+    u64 sb_features_compat=0;
+    u64 sb_features_ro_compat=0;
+    u64 sb_features_incompat=0;
+    u64 sb_features_log_incompat=0;
 
     // ---- check that mkfs is installed and get its version
     if (exec_command(command, sizeof(command), NULL, stdoutbuf, sizeof(stdoutbuf), NULL, 0, "mkfs.xfs -V")!=0)
@@ -84,17 +103,62 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
 
     if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -L '%.12s' ", buffer);
-    
+
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, &temp64)==0) && (temp64%512==0) && (temp64>=512) && (temp64<=65536))
         strlcatf(options, sizeof(options), " -b size=%ld ", (long)temp64);
-    
-    // Specify mkfs.xfs options to preserve version 4 of XFS if the original
-    // filesystem was an XFS v4 or if the original filesystem was saved with
-    // fsarchiver <= 0.6.19 which does not store the XFS version in the metadata
-    // Only pass these options to new versions of mkfs.xfs which support it
-    if (((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, &xfsver)!=0) || (xfsver == XFS_SB_VERSION_4)) && (xfstoolsver >= PROGVER(3,2,0)))
-        strlcatf(options, sizeof(options), " -m crc=0 -n ftype=0 ");
 
+    // ---- get xfs features attributes from the archive
+    dico_get_u64(d, 0, FSYSHEADKEY_FSXFSFEATURECOMPAT, &sb_features_compat);
+    dico_get_u64(d, 0, FSYSHEADKEY_FSXFSFEATUREROCOMPAT, &sb_features_ro_compat);
+    dico_get_u64(d, 0, FSYSHEADKEY_FSXFSFEATUREINCOMPAT, &sb_features_incompat);
+    dico_get_u64(d, 0, FSYSHEADKEY_FSXFSFEATURELOGINCOMPAT, &sb_features_log_incompat);
+
+    // ---- check fsarchiver is aware of all the filesystem features used on that filesystem
+    if (xfs_check_compatibility(sb_features_compat, sb_features_ro_compat, sb_features_incompat, sb_features_log_incompat)!=0)
+        return -1;
+
+    // Preserve version 4 of XFS if the original filesystem was an XFS v4 or if
+    // the original filesystem was saved with fsarchiver <= 0.6.19 which does
+    // not store the XFS version in the metadata: make an XFSv4 if unsure for
+    // better compatibility and as upgrading later is easier than downgrading
+    // if the user gets an XFSv4 and wanted an XFSv5
+    if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, &temp64)!=0) || (temp64==XFS_SB_VERSION_4))
+        xfsver = XFS_SB_VERSION_4;
+    else
+        xfsver = XFS_SB_VERSION_5;
+
+    // Determine if the "crc" mkfs option should be enabled (checksum)
+    // - checksum must be disabled if we want to recreate an XFSv4 filesystem
+    // - checksum must be enabled if we want to recreate an XFSv5 filesystem
+    if (xfstoolsver >= PROGVER(3,2,0)) // only use "crc" option when it is supported by mkfs
+    {
+        optval = (xfsver==XFS_SB_VERSION_5);
+        strlcatf(options, sizeof(options), " -m crc=%d ", (int)optval);
+    }
+
+    // Determine if the "ftype" mkfs option should be enabled (filetype in dirent)
+    // - this feature allows the inode type to be stored in the directory structure
+    // - mkfs.xfs 4.2.0 enabled ftype by default (supported since mkfs.xfs 3.2.0) for XFSv4 volumes
+    // - when CRCs are enabled via -m crc=1, the ftype functionality is always enabled
+    // - ftype is madatory in XFSv5 volumes but it is optional for XFSv4 volumes
+    if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
+    {
+        optval = (xfsver==XFS_SB_VERSION_5);
+        strlcatf(options, sizeof(options), " -m ftype=%d ", (int)optval);
+    }
+
+    // Determine if the "finobt" mkfs option should be enabled (free inode btree)
+    // - starting Linux 3.16 XFS has added a btree that tracks free inodes
+    // - this feature relies on the new v5 on-disk format but it is optional
+    // - this feature enabled by default when using xfsprogs 3.2.3 or later
+    // - this feature will be enabled if the original filesystem was XFSv5 and had it
+    if (xfstoolsver >= PROGVER(3,2,1)) // only use "finobt" option when it is supported by mkfs
+    {
+        optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_FINOBT));
+        strlcatf(options, sizeof(options), " -m finobt=%d ", (int)optval);
+    }
+
+    // ---- create the new filesystem using mkfs.xfs
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, options)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
@@ -155,7 +219,7 @@ int xfs_getinfo(cdico *d, char *devname)
     {
         case XFS_SB_VERSION_4:
         case XFS_SB_VERSION_5:
-            msgprintf(MSG_VERB2, "Detected XFS filesystem version %d\n", (int)xfsver);
+            msgprintf(MSG_DEBUG1, "Detected XFS filesystem version %d\n", (int)xfsver);
             dico_add_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, xfsver);
             break;
         default:
@@ -187,7 +251,7 @@ int xfs_getinfo(cdico *d, char *devname)
     dico_add_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, temp32);
     msgprintf(MSG_DEBUG1, "xfs_blksize=[%ld]\n", (long)temp32);
 
-    // ---- get filesystem features
+    // ---- get filesystem features (will all be set to 0 if this is an XFSv4)
     if (xfsver == XFS_SB_VERSION_5)
     {
         sb_features_compat=be32_to_cpu(sb.sb_features_compat);
@@ -198,9 +262,7 @@ int xfs_getinfo(cdico *d, char *devname)
 
     // ---- check fsarchiver is aware of all the filesystem features used on that filesystem
     if (xfs_check_compatibility(sb_features_compat, sb_features_ro_compat, sb_features_incompat, sb_features_log_incompat)!=0)
-    {   errprintf("this filesystem has XFS features which are not supported by this fsarchiver version.\n");
         return -1;
-    }
 
     // ---- store features in the archive metadata
     dico_add_u64(d, 0, FSYSHEADKEY_FSXFSFEATURECOMPAT, (u64)sb_features_compat);

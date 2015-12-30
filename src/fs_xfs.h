@@ -191,9 +191,7 @@ struct xfs_sb
 };
 
 // XFS features used in XFS version 5 only
-
 #define XFS_SB_FEAT_RO_COMPAT_FINOBT      (1 << 0)  /* free inode btree */
-
 #define XFS_SB_FEAT_INCOMPAT_FTYPE        (1 << 0)  /* filetype in dirent */
 #define XFS_SB_FEAT_INCOMPAT_SPINODES     (1 << 1)  /* sparse inode chunks */
 #define XFS_SB_FEAT_INCOMPAT_META_UUID    (1 << 2)  /* metadata UUID */
