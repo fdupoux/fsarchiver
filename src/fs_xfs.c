@@ -34,6 +34,24 @@
 #include "strlist.h"
 #include "error.h"
 
+int xfs_check_compatibility(u64 compat, u64 ro_compat, u64 incompat, u64 log_incompat)
+{
+    // to preserve the filesystem attributes, fsa must know all the features including the COMPAT ones
+    if (compat & ~FSA_XFS_FEATURE_COMPAT_SUPP)
+        return -1;
+
+    if (ro_compat & ~FSA_XFS_FEATURE_RO_COMPAT_SUPP)
+        return -1;
+
+    if (incompat & ~FSA_XFS_FEATURE_INCOMPAT_SUPP)
+        return -1;
+
+    if (log_incompat & ~FSA_XFS_FEATURE_LOG_INCOMPAT_SUPP)
+        return -1;
+
+    return 0;
+}
+
 int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
 {
     char stdoutbuf[2048];
@@ -107,7 +125,12 @@ int xfs_getinfo(cdico *d, char *devname)
     int ret=0;
     int fd;
     int res;
-    
+
+    u64 sb_features_compat=0;
+    u64 sb_features_ro_compat=0;
+    u64 sb_features_incompat=0;
+    u64 sb_features_log_incompat=0;
+
     if ((fd=open64(devname, O_RDONLY|O_LARGEFILE))<0)
     {   ret=-1;
         goto xfs_read_sb_return;
@@ -163,7 +186,28 @@ int xfs_getinfo(cdico *d, char *devname)
     }
     dico_add_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, temp32);
     msgprintf(MSG_DEBUG1, "xfs_blksize=[%ld]\n", (long)temp32);
-    
+
+    // ---- get filesystem features
+    if (xfsver == XFS_SB_VERSION_5)
+    {
+        sb_features_compat=be32_to_cpu(sb.sb_features_compat);
+        sb_features_ro_compat=be32_to_cpu(sb.sb_features_ro_compat);
+        sb_features_incompat=be32_to_cpu(sb.sb_features_incompat);
+        sb_features_log_incompat=be32_to_cpu(sb.sb_features_log_incompat);
+    }
+
+    // ---- check fsarchiver is aware of all the filesystem features used on that filesystem
+    if (xfs_check_compatibility(sb_features_compat, sb_features_ro_compat, sb_features_incompat, sb_features_log_incompat)!=0)
+    {   errprintf("this filesystem has XFS features which are not supported by this fsarchiver version.\n");
+        return -1;
+    }
+
+    // ---- store features in the archive metadata
+    dico_add_u64(d, 0, FSYSHEADKEY_FSXFSFEATURECOMPAT, (u64)sb_features_compat);
+    dico_add_u64(d, 0, FSYSHEADKEY_FSXFSFEATUREROCOMPAT, (u64)sb_features_ro_compat);
+    dico_add_u64(d, 0, FSYSHEADKEY_FSXFSFEATUREINCOMPAT, (u64)sb_features_incompat);
+    dico_add_u64(d, 0, FSYSHEADKEY_FSXFSFEATURELOGINCOMPAT, (u64)sb_features_log_incompat);
+
     // ---- minimum fsarchiver version required to restore
     dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 20, 0));
     

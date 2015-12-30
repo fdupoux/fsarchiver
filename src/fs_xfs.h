@@ -53,6 +53,7 @@ int xfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntin
 int xfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);
 int xfs_umount(char *partition, char *mntbuf);
 int xfs_test(char *devname);
+int xfs_check_compatibility(u64 compat, u64 ro_compat, u64 incompat, u64 log_incompat);
 
 typedef uint8_t __u8;
 typedef int8_t __s8;
@@ -188,5 +189,21 @@ struct xfs_sb
 
         /* must be padded to 64 bit alignment */
 };
+
+// XFS features used in XFS version 5 only
+
+#define XFS_SB_FEAT_RO_COMPAT_FINOBT      (1 << 0)  /* free inode btree */
+
+#define XFS_SB_FEAT_INCOMPAT_FTYPE        (1 << 0)  /* filetype in dirent */
+#define XFS_SB_FEAT_INCOMPAT_SPINODES     (1 << 1)  /* sparse inode chunks */
+#define XFS_SB_FEAT_INCOMPAT_META_UUID    (1 << 2)  /* metadata UUID */
+
+// features supported by the current fsarchiver version
+#define FSA_XFS_FEATURE_COMPAT_SUPP       (u64)(0)
+#define FSA_XFS_FEATURE_RO_COMPAT_SUPP    (u64)(XFS_SB_FEAT_RO_COMPAT_FINOBT)
+#define FSA_XFS_FEATURE_INCOMPAT_SUPP     (u64)(XFS_SB_FEAT_INCOMPAT_FTYPE|\
+                                                XFS_SB_FEAT_INCOMPAT_SPINODES|\
+                                                XFS_SB_FEAT_INCOMPAT_META_UUID)
+#define FSA_XFS_FEATURE_LOG_INCOMPAT_SUPP (u64)(0)
 
 #endif // __FS_XFS_H__
