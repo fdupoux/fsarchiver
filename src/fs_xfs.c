@@ -70,9 +70,11 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, &temp64)==0) && (temp64%512==0) && (temp64>=512) && (temp64<=65536))
         strlcatf(options, sizeof(options), " -b size=%ld ", (long)temp64);
     
-    // specify mkfs options to preserve version 4 of XFS if version is known
-    // and a version of mkfs.xfs which uses XFS v5 by default is installed
-    if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, &xfsver)==0) && (xfsver == XFS_SB_VERSION_4) && (xfstoolsver >= PROGVER(3,2,0)))
+    // Specify mkfs.xfs options to preserve version 4 of XFS if the original
+    // filesystem was an XFS v4 or if the original filesystem was saved with
+    // fsarchiver <= 0.6.19 which does not store the XFS version in the metadata
+    // Only pass these options to new versions of mkfs.xfs which support it
+    if (((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, &xfsver)!=0) || (xfsver == XFS_SB_VERSION_4)) && (xfstoolsver >= PROGVER(3,2,0)))
         strlcatf(options, sizeof(options), " -m crc=0 -n ftype=0 ");
 
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, options)!=0 || exitst!=0)
