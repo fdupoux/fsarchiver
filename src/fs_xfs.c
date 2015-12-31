@@ -154,10 +154,12 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     // - ftype is madatory in XFSv5 volumes but it is optional for XFSv4 volumes
     // - the "ftype" option must be specified after the "crc" option in mkfs.xfs < 4.2.0:
     //   http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/cmds/xfsprogs.git;a=commit;h=b990de8ba4e2df2bc76a140799d3ddb4a0eac4ce
+    // - do not set ftype=1 with crc=1 as mkfs.xfs may fail when both options are enabled (at least with xfsprogs-3.2.2)
     if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
     {
-        optval = (xfsver==XFS_SB_VERSION_5);
-        strlcatf(options, sizeof(options), " -n ftype=%d ", (int)optval);
+        // crc is already set to 1 when it is XFSv5 hence do not set ftype=1 with XFSv5
+        if (xfsver==XFS_SB_VERSION_4)
+            strlcatf(options, sizeof(options), " -n ftype=0 ");
     }
 
     // ---- create the new filesystem using mkfs.xfs
