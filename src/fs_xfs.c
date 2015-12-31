@@ -136,17 +136,6 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
         strlcatf(options, sizeof(options), " -m crc=%d ", (int)optval);
     }
 
-    // Determine if the "ftype" mkfs option should be enabled (filetype in dirent)
-    // - this feature allows the inode type to be stored in the directory structure
-    // - mkfs.xfs 4.2.0 enabled ftype by default (supported since mkfs.xfs 3.2.0) for XFSv4 volumes
-    // - when CRCs are enabled via -m crc=1, the ftype functionality is always enabled
-    // - ftype is madatory in XFSv5 volumes but it is optional for XFSv4 volumes
-    if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
-    {
-        optval = (xfsver==XFS_SB_VERSION_5);
-        strlcatf(options, sizeof(options), " -n ftype=%d ", (int)optval);
-    }
-
     // Determine if the "finobt" mkfs option should be enabled (free inode btree)
     // - starting Linux 3.16 XFS has added a btree that tracks free inodes
     // - this feature relies on the new v5 on-disk format but it is optional
@@ -156,6 +145,17 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     {
         optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_FINOBT));
         strlcatf(options, sizeof(options), " -m finobt=%d ", (int)optval);
+    }
+
+    // Determine if the "ftype" mkfs option should be enabled (filetype in dirent)
+    // - this feature allows the inode type to be stored in the directory structure
+    // - mkfs.xfs 4.2.0 enabled ftype by default (supported since mkfs.xfs 3.2.0) for XFSv4 volumes
+    // - when CRCs are enabled via -m crc=1, the ftype functionality is always enabled
+    // - ftype is madatory in XFSv5 volumes but it is optional for XFSv4 volumes
+    if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
+    {
+        optval = (xfsver==XFS_SB_VERSION_5);
+        strlcatf(options, sizeof(options), " -n ftype=%d ", (int)optval);
     }
 
     // ---- create the new filesystem using mkfs.xfs
