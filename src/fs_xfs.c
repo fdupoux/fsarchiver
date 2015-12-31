@@ -144,7 +144,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
     {
         optval = (xfsver==XFS_SB_VERSION_5);
-        strlcatf(options, sizeof(options), " -m ftype=%d ", (int)optval);
+        strlcatf(options, sizeof(options), " -n ftype=%d ", (int)optval);
     }
 
     // Determine if the "finobt" mkfs option should be enabled (free inode btree)
