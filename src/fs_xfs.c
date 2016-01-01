@@ -151,21 +151,6 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
         strlcatf(mkfsopts, sizeof(mkfsopts), " -m finobt=%d ", (int)optval);
     }
 
-    // Determine if the "ftype" mkfs option should be enabled (filetype in dirent)
-    // - this feature allows the inode type to be stored in the directory structure
-    // - mkfs.xfs 4.2.0 enabled ftype by default (supported since mkfs.xfs 3.2.0) for XFSv4 volumes
-    // - when CRCs are enabled via -m crc=1, the ftype functionality is always enabled
-    // - ftype is madatory in XFSv5 volumes but it is optional for XFSv4 volumes
-    // - the "ftype" option must be specified after the "crc" option in mkfs.xfs < 4.2.0:
-    //   http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/cmds/xfsprogs.git;a=commit;h=b990de8ba4e2df2bc76a140799d3ddb4a0eac4ce
-    // - do not set ftype=1 with crc=1 as mkfs.xfs may fail when both options are enabled (at least with xfsprogs-3.2.2)
-    if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
-    {
-        // crc is already set to 1 when it is XFSv5 hence do not set ftype=1 with XFSv5
-        if (xfsver==XFS_SB_VERSION_4)
-            strlcatf(mkfsopts, sizeof(mkfsopts), " -n ftype=0 ");
-    }
-
     // ---- attempt to preserve UUID of the filesystem
     // - the "-m uuid=<UUID>" option in mkfs.xfs was added in mkfs.xfs 4.3.0 and is the best way to set UUIDs
     // - the UUID of XFSv4 can be successfully set using either xfs_admin or mkfs.xfs >= 4.3.0
@@ -180,6 +165,21 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
         {
             strlcatf(xadmopts, sizeof(xadmopts), " -U %s ", buffer);
         }
+    }
+
+    // Determine if the "ftype" mkfs option should be enabled (filetype in dirent)
+    // - this feature allows the inode type to be stored in the directory structure
+    // - mkfs.xfs 4.2.0 enabled ftype by default (supported since mkfs.xfs 3.2.0) for XFSv4 volumes
+    // - when CRCs are enabled via -m crc=1, the ftype functionality is always enabled
+    // - ftype is madatory in XFSv5 volumes but it is optional for XFSv4 volumes
+    // - the "ftype" option must be specified after the "crc" option in mkfs.xfs < 4.2.0:
+    //   http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/cmds/xfsprogs.git;a=commit;h=b990de8ba4e2df2bc76a140799d3ddb4a0eac4ce
+    // - do not set ftype=1 with crc=1 as mkfs.xfs may fail when both options are enabled (at least with xfsprogs-3.2.2)
+    if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
+    {
+        // crc is already set to 1 when it is XFSv5 hence do not set ftype=1 with XFSv5
+        if (xfsver==XFS_SB_VERSION_4)
+            strlcatf(mkfsopts, sizeof(mkfsopts), " -n ftype=0 ");
     }
 
     // ---- create the new filesystem using mkfs.xfs
