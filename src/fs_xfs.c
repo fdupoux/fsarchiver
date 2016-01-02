@@ -131,7 +131,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     else
         xfsver = XFS_SB_VERSION_5;
 
-    // Unfortunately it is impossible to preserve the UUID of an XFSv4 with
+    // Unfortunately it is impossible to preserve the UUID of an XFSv5 with
     // mkfs.xfs < 4.3.0. Restoring with a new random UUID would work but could
     // prevent the system from booting if this ia a boot/root filesystem and
     // grub/fstab often use the UUID to identify it. Hence it is much safer to
