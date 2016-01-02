@@ -70,7 +70,9 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     char stdoutbuf[2048];
     char command[2048];
     char buffer[2048];
-    char options[2048];
+    char mkfsopts[2048];
+    char xadmopts[2048];
+    char uuid[64];
     u64 xfstoolsver;
     int exitst;
     u64 temp64;
@@ -97,15 +99,17 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     xfstoolsver=PROGVER(x,y,z);
     msgprintf(MSG_VERB2, "Detected mkfs.xfs version %d.%d.%d\n", x, y, z);
 
-    memset(options, 0, sizeof(options));
+    memset(mkfsopts, 0, sizeof(mkfsopts));
+    memset(xadmopts, 0, sizeof(xadmopts));
+    memset(uuid, 0, sizeof(uuid));
 
-    strlcatf(options, sizeof(options), " %s ", fsoptions);
+    strlcatf(mkfsopts, sizeof(mkfsopts), " %s ", fsoptions);
 
     if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
-        strlcatf(options, sizeof(options), " -L '%.12s' ", buffer);
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -L '%.12s' ", buffer);
 
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, &temp64)==0) && (temp64%512==0) && (temp64>=512) && (temp64<=65536))
-        strlcatf(options, sizeof(options), " -b size=%ld ", (long)temp64);
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -b size=%ld ", (long)temp64);
 
     // ---- get xfs features attributes from the archive
     dico_get_u64(d, 0, FSYSHEADKEY_FSXFSFEATURECOMPAT, &sb_features_compat);
@@ -133,7 +137,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     if (xfstoolsver >= PROGVER(3,2,0)) // only use "crc" option when it is supported by mkfs
     {
         optval = (xfsver==XFS_SB_VERSION_5);
-        strlcatf(options, sizeof(options), " -m crc=%d ", (int)optval);
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -m crc=%d ", (int)optval);
     }
 
     // Determine if the "finobt" mkfs option should be enabled (free inode btree)
@@ -144,7 +148,23 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     if (xfstoolsver >= PROGVER(3,2,1)) // only use "finobt" option when it is supported by mkfs
     {
         optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_FINOBT));
-        strlcatf(options, sizeof(options), " -m finobt=%d ", (int)optval);
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -m finobt=%d ", (int)optval);
+    }
+
+    // ---- attempt to preserve UUID of the filesystem
+    // - the "-m uuid=<UUID>" option in mkfs.xfs was added in mkfs.xfs 4.3.0 and is the best way to set UUIDs
+    // - the UUID of XFSv4 can be successfully set using either xfs_admin or mkfs.xfs >= 4.3.0
+    // - it is impossible to set both types of UUIDs of an XFSv5 filesystem using xfsprogs < 4.3.0
+    if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, uuid, sizeof(uuid))==0 && strlen(uuid)==36)
+    {
+        if (xfstoolsver >= PROGVER(4,3,0))
+        {
+            strlcatf(mkfsopts, sizeof(mkfsopts), " -m uuid=%s ", uuid);
+        }
+        else if (xfsver==XFS_SB_VERSION_4)
+        {
+            strlcatf(xadmopts, sizeof(xadmopts), " -U %s ", buffer);
+        }
     }
 
     // Determine if the "ftype" mkfs option should be enabled (filetype in dirent)
@@ -155,27 +175,25 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     // - the "ftype" option must be specified after the "crc" option in mkfs.xfs < 4.2.0:
     //   http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/cmds/xfsprogs.git;a=commit;h=b990de8ba4e2df2bc76a140799d3ddb4a0eac4ce
     // - do not set ftype=1 with crc=1 as mkfs.xfs may fail when both options are enabled (at least with xfsprogs-3.2.2)
+    // - XFSv4 with ftype=1 is supported since linux-3.13. We purposely always
+    //   disable ftype for V4 volumes to keep them compatible with older kernels
     if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
     {
         // crc is already set to 1 when it is XFSv5 hence do not set ftype=1 with XFSv5
         if (xfsver==XFS_SB_VERSION_4)
-            strlcatf(options, sizeof(options), " -n ftype=0 ");
+            strlcatf(mkfsopts, sizeof(mkfsopts), " -n ftype=0 ");
     }
 
     // ---- create the new filesystem using mkfs.xfs
-    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, options)!=0 || exitst!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, mkfsopts)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }
     
-    // ---- use xfs_admin to set the other advanced options
-    memset(options, 0, sizeof(options));
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0 && strlen(buffer)==36)
-        strlcatf(options, sizeof(options), " -U %s ", buffer);
-    
-    if (options[0])
+    // ---- use xfs_admin to set the UUID if not already done with mkfs.xfs
+    if (xadmopts[0])
     {
-        if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "xfs_admin %s %s", options, partition)!=0 || exitst!=-0)
+        if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "xfs_admin %s %s", xadmopts, partition)!=0 || exitst!=-0)
         {   errprintf("command [%s] failed\n", command);
             return -1;
         }
