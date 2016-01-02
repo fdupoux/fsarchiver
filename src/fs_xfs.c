@@ -146,7 +146,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
             "It is impossible to restore this filesystem as an XFSv5 and preserve its UUID\n"
             "with mkfs.xfs < 4.3.0. This filesystem will be restored as an XFSv4 instead\n"
             "as this is a much safer option (preserving the UUID may be required on\n"
-            "boot/root filesystems for the opearting system to be able to start). If you\n"
+            "boot/root filesystems for the operating system to be able to start). If you\n"
             "really want to have an XFSv5 filesystem, please upgrade xfsprogs to version\n"
             "4.3.0 or more recent and rerun this operation to get an XFSv5 with the same\n"
             "UUID as original filesystem\n");
@@ -176,7 +176,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     // - the "-m uuid=<UUID>" option in mkfs.xfs was added in mkfs.xfs 4.3.0 and is the best way to set UUIDs
     // - the UUID of XFSv4 can be successfully set using either xfs_admin or mkfs.xfs >= 4.3.0
     // - it is impossible to set both types of UUIDs of an XFSv5 filesystem using xfsprogs < 4.3.0
-    //   for this reason the XFS version if forced to v4 if xfsprogs version < 4.3.0
+    //   for this reason the XFS version is forced to v4 if xfsprogs version < 4.3.0
     if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, uuid, sizeof(uuid))==0 && strlen(uuid)==36)
     {
         if (xfstoolsver >= PROGVER(4,3,0))
