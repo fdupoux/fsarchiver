@@ -181,7 +181,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
         if (xfstoolsver >= PROGVER(4,3,0))
             strlcatf(mkfsopts, sizeof(mkfsopts), " -m uuid=%s ", uuid);
         else
-            strlcatf(xadmopts, sizeof(xadmopts), " -U %s ", buffer);
+            strlcatf(xadmopts, sizeof(xadmopts), " -U %s ", uuid);
     }
 
     // Determine if the "ftype" mkfs option should be enabled (filetype in dirent)
