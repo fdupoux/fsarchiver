@@ -3,6 +3,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 * 0.6.20
   - Detect version of XFS filesystems in order to preserve it when they are restored
   - Add support for XFS filesystems features introduced in XFS version 5
+  - Make sure the UUIDs of XFS filesystems are always preserved
 * 0.6.19 (2014-03-01):
   - Reverted "number of inode blocks per group" patch which caused a regression in release 0.6.18
 * 0.6.18 (2014-02-13):

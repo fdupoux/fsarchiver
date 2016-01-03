@@ -131,6 +131,27 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     else
         xfsver = XFS_SB_VERSION_5;
 
+    // Unfortunately it is impossible to preserve the UUID (stamped on every
+    // metadata block) of an XFSv5 filesystem with mkfs.xfs < 4.3.0.
+    // Restoring with a new random UUID would work but could prevent the system
+    // from booting if this is a boot/root filesystem and grub/fstab often use
+    // the UUID to identify it. Hence it is much safer to restore it as an
+    // XFSv4 and it also provides a better compatibility with older kernels.
+    // Hence this is the safest option.
+    // More details: https://github.com/fdupoux/fsarchiver/issues/4
+    if ((xfsver==XFS_SB_VERSION_5) && (xfstoolsver < PROGVER(4,3,0)))
+    {
+        xfsver = XFS_SB_VERSION_4; // Do not preserve the XFS version
+        msgprintf(MSG_FORCE,
+            "It is impossible to restore this filesystem as an XFSv5 and preserve its UUID\n"
+            "with mkfs.xfs < 4.3.0. This filesystem will be restored as an XFSv4 instead\n"
+            "as this is a much safer option (preserving the UUID may be required on\n"
+            "boot/root filesystems for the operating system to be able to start). If you\n"
+            "really want to have an XFSv5 filesystem, please upgrade xfsprogs to version\n"
+            "4.3.0 or more recent and rerun this operation to get an XFSv5 with the same\n"
+            "UUID as original filesystem\n");
+    }
+
     // Determine if the "crc" mkfs option should be enabled (checksum)
     // - checksum must be disabled if we want to recreate an XFSv4 filesystem
     // - checksum must be enabled if we want to recreate an XFSv5 filesystem
@@ -155,16 +176,13 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     // - the "-m uuid=<UUID>" option in mkfs.xfs was added in mkfs.xfs 4.3.0 and is the best way to set UUIDs
     // - the UUID of XFSv4 can be successfully set using either xfs_admin or mkfs.xfs >= 4.3.0
     // - it is impossible to set both types of UUIDs of an XFSv5 filesystem using xfsprogs < 4.3.0
+    //   for this reason the XFS version is forced to v4 if xfsprogs version < 4.3.0
     if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, uuid, sizeof(uuid))==0 && strlen(uuid)==36)
     {
         if (xfstoolsver >= PROGVER(4,3,0))
-        {
             strlcatf(mkfsopts, sizeof(mkfsopts), " -m uuid=%s ", uuid);
-        }
-        else if (xfsver==XFS_SB_VERSION_4)
-        {
-            strlcatf(xadmopts, sizeof(xadmopts), " -U %s ", buffer);
-        }
+        else
+            strlcatf(xadmopts, sizeof(xadmopts), " -U %s ", uuid);
     }
 
     // Determine if the "ftype" mkfs option should be enabled (filetype in dirent)
