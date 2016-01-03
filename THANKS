@@ -12,3 +12,7 @@ crash. It permitted to fix a critical integer overflow bug with
 the "u64 headerlen" when the total size of the attributes is more
 than 65535 bytes in the header. It has been fixed in fsarchiver-0.6.4.
 
+Many thanks to Marcos Mello who helped a lot improve the XFS support
+in fsarchiver-0.6.20. He found unexpected fsarchiver behaviors with new
+versions of the kernel and xfsprogs, did a lot of research regarding these
+components, and tested the XFS fixes in fsarchiver.
