@@ -3,8 +3,8 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([fsarchiver], 0.6.20-git)
-AC_DEFINE([PACKAGE_RELDATE], "2016-MM-DD", [Define the date of the release])
+AC_INIT([fsarchiver], 0.6.20)
+AC_DEFINE([PACKAGE_RELDATE], "2016-01-03", [Define the date of the release])
 AC_DEFINE([PACKAGE_FILEFMT], "FsArCh_002", [Define the version of the file format])
 AC_DEFINE([PACKAGE_VERSION_A], 0, [Major version number])
 AC_DEFINE([PACKAGE_VERSION_B], 6, [Medium version number])
