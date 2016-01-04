@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <byteswap.h>
+#include <linux/types.h>
 
 typedef uint8_t u8;
 typedef int8_t s8;
@@ -31,10 +32,6 @@ typedef uint32_t u32;
 typedef int32_t s32;
 typedef uint64_t u64;
 typedef int64_t s64;
-
-typedef uint16_t __le16;
-typedef uint32_t __le32;
-typedef uint64_t __le64;
 
 #define le8_to_cpu(v) (v)
 #define cpu_to_le8(v) (v)

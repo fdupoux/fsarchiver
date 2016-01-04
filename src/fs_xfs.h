@@ -55,15 +55,6 @@ int xfs_umount(char *partition, char *mntbuf);
 int xfs_test(char *devname);
 int xfs_check_compatibility(u64 compat, u64 ro_compat, u64 incompat, u64 log_incompat);
 
-typedef uint8_t __u8;
-typedef int8_t __s8;
-typedef uint16_t __u16;
-typedef int16_t __s16;
-typedef uint32_t __u32;
-typedef int32_t __s32;
-typedef uint64_t __u64;
-typedef int64_t __s64;
-
 typedef __uint32_t      xfs_agblock_t;  /* blockno in alloc. group */
 typedef __uint32_t      xfs_extlen_t;   /* extent length in blocks */
 typedef __uint32_t      xfs_agnumber_t; /* allocation group number */
