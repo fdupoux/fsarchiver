@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/vfs.h>
 #include <sys/utsname.h>
@@ -320,12 +321,24 @@ int generic_mount(char *partition, char *mntbuf, char *fsbuf, char *mntopt, int 
 
 int generic_umount(char *mntbuf)
 {
+    int res=0;
+    int i;
+
     if (!mntbuf)
     {   errprintf("invalid param: mntbuf is null\n");
         return -1;
     }
+
     msgprintf(MSG_DEBUG1, "unmount_partition(%s)\n", mntbuf);
-    return umount2(mntbuf, 0);
+    for (i=0, errno=0 ; (i < 4) && (res=umount2(mntbuf, 0)!=0) && (errno==EBUSY) ; i++)
+    {   sync();
+        sleep(i+1);
+    }
+
+    if (res!=0)
+        errprintf("Failed to umount device %s after %d attempts\n", mntbuf, (int)i);
+
+    return res;
 }
 
 char *format_prog_version(u64 version, char *bufdat, int buflen)

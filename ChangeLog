@@ -2,6 +2,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.6.21
   - Removed duplicate types definitions in order to fix compilation errors
+  - Attempt to unmount a device four times before failing
 * 0.6.20 (2016-01-03):
   - Detect version of XFS filesystems in order to preserve it when they are restored
   - Add support for XFS filesystems features introduced in XFS version 5
