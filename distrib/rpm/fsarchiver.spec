@@ -6,7 +6,7 @@ Summary:	Safe and flexible file-system backup/deployment tool
 Group:		Applications/Archiving
 License:	GPLv2
 URL:		http://www.fsarchiver.org
-Source0:  	http://downloads.sourceforge.net/%{name}/%{name}-%{version}.tar.gz      
+Source0:  	https://github.com/fdupoux/%{name}/releases/download/%{version}/%{name}-%{version}.tar.gz
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:	e2fsprogs-devel => 1.41.4
