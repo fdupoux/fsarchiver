@@ -915,6 +915,7 @@ int filesystem_mount_partition(cdevinfo *devinfo, cdico *dicofsinfo, u16 fsid)
     cstrlist curmntopt;
     int showwarningcount1=0;
     int showwarningcount2=0;
+    int errorattr=false;
     char temp[PATH_MAX];
     char curmntdir[PATH_MAX];
     char optbuf[128];
@@ -1036,7 +1037,41 @@ int filesystem_mount_partition(cdevinfo *devinfo, cdico *dicofsinfo, u16 fsid)
         devinfo->fstype=tmptype;
         devinfo->mountedbyfsa=true;
     }
-    
+
+    // Make sure support for extended attributes is enabled if this filesystem supports it
+    if (g_options.dontcheckmountopts==false)
+    {
+        errorattr=false;
+
+        if (filesys[i].support_for_xattr==true)
+        {   errno=0;
+            res=lgetxattr(devinfo->partmount, "user.fsa_test_xattr", temp, sizeof(temp));
+            msgprintf(MSG_DEBUG1, "lgetxattr(\"%s\", \"user.fsa_test_attr\", buf, bufsize)=[%d] and errno=[%d]\n", devinfo->partmount, (int)res, (int)errno);
+            // errno should be set to ENOATTR if we are able to read extended attributes
+            if ((res!=0) && (errno==ENOTSUP))
+            {   errprintf("fsarchiver is unable to access extended attributes on device [%s].\n", devinfo->devpath);
+                errorattr=true;
+            }
+        }
+
+        if (filesys[i].support_for_acls==true)
+        {   errno=0;
+            res=lgetxattr(devinfo->partmount, "system.posix_acl_access", temp, sizeof(temp));
+            msgprintf(MSG_DEBUG1, "lgetxattr(\"%s\", \"system.posix_acl_access\", buf, bufsize)=[%d] and errno=[%d]\n", devinfo->partmount, (int)res, (int)errno);
+            // errno should be set to ENOATTR if we are able to read ACLs
+            if ((res!=0) && (errno==ENOTSUP))
+            {   errprintf("fsarchiver is unable to access ACLs on device [%s].\n", devinfo->devpath);
+                errorattr=true;
+            }
+        }
+
+        if (errorattr==true)
+        {   errprintf("Cannot continue, you can use option '-a' to ignore "
+                      "support for xattr and acl (they will not be preserved)\n");
+            return -1;
+        }
+    }
+
     // get space statistics
     if (statvfs64(devinfo->partmount, &statfsbuf)!=0)
     {   errprintf("statvfs64(%s) failed\n", devinfo->partmount);

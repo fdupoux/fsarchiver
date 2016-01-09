@@ -502,28 +502,11 @@ int ext4_test(char *partition)
 
 int extfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt)
 {
-    blk_t use_superblock=0;
-    int use_blocksize=0;
-    u32 defmntoptmask;
-    ext2_filsys fs;
-    
     if (!reqopt || !badopt)
         return -1;
     
-    // check the "default mount options"
-    if (ext2fs_open(partition, EXT2_FLAG_JOURNAL_DEV_OK | EXT2_FLAG_SOFTSUPP_FEATURES, use_superblock,  use_blocksize, unix_io_manager, &fs)!=0)
-        return -1;
-    
-    defmntoptmask=fs->super->s_default_mount_opts;
-    if (!(defmntoptmask&EXT2_DEFM_XATTR_USER))
-        strlist_add(reqopt, "user_xattr");
-    if (!(defmntoptmask&EXT2_DEFM_ACL))
-        strlist_add(reqopt, "acl");
-    
     strlist_add(badopt, "nouser_xattr");
     strlist_add(badopt, "noacl");
-    
-    ext2fs_close(fs);
     
     return 0;
 }

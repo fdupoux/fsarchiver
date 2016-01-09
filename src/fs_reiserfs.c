@@ -180,8 +180,6 @@ int reiserfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt)
     if (!reqopt || !badopt)
         return -1;
     
-    strlist_add(reqopt, "user_xattr");
-    strlist_add(reqopt, "acl");
     strlist_add(badopt, "nouser_xattr");
     strlist_add(badopt, "noacl");
     

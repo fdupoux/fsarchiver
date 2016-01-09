@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.22:
+  - Test support for extended attributes and ACLs instead of checking mount options
 * 0.6.21 (2016-01-07):
   - Removed duplicate types definitions in order to fix compilation errors
   - Attempt to unmount a device four times before failing
