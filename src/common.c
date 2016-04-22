@@ -32,6 +32,7 @@
 #include <wordexp.h>
 #include <fnmatch.h>
 #include <time.h>
+#include <limits.h>
 
 #ifdef HAVE_EXECINFO_H
 #include <execinfo.h>
