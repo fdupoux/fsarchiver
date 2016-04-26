@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <blkid.h>
+#include <limits.h>
 
 #include "fsarchiver.h"
 #include "devinfo.h"

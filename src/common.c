@@ -29,10 +29,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <execinfo.h>
 #include <wordexp.h>
 #include <fnmatch.h>
 #include <time.h>
+#include <limits.h>
+
+#ifdef HAVE_EXECINFO_H
+#include <execinfo.h>
+#endif
 
 #include "fsarchiver.h"
 #include "syncthread.h"
@@ -549,6 +553,7 @@ u64 stats_errcount(cstats stats)
 
 int format_stacktrace(char *buffer, int bufsize)
 {
+#ifdef HAVE_EXECINFO_H
     const int stack_depth=20;
     void *temp[stack_depth];
     char **strings;
@@ -565,6 +570,7 @@ int format_stacktrace(char *buffer, int bufsize)
             strlcatf(buffer, bufsize, "%s\n", strings[i]);
         free(strings);
     }
+#endif
     
     return 0;
 }

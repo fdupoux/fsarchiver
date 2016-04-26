@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/mount.h>
+#include <sys/param.h>
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <attr/xattr.h>
@@ -540,7 +541,7 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
             }
             if (*objtype==OBJTYPE_REGFILEUNIQUE || *objtype==OBJTYPE_REGFILEMULTI)
             {
-                if (((u64)statbuf->st_blocks) * ((u64)S_BLKSIZE) < ((u64)statbuf->st_size))
+                if (((u64)statbuf->st_blocks) * ((u64)DEV_BSIZE) < ((u64)statbuf->st_size))
                     flags|=FSA_FILEFLAGS_SPARSE;
             }
             break;
