@@ -420,9 +420,9 @@ int generate_random_tmpdir(char *buffer, int bufsize, int n)
     abstime=tv.tv_sec;
         localtime_r(&abstime, &tbreak);
     
-    snprintf(buffer, bufsize, "/tmp/fsa/%.4d%.2d%.2d-%.2d%.2d%.2d-%.2d",
+    snprintf(buffer, bufsize, "/tmp/fsa/%.4d%.2d%.2d-%.2d%.2d%.2d-%.8x-%.2d",
         tbreak.tm_year+1900, tbreak.tm_mon+1, tbreak.tm_mday,
-         tbreak.tm_hour, tbreak.tm_min, tbreak.tm_sec, n);
+         tbreak.tm_hour, tbreak.tm_min, tbreak.tm_sec, (u32)tv.tv_usec, n);
     return 0;
 }
 
