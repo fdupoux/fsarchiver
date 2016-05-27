@@ -121,11 +121,10 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     if (xfs_check_compatibility(sb_features_compat, sb_features_ro_compat, sb_features_incompat, sb_features_log_incompat)!=0)
         return -1;
 
-    // Preserve version 4 of XFS if the original filesystem was an XFS v4 or if
-    // the original filesystem was saved with fsarchiver <= 0.6.19 which does
-    // not store the XFS version in the metadata: make an XFSv4 if unsure for
-    // better compatibility and as upgrading later is easier than downgrading
-    // if the user gets an XFSv4 and wanted an XFSv5
+    // Preserve version 4 of XFS if the original filesystem was an XFSv4 or if
+    // it was saved with fsarchiver <= 0.6.19 which does not store the XFS
+    // version in the metadata: make an XFSv4 if unsure for better compatibility,
+    // as upgrading later is easier than downgrading
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSVERSION, &temp64)!=0) || (temp64==XFS_SB_VERSION_4))
         xfsver = XFS_SB_VERSION_4;
     else
@@ -134,8 +133,8 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     // Unfortunately it is impossible to preserve the UUID (stamped on every
     // metadata block) of an XFSv5 filesystem with mkfs.xfs < 4.3.0.
     // Restoring with a new random UUID would work but could prevent the system
-    // from booting if this is a boot/root filesystem and grub/fstab often use
-    // the UUID to identify it. Hence it is much safer to restore it as an
+    // from booting if this is a boot/root filesystem because grub/fstab often
+    // use the UUID to identify it. Hence it is much safer to restore it as an
     // XFSv4 and it also provides a better compatibility with older kernels.
     // Hence this is the safest option.
     // More details: https://github.com/fdupoux/fsarchiver/issues/4
@@ -162,9 +161,9 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     }
 
     // Determine if the "finobt" mkfs option should be enabled (free inode btree)
-    // - starting Linux 3.16 XFS has added a btree that tracks free inodes
+    // - starting with linux-3.16 XFS has added a btree that tracks free inodes
     // - this feature relies on the new v5 on-disk format but it is optional
-    // - this feature enabled by default when using xfsprogs 3.2.3 or later
+    // - this feature is enabled by default when using xfsprogs 3.2.3 or later
     // - this feature will be enabled if the original filesystem was XFSv5 and had it
     if (xfstoolsver >= PROGVER(3,2,1)) // only use "finobt" option when it is supported by mkfs
     {
@@ -197,7 +196,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     //   disable ftype for V4 volumes to keep them compatible with older kernels
     if (xfstoolsver >= PROGVER(3,2,0)) // only use "ftype" option when it is supported by mkfs
     {
-        // crc is already set to 1 when it is XFSv5 hence do not set ftype=1 with XFSv5
+        // ftype is already set to 1 when it is XFSv5
         if (xfsver==XFS_SB_VERSION_4)
             strlcatf(mkfsopts, sizeof(mkfsopts), " -n ftype=0 ");
     }
