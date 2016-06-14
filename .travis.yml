@@ -1,0 +1,21 @@
+---
+group: stable
+dist: trusty
+language: c
+
+before_install:
+  # Install dependencies
+  - sudo apt-get install -y gcc make automake autoconf autotools-dev zlib1g-dev libbz2-dev liblzma-dev liblzo2-dev libgcrypt20-dev e2fslibs-dev uuid-dev libblkid-dev libattr1-dev pkg-config
+  # Print information about the environment
+  - gcc --version
+
+install:
+  # Generate build files
+  - ./autogen.sh
+  # Build application
+  - ./configure
+  - make
+
+script:
+  # Make sure it has built successfully
+  - ./src/fsarchiver --version
