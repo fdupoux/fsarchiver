@@ -211,7 +211,8 @@ s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
     
     // does not make sense to add item on a queue where endofqueue is true
     if (q->endofqueue==true)
-    {   assert(pthread_mutex_unlock(&q->mutex)==0);
+    {   free (item);
+        assert(pthread_mutex_unlock(&q->mutex)==0);
         return FSAERR_ENDOFFILE;
     }
     
@@ -227,7 +228,8 @@ s64 queue_add_block(cqueue *q, cblockinfo *blkinfo, int status)
         q->head=item;
     }
     else // list not empty: add items at the end
-    {   for (cur=q->head; (cur!=NULL) && (cur->next!=NULL); cur=cur->next);
+    {
+        for (cur=q->head; (cur!=NULL) && (cur->next!=NULL); cur=cur->next);
         cur->next=item;
     }
     
@@ -284,7 +286,8 @@ s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
     
     // does not make sense to add item on a queue where endofqueue is true
     if (q->endofqueue==true)
-    {   assert(pthread_mutex_unlock(&q->mutex)==0);
+    {   free(item);
+        assert(pthread_mutex_unlock(&q->mutex)==0);
         return FSAERR_ENDOFFILE;
     }
     
@@ -301,7 +304,8 @@ s64 queue_add_header_internal(cqueue *q, cheadinfo *headinfo)
         q->head=item;
     }
     else // list not empty
-    {   for (cur=q->head; (cur!=NULL) && (cur->next!=NULL); cur=cur->next);
+    {
+        for (cur=q->head; (cur!=NULL) && (cur->next!=NULL); cur=cur->next);
         cur->next=item;
     }
     

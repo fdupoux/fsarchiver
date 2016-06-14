@@ -168,6 +168,7 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
         if ((blkinfo->blkcryptalgo!=ENCRYPT_NONE) && (g_options.encryptalgo!=ENCRYPT_BLOWFISH))
         {   msgprintf(MSG_DEBUG1, "this archive has been encrypted, you have to provide a password "
                 "on the command line using option '-c'\n");
+            free (bufcomp);
             return -1;
         }
         
@@ -177,16 +178,19 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
         {
             if ((bufcrypt=malloc(blkinfo->blkrealsize+8))==NULL)
             {   errprintf("malloc(%ld) failed: out of memory\n", (long)blkinfo->blkrealsize+8);
+                free(bufcomp);
                 return -1;
             }
             if ((res=crypto_blowfish(blkinfo->blkarsize, &clearsize, (u8*)blkinfo->blkdata, (u8*)bufcrypt, 
                 g_options.encryptpass, strlen((char*)g_options.encryptpass), 0))!=0)
             {   errprintf("crypt_block_blowfish() failed\n");
+                free(bufcomp);
                 return -1;
             }
             if (clearsize!=blkinfo->blkcompsize)
             {   errprintf("clearsize does not match blkcompsize: clearsize=%ld and blkcompsize=%ld\n", 
                     (long)clearsize, (long)blkinfo->blkcompsize);
+                free(bufcomp);
                 return -1;
             }
             free(blkinfo->blkdata);
@@ -242,7 +246,6 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
         free(blkinfo->blkdata); // free old buffer (with compressed data)
         blkinfo->blkdata=bufcomp; // pointer to new buffer with uncompressed data
     }
-    
     return 0;
 }
 
