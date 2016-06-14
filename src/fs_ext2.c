@@ -550,7 +550,7 @@ u64 check_prog_version(char *prog)
     }
     
     x=y=z=0;
-    sscanf(result, "%s %d.%d.%d", temp1, &x, &y, &z);
+    sscanf(result, "%1023s %d.%d.%d", temp1, &x, &y, &z);
     
     if (x==0 && y==0)
     {   errprintf("can't parse %s version number: x=y=0\n", prog);
