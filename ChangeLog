@@ -1,5 +1,10 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.23 (2016-06-16):
+  - Added micro-seconds to timestamp used in the name of the temporary directory
+  - Fixed memory leaks on failure scenarios and protect against buffer overflows in scanf
+  - Fixed possible failure to restore ext4 filesystems when mkfs running in interactive mode
+  - Fixed compilation errors with the musl libc
 * 0.6.22 (2016-02-13):
   - Test support for extended attributes and ACLs instead of checking mount options
 * 0.6.21 (2016-01-07):
