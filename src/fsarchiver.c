@@ -67,6 +67,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " * probe [detailed]: show list of filesystems detected on the disks\n");
     msgprintf(MSG_FORCE, "<options>\n");
     msgprintf(MSG_FORCE, " -o: overwrite the archive if it already exists instead of failing\n");
+    msgprintf(MSG_FORCE, " -k: keep corrupted files\n");
     msgprintf(MSG_FORCE, " -v: verbose mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -d: debug mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -A: allow to save a filesystem which is mounted in read-write (live backup)\n");
@@ -124,6 +125,7 @@ static struct option const long_options[] =
     {"overwrite", no_argument, NULL, 'o'},
     {"allow-no-acl-xattr", no_argument, NULL, 'a'},
     {"allow-rw-mounted", no_argument, NULL, 'A'},
+    {"keep-corrupt", no_argument, NULL, 'k'},
     {"verbose", no_argument, NULL, 'v'},
     {"debug", no_argument, NULL, 'd'},
     {"compress", required_argument, NULL, 'z'},
@@ -162,6 +164,7 @@ int process_cmdline(int argc, char **argv)
     g_options.overwrite=false;
     g_options.allowsaverw=false;
     g_options.dontcheckmountopts=false;
+    g_options.keepcorrupt=false;
     g_options.verboselevel=0;
     g_options.debuglevel=0;
     g_options.compressjobs=1;
@@ -173,7 +176,7 @@ int process_cmdline(int argc, char **argv)
     snprintf(g_options.archlabel, sizeof(g_options.archlabel), "<none>");
     g_options.encryptpass[0]=0;
     
-    while ((c = getopt_long(argc, argv, "oaAvdz:j:hVs:c:L:e:", long_options, NULL)) != EOF)
+    while ((c = getopt_long(argc, argv, "oaAkvdz:j:hVs:c:L:e:", long_options, NULL)) != EOF)
     {
         switch (c)
         {
@@ -185,6 +188,9 @@ int process_cmdline(int argc, char **argv)
                 break;
             case 'A': // allows to backup read/write mounted partition
                 g_options.allowsaverw=true;
+                break;
+            case 'k': // keep corrupt files
+                g_options.keepcorrupt=true;
                 break;
             case 'v': // verbose mode
                 g_options.verboselevel++;

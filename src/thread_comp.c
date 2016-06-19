@@ -151,6 +151,7 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
     u64 checkorigsize;
     char *bufcomp=NULL;
     int res;
+    bool corrupt=false;
     
     // allocate memory for uncompressed data
     if ((bufcomp=malloc(blkinfo->blkrealsize))==NULL)
@@ -161,9 +162,9 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
     // check the block checksum
     if (fletcher32((u8*)blkinfo->blkdata, blkinfo->blkarsize)!=(blkinfo->blkarcsum))
     {   errprintf("block is corrupt at blockoffset=%ld, blksize=%ld\n", (long)blkinfo->blkoffset, (long)blkinfo->blkrealsize);
-        memset(bufcomp, 0, blkinfo->blkrealsize);
+        corrupt=!g_options.keepcorrupt;
     }
-    else // data not corrupted, decompresses the block
+    if (!corrupt) // decompresses the block
     {
         if ((blkinfo->blkcryptalgo!=ENCRYPT_NONE) && (g_options.encryptalgo!=ENCRYPT_BLOWFISH))
         {   msgprintf(MSG_DEBUG1, "this archive has been encrypted, you have to provide a password "

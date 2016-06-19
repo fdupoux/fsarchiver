@@ -865,8 +865,9 @@ int extractar_restore_obj_regfile_unique(cextractar *exar, char *fullpath, char 
             }
             
             if (memcmp(md5sumcalc, md5sumorig, 16)!=0)
-            {   errprintf("cannot restore file %s, file is corrupt\n", relpath);
-                delfile=true; // don't leave corrupt data in the file
+            {   errprintf("file %s is corrupt\n", relpath);
+                if (!g_options.keepcorrupt)
+                    delfile=true; // don't leave corrupt data in the file
                 minorerr=true;
                 goto restore_obj_regfile_unique_end;
             }

@@ -443,6 +443,7 @@ int archreader_read_block(carchreader *ai, cdico *in_blkdico, int in_skipblock, 
     u32 finalsize; // compressed  block size
     u32 compsize;
     u8 *buffer;
+    bool corrupt;
     
     assert(ai);
     assert(out_sumok);
@@ -521,9 +522,13 @@ int archreader_read_block(carchreader *ai, cdico *in_blkdico, int in_skipblock, 
     
     // ---- checksum
     arblockcsumcalc=fletcher32(buffer, finalsize);
+    corrupt=false;
     if (arblockcsumcalc!=arblockcsumorig) // bad checksum
     {
         errprintf("block is corrupt at offset=%ld, blksize=%ld\n", (long)blockoffset, (long)curblocksize);
+        corrupt=!g_options.keepcorrupt;
+    }
+    if (corrupt) {
         free(out_blkinfo->blkdata);
         if ((out_blkinfo->blkdata=malloc(curblocksize))==NULL)
         {   errprintf("cannot allocate block: malloc(%d) failed\n", curblocksize);
