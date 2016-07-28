@@ -358,6 +358,7 @@ int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, in
         close(pfildes1[1]); // close excess fildes
         dup2(pfildes2[1],2); // make 1 same as write-to end of pipe
         close(pfildes2[1]); // close excess fildes
+        setenv("LC_ALL", "C", 1); // kill internationalization
         execvp(pathtoprog, argv);
         errprintf("execvp(%s) failed\n", pathtoprog); // still around? exec failed
         wordfree(&p);
