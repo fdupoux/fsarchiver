@@ -171,7 +171,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
         strlcatf(mkfsopts, sizeof(mkfsopts), " -m finobt=%d ", (int)optval);
     }
 
-    // ---- attempt to preserve UUID of the filesystem
+    // Attempt to preserve UUID of the filesystem
     // - the "-m uuid=<UUID>" option in mkfs.xfs was added in mkfs.xfs 4.3.0 and is the best way to set UUIDs
     // - the UUID of XFSv4 can be successfully set using either xfs_admin or mkfs.xfs >= 4.3.0
     // - it is impossible to set both types of UUIDs of an XFSv5 filesystem using xfsprogs < 4.3.0
@@ -199,6 +199,16 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
         // ftype is already set to 1 when it is XFSv5
         if (xfsver==XFS_SB_VERSION_4)
             strlcatf(mkfsopts, sizeof(mkfsopts), " -n ftype=0 ");
+    }
+
+    // Determine if the "sparse" mkfs option should be enabled (sparse inode allocation)
+    // - starting with linux-4.2 XFS can allocate discontinuous inode chunks
+    // - this feature relies on the new v5 on-disk format but it is optional
+    // - this feature will be enabled if the original filesystem was XFSv5 and had it
+    if (xfstoolsver >= PROGVER(4,2,0)) // only use "sparse" option when it is supported by mkfs
+    {
+        optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_incompat & XFS_SB_FEAT_INCOMPAT_SPINODES));
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -i sparse=%d ", (int)optval);
     }
 
     // ---- create the new filesystem using mkfs.xfs
