@@ -59,7 +59,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, "Distributed under the GPL v2 license (GNU General Public License v2).\n");
     msgprintf(MSG_FORCE, " * usage: %s [<options>] <command> <archive> [<part1> [<part2> [...]]]\n", progname);
     msgprintf(MSG_FORCE, "<commands>\n");
-    msgprintf(MSG_FORCE, " * savefs: save filesystems to an archive file (backup a partition to a file)\n");
+    msgprintf(MSG_FORCE, " * savefs: save filesystems to an archive file (backup a device to a file)\n");
     msgprintf(MSG_FORCE, " * restfs: restore filesystems from an archive (overwrites the existing data)\n");
     msgprintf(MSG_FORCE, " * savedir: save directories to the archive (similar to a compressed tarball)\n");
     msgprintf(MSG_FORCE, " * restdir: restore data from an archive which is not based on a filesystem\n");
@@ -70,18 +70,18 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -v: verbose mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -d: debug mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -A: allow to save a filesystem which is mounted in read-write (live backup)\n");
-    msgprintf(MSG_FORCE, " -a: allow running savefs when partition mounted without the acl/xattr options\n");
+    msgprintf(MSG_FORCE, " -a: allow to save a filesystem when acls and xattrs are not supported\n");
     msgprintf(MSG_FORCE, " -e <pattern>: exclude files and directories that match that pattern\n");
     msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
-    msgprintf(MSG_FORCE, " -z <level>: compression level from 1 (very fast)  to  9 (very good) default=3\n");
+    msgprintf(MSG_FORCE, " -z <level>: compression level from 1 (very fast) to 9 (very good) default=3\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
-    msgprintf(MSG_FORCE, " -j <count>: create more than one compression thread. useful on multi-core cpu\n");
+    msgprintf(MSG_FORCE, " -j <count>: create more than one (de)compression thread. useful on multi-core cpu\n");
     msgprintf(MSG_FORCE, " -c <password>: encrypt/decrypt data in archive, \"-c -\" for interactive password\n");
     msgprintf(MSG_FORCE, " -h: show help and information about how to use fsarchiver with examples\n");
     msgprintf(MSG_FORCE, " -V: show program version and exit\n");
     msgprintf(MSG_FORCE, "<information>\n");
     msgprintf(MSG_FORCE, " * Support included for: lzo=%s, lzma=%s\n", (lzo==true)?"yes":"no", (lzma==true)?"yes":"no");
-    msgprintf(MSG_FORCE, " * support for ntfs filesystems is unstable: don't use it for production.\n");
+    msgprintf(MSG_FORCE, " * Support for ntfs filesystems is unstable: don't use it for production.\n");
     
     if (examples==true)
     {
@@ -98,6 +98,8 @@ void usage(char *progname, bool examples)
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/arch2.fsa id=0,dest=/dev/sda1 id=1,dest=/dev/sdb1\n");
         msgprintf(MSG_FORCE, " * \e[1mrestore a filesystem from an archive and convert it to reiserfs:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs\n");
+        msgprintf(MSG_FORCE, " * \e[1mrestore a filesystem from an archive and specify extra mkfs options:\e[0m\n");
+        msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=ext4,mkfsopt=\"-I 256\"\n");
         msgprintf(MSG_FORCE, " * \e[1msave the contents of /usr/src/linux to an archive (similar to tar):\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savedir /data/linux-sources.fsa /usr/src/linux\n");
         msgprintf(MSG_FORCE, " * \e[1msave a filesystem (/dev/sda1) to an archive split into volumes of 680MB:\e[0m\n");
@@ -110,11 +112,11 @@ void usage(char *progname, bool examples)
         msgprintf(MSG_FORCE, "   fsarchiver savefs /data/myarchive.fsa --exclude=/usr/share\n");
         msgprintf(MSG_FORCE, " * \e[1msave a filesystem (/dev/sda1) to an encrypted archive:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -c mypassword /data/myarchive1.fsa /dev/sda1\n");
-        msgprintf(MSG_FORCE, " * \e[1mSame as before but prompt for password in the terminal:\e[0m\n");
+        msgprintf(MSG_FORCE, " * \e[1msame as before but prompt for password in the terminal:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savefs -c - /data/myarchive1.fsa /dev/sda1\n");
         msgprintf(MSG_FORCE, " * \e[1mextract an archive made of simple files to /tmp/extract:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restdir /data/linux-sources.fsa /tmp/extract\n");
-        msgprintf(MSG_FORCE, " * \e[1mshow information about an archive and its file systems:\e[0m\n");
+        msgprintf(MSG_FORCE, " * \e[1mshow information about an archive and its filesystems:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver archinfo /data/myarchive2.fsa\n");
     }
 }

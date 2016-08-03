@@ -4,13 +4,13 @@
 fsarchiver \- filesystem archiver
 
 .SH DESCRIPTION
-fsarchiver is a system tool that allows you to save the contents of a 
-filesystem to a compressed archive file. The file-system can be restored 
-on a partition which has a different size and it can be restored on a 
-different file-system. Unlike tar/dar, FSArchiver also creates the 
-filesystem when it extracts the data to partitions. Everything is 
-checksummed in the archive in order to protect the data. If the archive 
-is corrupt, you just lose the current file, not the whole archive. 
+fsarchiver is a system tool that allows you to save the contents of a
+filesystem to a compressed archive file. The filesystem contents can be
+restored on a device which has a different size and it can be restored on a
+different filesystem. Unlike tar/dar, fsarchiver also creates the
+filesystem when it extracts the data to devices. Everything is checksummed
+in the archive in order to protect the data. If the archive is corrupt, you
+just lose the current file, not the whole archive.
 
 .SH LINKS
 .SS Official project homepage:
@@ -19,22 +19,24 @@ http://www.fsarchiver.org
 http://www.fsarchiver.org/QuickStart
 .SS Forums where to ask questions:
 http://www.fsarchiver.org/forums/
+.SS Git repository:
+https://github.com/fdupoux/fsarchiver
 .SS Report a bug:
-http://www.fsarchiver.org/forums/viewforum.php?f=17
+https://github.com/fdupoux/fsarchiver/issues
 
 .SH SYNOPSIS
 .B fsarchiver [
 .I options
 .B ] savefs
 .I archive
-.I filesystem
+.I device
 .B ...
 .PP
 .B fsarchiver [
 .I options
 .B ] restfs
 .I archive
-.BI id= n ,dest= filesystem [,mkfs= fstype, mkfsopt= options ]
+.BI id= n ,dest= device [,mkfs= fstype [,mkfsopt= options ]]
 .B ...
 .PP
 .B fsarchiver [
@@ -62,20 +64,23 @@ http://www.fsarchiver.org/forums/viewforum.php?f=17
 .TP
 .B savefs
 Save
-.I filesystems
-to
+.I device
+filesystem to
 .IR archive .
 .TP
 .B restfs
 Restore filesystems from
 .IR archive .
 This overwrites the existing data on
-.IR filesystems .
+.IR device .
 Zero-based index
 .I n
 indicates the part of the archive to restore.
 Optionally, a filesystem may be converted to
-.IR fstype .
+.IR fstype
+and extra mkfs
+.IR options
+specified.
 .TP
 .B savedir
 Save
@@ -98,8 +103,6 @@ file and its contents.
 .B probe
 Show list of filesystems detected on the disks.
 
-
-
 .SH "OPTIONS"
 .PP
 .IP "\fB\-h, \-\-help\fP"
@@ -115,58 +118,56 @@ Overwrite the archive if it already exists instead of failing.
 Debug mode (can be used several times to increase the level of details).
 The details will be written in /var/log/fsarchiver.log.
 .IP "\fB\-A, \-\-allow-rw-mounted\fP"
-Allow to save a filesystem which is mounted in read-write (live backup).
-By default fsarchiver fails with an error if the partition is mounted 
-in read-write mode which allows modifications to be done on the filesystem
-during the backup. Modifications can drive to inconsistencies in the backup.
-Using lvm snapshots is the recommended way to make backups since it will
-provide consistency, but it is only available for filesystems which are on
-LVM logical-volumes.
+Allow to save a filesystem which is mounted in read-write (live backup). By
+default fsarchiver fails with an error if the device is mounted in
+read-write mode which allows modifications to be done on the filesystem
+during the backup. Modifications can drive to inconsistencies in the
+backup. Using LVM snapshots is the recommended way to make backups since it
+will provide consistency, but it is only available for filesystems which
+are on LVM logical volumes.
 .IP "\fB\-a, \-\-allow-no-acl-xattr\fP"
-Allow to run savefs when partition is mounted without the acl/xattr options.
-By default fsarchiver fails with an error if the partition is mounted
-in such a way that the ACL and Extended-Attributes are not readable. These
-attributes would not be saved and then such attributes could be lost. If you
-know what you don't need ACL and Extended-Attributes to be preserved then
-it's safe to run fsarchiver with that option.
+Allow to to save a filesystem when ACLs and extended attributes are not
+supported (or are disabled) by the kernel. By default fsarchiver fails with
+an error if it cannot access ACLs and extended attributes, since they would
+not be saved. If you do not need ACLs and extended attributes preserved
+then it is safe to use this option.
 .IP "\fB\-e pattern, \-\-exclude=pattern\fP"
-Exclude files and directories that match that pattern. The pattern can 
-contains shell asterisks such as * and ?, and the pattern may be either
-a simple file/dir name or an absolute file/dir path. You must use quotes
-around the pattern each time you use wildcards, else it would be interpreted
-by the shell. The wildcards must be interpreted by fsarchiver. See examples
-below for more details about this option.
+Exclude files and directories that match specified pattern. The pattern can
+contain shell wildcards such as * and ? or may be either a simple file/dir
+name or an absolute file/dir path. You must use quotes around the pattern
+each time you use wildcards, else it would be interpreted by the shell. The
+wildcards must be interpreted by fsarchiver. See examples below for more
+details about this option.
 .IP "\fB\-L label, \-\-label=label\fP"
-Set the label of the archive: it's just a comment about the contents. 
-It can be used to remember a particular thing about the archive or the
-state of the filesystem for instance.
+Set the label of the archive: it is just a comment about its contents. It
+can be used to remember a particular thing about the archive or the state
+of the filesystem for instance.
 .IP "\fB\-z level, \-\-compress=level\fP"
-Valid compression levels are between 1 (very fast) and 9 (very good).
-The memory requirement increases a lot with the best compression levels,
-and it's multiplied by the number of compression threads (option -j).
-Level 9 is considered as an extreme compression level and requires an
-huge amount of memory to run.
-For more details please read this page: http://www.fsarchiver.org/Compression
+Valid compression levels are between 1 (very fast) and 9 (very good). The
+memory requirement increases a lot with the best compression levels, and it
+is multiplied by the number of compression threads (option -j). Level 9 is
+considered as an extreme compression level and requires an huge amount of
+memory to run. For more details please read this page:
+http://www.fsarchiver.org/Compression
 .IP "\fB\-s mbsize, \-\-split=mbsize\fP"
 Split the archive into several files of mbsize megabytes each.
 .IP "\fB\-j count, \-\-jobs=count\fP"
-Create more than one compression thread. Useful on multi-core CPUs. 
-By default fsarchiver will only use one compression thread (-j 1) and
-then only one logical processor will be used for compression.
-You should use that option if you have a multi-core CPU or more than one
-physical CPU on your computer. The typical way to use this option is to
-specify the number of logical processors available so that all the
-processing power is used to compress the archive very quickly. You may 
-also want to use all the logical processors but one for that task so that
-the system stays responsive for other applications.
+Create more than one (de)compression thread. Useful on multi-core CPUs. By
+default fsarchiver will only use one (de)compression thread (-j 1) and then
+only one logical processor will be used for the task. You should use this
+option if you have a multi-core CPU or more than one physical CPU on your
+computer. The typical way to use it is to specify the number of logical
+processors available so that all the processing power is used to
+(de)compress the archive very quickly. You may also want to use all logical
+processors but one so that your system stays responsive for other
+applications.
 .IP "\fB\-c password, \-\-cryptpass=password\fP"
-Encrypt/decrypt data in archive. Password length: 6 to 64 chars.
-You can either provide a real password or a dash ("-c -") with this option
-if you do not want to provide the password in the command line and you
-want to be prompted for a password in the terminal instead.
+Encrypt/decrypt data in archive. Password length: 6 to 64 characters. You
+can either provide a real password or a dash (-c -). Use the dash if you do
+not want to provide the password in the command line. It will be prompted
+in the terminal instead.
 
 .SH EXAMPLES
-
 .SS save only one filesystem (/dev/sda1) to an archive:
 fsarchiver savefs /data/myarchive1.fsa /dev/sda1
 .SS save two filesystems (/dev/sda1 and /dev/sdb1) to an archive:
@@ -183,28 +184,29 @@ fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs
 fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=ext4,mkfsopt="-I 256"
 .SS save the contents of /usr/src/linux to an archive (similar to tar):
 fsarchiver savedir /data/linux-sources.fsa /usr/src/linux
-.SS save a /dev/sda1 to an archive split into volumes of 680MB:
+.SS save a filesystem (/dev/sda1) to an archive split into volumes of 680MB:
 fsarchiver savefs -s 680 /data/myarchive1.fsa /dev/sda1
-.SS save a filesystem and exclude all files/dirs called 'pagefile.*'
+.SS save a filesystem and exclude all files/dirs called 'pagefile.*':
 fsarchiver savefs /data/myarchive.fsa /dev/sda1 --exclude='pagefile.*'
-.SS exclude 'share' in both '/usr/share' and '/usr/local/share':
+.SS generic exclude for 'share' such as '/usr/share' and '/usr/local/share':
 fsarchiver savefs /data/myarchive.fsa --exclude=share
-.SS absolute exclude valid for '/usr/share' but not '/usr/local/share'
+.SS absolute exclude valid for '/usr/share' but not for '/usr/local/share':
 fsarchiver savefs /data/myarchive.fsa --exclude=/usr/share
 .SS save a filesystem (/dev/sda1) to an encrypted archive:
 fsarchiver savefs -c mypassword /data/myarchive1.fsa /dev/sda1
+.SS same as before but prompt for password in the terminal:
+fsarchiver savefs -c - /data/myarchive1.fsa /dev/sda1
 .SS extract an archive made of simple files to /tmp/extract:
-fsarchiver restdir /data/linux-sources.fsa /tmp/extract   
-.SS show information about an archive and its file systems:
+fsarchiver restdir /data/linux-sources.fsa /tmp/extract
+.SS show information about an archive and its filesystems:
 fsarchiver archinfo /data/myarchive2.fsa
 
 .SH WARNING
 .B fsarchiver
-is considered stable for linux filesystems such as ext4 and xfs but unstable for
-ntfs.
+is considered stable for Linux filesystems such as EXT4 and XFS but unstable for
+NTFS.
 
 .SH AUTHOR
-fsarchiver was written by Francois Dupoux. It is released under the 
-GPL2 (GNU General Public License version 2). This manpage was written 
+fsarchiver was written by Francois Dupoux. It is released under the
+GPL2 (GNU General Public License version 2). This manpage was written
 by Ilya Barygin and Francois Dupoux.
-
