@@ -40,6 +40,7 @@
 #include "fs_xfs.h"
 #include "fs_jfs.h"
 #include "fs_ntfs.h"
+#include "fs_vfat.h"
 #include "error.h"
 
 cfilesys filesys[]=
@@ -53,6 +54,7 @@ cfilesys filesys[]=
     {"xfs",      xfs_mount,      xfs_umount,      xfs_getinfo,      xfs_mkfs,      xfs_test,      xfs_get_reqmntopt,      true,  true,  false, false},
     {"jfs",      jfs_mount,      jfs_umount,      jfs_getinfo,      jfs_mkfs,      jfs_test,      jfs_get_reqmntopt,      true,  true,  false, false},
     {"ntfs",     ntfs_mount,     ntfs_umount,     ntfs_getinfo,     ntfs_mkfs,     ntfs_test,     ntfs_get_reqmntopt,     false, false, true,  true},
+    {"vfat",     vfat_mount,     vfat_umount,     vfat_getinfo,     vfat_mkfs,     vfat_test,     vfat_get_reqmntopt,     false, false, false, false},
     {NULL,       NULL,           NULL,            NULL,             NULL,          NULL,          NULL,                   false, false},
 };
 
