@@ -1,7 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.8.0
-  - No change yet
+  - Implemented FAT filesystem support for EFI system partitions
 * 0.6.24 (2016-08-07):
   - Updated man page and description of the commands and options
   - Support for sparse inode chunks on XFS v5
