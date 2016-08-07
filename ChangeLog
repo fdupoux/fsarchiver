@@ -1,5 +1,9 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.6.24 (2016-08-07):
+  - Updated man page and description of the commands and options
+  - Support for sparse inode chunks on XFS v5
+  - Avoid internationalization when running commands so mkfs output can be parsed properly
 * 0.6.23 (2016-06-16):
   - Added micro-seconds to timestamp used in the name of the temporary directory
   - Fixed memory leaks on failure scenarios and protect against buffer overflows in scanf
