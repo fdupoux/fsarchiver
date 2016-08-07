@@ -79,18 +79,14 @@ int vfat_getinfo(cdico *d, char *devname)
 {
     struct vfat_superblock sb;
     char label[512];
-    char uuid[512];
-    u8 serial[8];
-    u32 serial32;
+    u32 serial;
     u32 temp32;
     u16 type;
     int ret=0;
     int fd;
     int res;
 
-    memset(serial, 0, sizeof(serial));
     memset(label, 0, sizeof(label));
-    memset(uuid, 0, sizeof(uuid));
     memset(&sb, 0, sizeof(sb));
 
     if ((fd=open64(devname, O_RDONLY|O_LARGEFILE))<0)
@@ -124,16 +120,14 @@ int vfat_getinfo(cdico *d, char *devname)
         msgprintf(MSG_DEBUG1, "FAT_TYPE_FAT32\n");
         memcpy(label, ((char*)&sb)+0x047, 11);
         memcpy(&temp32, ((char*)&sb)+0x043, 4);
-        memcpy(serial, &temp32, 4);
-        serial32=le32_to_cpu(temp32);
+        serial=le32_to_cpu(temp32);
     }
     else
     {   type=FAT_TYPE_FAT16;
         msgprintf(MSG_DEBUG1, "FAT_TYPE_FAT16\n");
         memcpy(label, ((char*)&sb)+0x02B, 11);
         memcpy(&temp32, ((char*)&sb)+0x027, 4);
-        memcpy(serial, &temp32, 4);
-        serial32=le32_to_cpu(temp32);
+        serial=le32_to_cpu(temp32);
     }
 
     // ---- type
@@ -143,12 +137,9 @@ int vfat_getinfo(cdico *d, char *devname)
     msgprintf(MSG_DEBUG1, "vfat_label=[%s]\n", label);
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, label);
 
-    // ---- uuid
-    snprintf(uuid, sizeof(uuid), "%02X%02X-%02X%02X", serial[3], serial[2], serial[1], serial[0]);
-    dico_add_string(d, 0, FSYSHEADKEY_FSUUID, uuid);
-    dico_add_u32(d, 0, FSYSHEADKEY_FSVFATSERIAL, serial32);
-    msgprintf(MSG_DEBUG1, "vfat_uuid=[%s]\n", uuid);
-    msgprintf(MSG_DEBUG1, "vfat_serial=[%08X]\n", serial32);
+    // ---- serial
+    dico_add_u32(d, 0, FSYSHEADKEY_FSVFATSERIAL, serial);
+    msgprintf(MSG_DEBUG1, "vfat_serial=[%08X]\n", serial);
 
     // ---- minimum fsarchiver version required to restore
     dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 8, 0, 0));
