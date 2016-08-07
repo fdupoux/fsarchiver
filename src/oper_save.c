@@ -950,6 +950,7 @@ int filesystem_mount_partition(cdevinfo *devinfo, cdico *dicofsinfo, u16 fsid)
                 errprintf("filesystem of partition [%s] is not supported by fsarchiver: filesystem=[%s]\n", devinfo->devpath, fsbuf);
             return -1;
         }
+
         // check the filesystem is mounted with the right mount-options (to preserve acl and xattr)
         strlist_init(&reqmntopt);
         strlist_init(&badmntopt);
@@ -1044,7 +1045,7 @@ int filesystem_mount_partition(cdevinfo *devinfo, cdico *dicofsinfo, u16 fsid)
     {
         errorattr=false;
 
-        if (filesys[i].support_for_xattr==true)
+        if (filesys[devinfo->fstype].support_for_xattr==true)
         {   errno=0;
             res=lgetxattr(devinfo->partmount, "user.fsa_test_xattr", temp, sizeof(temp));
             msgprintf(MSG_DEBUG1, "lgetxattr(\"%s\", \"user.fsa_test_attr\", buf, bufsize)=[%d] and errno=[%d]\n", devinfo->partmount, (int)res, (int)errno);
@@ -1055,7 +1056,7 @@ int filesystem_mount_partition(cdevinfo *devinfo, cdico *dicofsinfo, u16 fsid)
             }
         }
 
-        if (filesys[i].support_for_acls==true)
+        if (filesys[devinfo->fstype].support_for_acls==true)
         {   errno=0;
             res=lgetxattr(devinfo->partmount, "system.posix_acl_access", temp, sizeof(temp));
             msgprintf(MSG_DEBUG1, "lgetxattr(\"%s\", \"system.posix_acl_access\", buf, bufsize)=[%d] and errno=[%d]\n", devinfo->partmount, (int)res, (int)errno);
