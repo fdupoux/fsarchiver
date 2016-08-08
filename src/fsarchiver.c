@@ -71,6 +71,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -d: debug mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -A: allow to save a filesystem which is mounted in read-write (live backup)\n");
     msgprintf(MSG_FORCE, " -a: allow to save a filesystem when acls and xattrs are not supported\n");
+    msgprintf(MSG_FORCE, " -x: enable support for experimental features (they are disabled by default)\n");
     msgprintf(MSG_FORCE, " -e <pattern>: exclude files and directories that match that pattern\n");
     msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
     msgprintf(MSG_FORCE, " -z <level>: compression level from 1 (very fast) to 9 (very good) default=3\n");
@@ -136,6 +137,7 @@ static struct option const long_options[] =
     {"cryptpass", required_argument, NULL, 'c'},
     {"label", required_argument, NULL, 'L'},
     {"exclude", required_argument, NULL, 'e'},
+    {"experimental", no_argument, NULL, 'x'},
     {NULL, 0, NULL, 0}
 };
 
@@ -163,6 +165,7 @@ int process_cmdline(int argc, char **argv)
     // set default options
     g_options.overwrite=false;
     g_options.allowsaverw=false;
+    g_options.experimental=false;
     g_options.dontcheckmountopts=false;
     g_options.verboselevel=0;
     g_options.debuglevel=0;
@@ -175,7 +178,7 @@ int process_cmdline(int argc, char **argv)
     snprintf(g_options.archlabel, sizeof(g_options.archlabel), "<none>");
     g_options.encryptpass[0]=0;
     
-    while ((c = getopt_long(argc, argv, "oaAvdz:j:hVs:c:L:e:", long_options, NULL)) != EOF)
+    while ((c = getopt_long(argc, argv, "oaAvdz:j:hVs:c:L:e:x", long_options, NULL)) != EOF)
     {
         switch (c)
         {
@@ -187,6 +190,9 @@ int process_cmdline(int argc, char **argv)
                 break;
             case 'A': // allows to backup read/write mounted partition
                 g_options.allowsaverw=true;
+                break;
+            case 'x': // enable support for experimental features
+                g_options.experimental=true;
                 break;
             case 'v': // verbose mode
                 g_options.verboselevel++;

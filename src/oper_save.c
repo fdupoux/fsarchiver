@@ -1040,6 +1040,12 @@ int filesystem_mount_partition(cdevinfo *devinfo, cdico *dicofsinfo, u16 fsid)
         devinfo->mountedbyfsa=true;
     }
 
+    // Make sure users are aware if they save filesystems with experimental support in fsarchiver
+    if ((g_options.experimental==false) && (filesys[devinfo->fstype].stable==false))
+    {   errprintf("You must enable support for experimental features in order to save %s filesystems with fsarchiver.\n", filesys[devinfo->fstype].name);
+        return -1;
+    }
+
     // Make sure support for extended attributes is enabled if this filesystem supports it
     if (g_options.dontcheckmountopts==false)
     {

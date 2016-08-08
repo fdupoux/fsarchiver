@@ -39,6 +39,7 @@ struct s_filesys
     bool support_for_acls;
     bool winattr;
     bool savesymtargettype; // we have to know the type of the target to recreate a symlink on ntfs
+    bool stable; // say if the fsarchiver support for this filesystem is considered stable or not
 };
 
 extern cfilesys filesys[];

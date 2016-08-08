@@ -27,6 +27,7 @@ typedef struct s_options coptions;
 struct s_options
 {   bool     overwrite;
     bool     allowsaverw;
+    bool     experimental;
     bool     dontcheckmountopts;
     int      verboselevel;
     int      debuglevel;
