@@ -35,7 +35,7 @@
 #include "strlist.h"
 #include "error.h"
 
-int jfs_mkfs(cdico *d, char *partition, char *fsoptions)
+int jfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *mkfsuuid)
 {
     char command[2048];
     char buffer[2048];
@@ -53,7 +53,9 @@ int jfs_mkfs(cdico *d, char *partition, char *fsoptions)
 
     strlcatf(options, sizeof(options), " %s ", fsoptions);
 
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
+    if (strlen(mkfslabel) > 0)
+        strlcatf(options, sizeof(options), " -L '%s' ", mkfslabel);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -L '%s' ", buffer);
     
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.jfs -q %s %s", options, partition)!=0 || exitst!=0)
@@ -63,7 +65,9 @@ int jfs_mkfs(cdico *d, char *partition, char *fsoptions)
     
     // ---- use jfs_tune to set the other advanced options
     memset(options, 0, sizeof(options));
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0 && strlen(buffer)==36)
+    if (strlen(mkfsuuid) > 0)
+        strlcatf(options, sizeof(options), " -U %s ", mkfsuuid);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0 && strlen(buffer)==36)
         strlcatf(options, sizeof(options), " -U %s ", buffer);
     
     if (options[0])

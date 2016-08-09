@@ -35,7 +35,7 @@
 #include "strlist.h"
 #include "error.h"
 
-int reiserfs_mkfs(cdico *d, char *partition, char *fsoptions)
+int reiserfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *mkfsuuid)
 {
     char command[2048];
     char buffer[2048];
@@ -54,13 +54,17 @@ int reiserfs_mkfs(cdico *d, char *partition, char *fsoptions)
 
     strlcatf(options, sizeof(options), " %s ", fsoptions);
 
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
+    if (strlen(mkfslabel) > 0)
+        strlcatf(options, sizeof(options), " -l '%.16s' ", mkfslabel);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -l '%.16s' ", buffer);
     
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSREISERBLOCKSIZE, &temp64)==0)
         strlcatf(options, sizeof(options), " -b %ld ", (long)temp64);
     
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0 && strlen(buffer)==36)
+    if (strlen(mkfsuuid) > 0)
+        strlcatf(options, sizeof(options), " -u %s ", mkfsuuid);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0 && strlen(buffer)==36)
         strlcatf(options, sizeof(options), " -u %s ", buffer);
     
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkreiserfs -f %s %s", partition, options)!=0 || exitst!=0)

@@ -65,7 +65,7 @@ int xfs_check_compatibility(u64 compat, u64 ro_compat, u64 incompat, u64 log_inc
     }
 }
 
-int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
+int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *mkfsuuid)
 {
     char stdoutbuf[2048];
     char command[2048];
@@ -105,7 +105,9 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
 
     strlcatf(mkfsopts, sizeof(mkfsopts), " %s ", fsoptions);
 
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
+    if (strlen(mkfslabel) > 0)
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -L '%.12s' ", mkfslabel);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(mkfsopts, sizeof(mkfsopts), " -L '%.12s' ", buffer);
 
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSXFSBLOCKSIZE, &temp64)==0) && (temp64%512==0) && (temp64>=512) && (temp64<=65536))
@@ -176,7 +178,11 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions)
     // - the UUID of XFSv4 can be successfully set using either xfs_admin or mkfs.xfs >= 4.3.0
     // - it is impossible to set both types of UUIDs of an XFSv5 filesystem using xfsprogs < 4.3.0
     //   for this reason the XFS version is forced to v4 if xfsprogs version < 4.3.0
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, uuid, sizeof(uuid))==0 && strlen(uuid)==36)
+    if (strlen(mkfsuuid) > 0)
+        snprintf(uuid, sizeof(uuid), "%s", mkfsuuid);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0)
+        snprintf(uuid, sizeof(uuid), "%s", buffer);
+    if (strlen(uuid)==36)
     {
         if (xfstoolsver >= PROGVER(4,3,0))
             strlcatf(mkfsopts, sizeof(mkfsopts), " -m uuid=%s ", uuid);

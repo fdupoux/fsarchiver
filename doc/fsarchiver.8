@@ -36,7 +36,7 @@ https://github.com/fdupoux/fsarchiver/issues
 .I options
 .B ] restfs
 .I archive
-.BI id= n ,dest= device [,mkfs= fstype [,mkfsopt= options ]]
+.BI id= n ,dest= device [,mkfs= fstype ,mkfsopt= options ,label= newlabel ,uuid= newuuid ]
 .B ...
 .PP
 .B fsarchiver [
@@ -182,6 +182,10 @@ fsarchiver restfs /data/arch2.fsa id=0,dest=/dev/sda1 id=1,dest=/dev/sdb1
 fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs
 .SS restore a filesystem from an archive and specify extra mkfs options:
 fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=ext4,mkfsopt="-I 256"
+.SS restore a filesystem from an archive and specify a new filesystem label:
+fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,label=root
+.SS restore a filesystem from an archive and specify a new filesystem UUID:
+fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,uuid=5f6e5f4f-dc2a-4dbd-a6ea-9ca997cde75e
 .SS save the contents of /usr/src/linux to an archive (similar to tar):
 fsarchiver savedir /data/linux-sources.fsa /usr/src/linux
 .SS save a filesystem (/dev/sda1) to an archive split into volumes of 680MB:

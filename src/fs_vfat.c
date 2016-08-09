@@ -34,7 +34,7 @@
 #include "fs_vfat.h"
 #include "error.h"
 
-int vfat_mkfs(cdico *d, char *partition, char *fsoptions)
+int vfat_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *mkfsuuid)
 {
     char stdoutbuf[2048];
     char command[2048];
@@ -59,7 +59,9 @@ int vfat_mkfs(cdico *d, char *partition, char *fsoptions)
         strlcatf(mkfsopts, sizeof(mkfsopts), " -F 32 ");
 
     // ---- filesystem label
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
+    if (strlen(mkfslabel) > 0)
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -n '%.11s' ", mkfslabel);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(mkfsopts, sizeof(mkfsopts), " -n '%.11s' ", buffer);
 
     // ---- filesystem serial

@@ -105,6 +105,8 @@ void usage(char *progname, bool examples)
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs\n");
         msgprintf(MSG_FORCE, " * \e[1mrestore a filesystem from an archive and specify extra mkfs options:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=ext4,mkfsopt=\"-I 256\"\n");
+        msgprintf(MSG_FORCE, " * \e[1mrestore a filesystem from an archive and specify a new label and a new UUID:\e[0m\n");
+        msgprintf(MSG_FORCE, "   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,label=root,uuid=5f6e5f4f-dc2a-4dbd-a6ea-9ca997cde75e\n");
         msgprintf(MSG_FORCE, " * \e[1msave the contents of /usr/src/linux to an archive (similar to tar):\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver savedir /data/linux-sources.fsa /usr/src/linux\n");
         msgprintf(MSG_FORCE, " * \e[1msave a filesystem (/dev/sda1) to an archive split into volumes of 680MB:\e[0m\n");

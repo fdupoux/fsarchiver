@@ -122,7 +122,7 @@ int convert_argv_to_strdicos(cstrdico *dicoargv[], int argc, char *cmdargv[])
             return -1;
         
         // parse argument and write (key,value) pairs in the strdico object
-        if ((strdico_set_valid_keys(tmpdico, "id,dest,mkfs,mkfsopt")!=0) ||
+        if ((strdico_set_valid_keys(tmpdico, "id,dest,mkfs,mkfsopt,uuid,label")!=0) ||
             (strdico_parse_string(tmpdico, cmdargv[i])!=0))
         {   strdico_destroy(tmpdico);
             return -1;
@@ -1179,6 +1179,8 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     char mountinfo[4096];
     char partition[1024];
     char mkfsoptions[1024];
+    char mkfslabel[1024];
+    char mkfsuuid[1024];
     char tempbuf[1024];
     cdico *dicobegin=NULL;
     cdico *dicoend=NULL;
@@ -1197,6 +1199,8 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     // init
     memset(magic, 0, sizeof(magic));
     memset(partition, 0, sizeof(partition));
+    memset(mkfslabel, 0, sizeof(mkfslabel));
+    memset(mkfsuuid, 0, sizeof(mkfsuuid));
     
     // read destination partition from dicocmdline
     if (strdico_get_string(dicocmdline, partition, sizeof(partition), "dest")!=0)
@@ -1254,7 +1258,15 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     {
         msgprintf(MSG_VERB2,"strdico_get_string(dicocmdline, 'mkfsopt') doesn't exist\n");
     }
-       
+    if (strdico_get_string(dicocmdline, mkfslabel, sizeof(mkfslabel), "label")!=0)
+    {
+        msgprintf(MSG_VERB2,"strdico_get_string(dicocmdline, 'label') doesn't exist\n");
+    }
+    if (strdico_get_string(dicocmdline, mkfsuuid, sizeof(mkfsuuid), "uuid")!=0)
+    {
+        msgprintf(MSG_VERB2,"strdico_get_string(dicocmdline, 'uuid') doesn't exist\n");
+    }
+
     if (dico_get_u64(dicofs, 0, FSYSHEADKEY_BYTESTOTAL, &fsbytestotal)!=0)
     {   errprintf("dico_get_string(FSYSHEADKEY_BYTESTOTAL) failed\n");
         return -1;
@@ -1265,10 +1277,12 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
         return -1;
     }
     
-    msgprintf(MSG_VERB2, "filesystem=[%s]\n", filesystem);
-    msgprintf(MSG_VERB2, "filesystemoptions=[%s]\n", mkfsoptions);
-    msgprintf(MSG_VERB2, "fsbytestotal=[%s]\n", format_size(fsbytestotal, text, sizeof(text), 'h'));
-    msgprintf(MSG_VERB2, "fsbytesused=[%s]\n", format_size(fsbytesused, text, sizeof(text), 'h'));
+    msgprintf(MSG_VERB2, "filesystem_type=[%s]\n", filesystem);
+    msgprintf(MSG_VERB2, "filesystem_mkfsoptions=[%s]\n", mkfsoptions);
+    msgprintf(MSG_VERB2, "filesystem_mkfslabel=[%s]\n", mkfslabel);
+    msgprintf(MSG_VERB2, "filesystem_mkfsuuid=[%s]\n", mkfsuuid);
+    msgprintf(MSG_VERB2, "filesystem_space_total=[%s]\n", format_size(fsbytestotal, text, sizeof(text), 'h'));
+    msgprintf(MSG_VERB2, "filesystem_space_used=[%s]\n", format_size(fsbytesused, text, sizeof(text), 'h'));
     
     // get index of the filesystem in the filesystem table
     if (generic_get_fstype(filesystem, &fstype)!=0)
@@ -1277,8 +1291,8 @@ int extractar_filesystem_extract(cextractar *exar, cdico *dicofs, cstrdico *dico
     }
     
     // ---- make the filesystem
-    if (filesys[fstype].mkfs(dicofs, partition, mkfsoptions)!=0)
-    {   errprintf("cannot format the filesystem %s on partition %s\n", filesystem, partition);
+    if (filesys[fstype].mkfs(dicofs, partition, mkfsoptions, mkfslabel, mkfsuuid)!=0)
+    {   errprintf("cannot make filesystem %s on partition %s\n", filesystem, partition);
         return -1;
     }
 

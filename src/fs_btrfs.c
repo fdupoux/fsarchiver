@@ -50,7 +50,7 @@ int btrfs_check_compatibility(u64 compat, u64 incompat, u64 ro_compat)
     return 0;
 }
 
-int btrfs_mkfs(cdico *d, char *partition, char *fsoptions)
+int btrfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *mkfsuuid)
 {
     char command[2048];
     char buffer[2048];
@@ -88,9 +88,16 @@ int btrfs_mkfs(cdico *d, char *partition, char *fsoptions)
 
     strlcatf(options, sizeof(options), " %s ", fsoptions);
 
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
+    if (strlen(mkfslabel) > 0)
+        strlcatf(options, sizeof(options), " -L '%s' ", mkfslabel);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -L '%s' ", buffer);
-    
+
+    if (strlen(mkfsuuid) > 0)
+        strlcatf(options, sizeof(options), " -U '%s' ", mkfsuuid);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0)
+        strlcatf(options, sizeof(options), " -U '%s' ", buffer);
+
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSBTRFSSECTORSIZE, &temp64)==0)
         strlcatf(options, sizeof(options), " -s %ld ", (long)temp64);
     

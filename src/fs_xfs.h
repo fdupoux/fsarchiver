@@ -47,7 +47,7 @@ struct s_strlist;
 #define XFS_SB_VERSION_BORGBIT      0x4000  /* ASCII only case-insens. */
 #define XFS_SB_VERSION_MOREBITSBIT  0x8000
 
-int xfs_mkfs(struct s_dico *d, char *partition, char *fsoptions);
+int xfs_mkfs(struct s_dico *d, char *partition, char *fsoptions, char *mkfslabel, char *mkfsuuid);
 int xfs_getinfo(struct s_dico *d, char *devname);
 int xfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mntinfo);
 int xfs_get_reqmntopt(char *partition, struct s_strlist *reqopt, struct s_strlist *badopt);

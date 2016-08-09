@@ -34,7 +34,7 @@
 #include "strlist.h"
 #include "error.h"
 
-int ntfs_mkfs(cdico *d, char *partition, char *fsoptions)
+int ntfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *mkfsuuid)
 {
     char command[2048];
     char buffer[2048];
@@ -55,7 +55,9 @@ int ntfs_mkfs(cdico *d, char *partition, char *fsoptions)
 
     strlcatf(options, sizeof(options), " %s ", fsoptions);
 
-    if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
+    if (strlen(mkfslabel) > 0)
+        strlcatf(options, sizeof(options), " --label '%s' ", mkfslabel);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " --label '%s' ", buffer);
     
     if (dico_get_u16(d, 0, FSYSHEADKEY_NTFSSECTORSIZE, &temp16)==0)
