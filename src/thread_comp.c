@@ -127,7 +127,7 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
         }
         if ((res=crypto_blowfish(blkinfo->blkcompsize, &cryptsize, (u8*)bufcomp, (u8*)bufcrypt, 
             g_options.encryptpass, strlen((char*)g_options.encryptpass), 1))!=0)
-        {   errprintf("crypt_block_blowfish() failed\n");
+        {   errprintf("crypt_block_blowfish() failed with res=%d\n", res);
             return -1;
         }
         free(bufcomp);

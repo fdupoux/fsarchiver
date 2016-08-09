@@ -46,13 +46,17 @@ char *valid_magic[]={FSA_MAGIC_MAIN, FSA_MAGIC_VOLH, FSA_MAGIC_VOLF,
 
 void usage(char *progname, bool examples)
 {
-    int lzo=false, lzma=false;
-    
+    int lzo, lzma;
+
 #ifdef OPTION_LZO_SUPPORT
     lzo=true;
+#else
+    lzo=false;
 #endif // OPTION_LZO_SUPPORT
 #ifdef OPTION_LZMA_SUPPORT
     lzma=true;
+#else
+    lzma=false;
 #endif // OPTION_LZMA_SUPPORT
     
     msgprintf(MSG_FORCE, "====> fsarchiver version %s (%s) - http://www.fsarchiver.org <====\n", FSA_VERSION, FSA_RELDATE);

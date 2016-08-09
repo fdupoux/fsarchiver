@@ -397,9 +397,9 @@ int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, in
         
         // read the remaining data in the pipes 
         if ((stdoutbuf!=NULL) && (outpos+1 < stdoutsize))
-            res=read(mystdout, stdoutbuf+outpos, stdoutsize-outpos-1);
+            read(mystdout, stdoutbuf+outpos, stdoutsize-outpos-1);
         if ((stderrbuf!=NULL) && (errpos+1 < stderrsize))
-            res=read(mystderr, stderrbuf+errpos, stderrsize-errpos-1);
+            read(mystderr, stderrbuf+errpos, stderrsize-errpos-1);
         
         msgprintf(MSG_VERB1, "command [%s] returned %d\n", command, WEXITSTATUS(status));
         if (exitst)
@@ -616,4 +616,3 @@ int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol
     
     return 0;
 }
-

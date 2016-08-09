@@ -126,8 +126,8 @@ int reiser4_getinfo(cdico *d, char *devname)
     temp16=le16_to_cpu(sb.blocksize);
     if (temp16!=4096)
     {   ret=-5;
-        goto reiser4_get_specific_close;
         errprintf("invalid reiser4 block-size: %ld, it should be 4096\n", (long)temp16);
+        goto reiser4_get_specific_close;
     }
     else
     {   dico_add_u64(d, 0, FSYSHEADKEY_FSREISER4BLOCKSIZE, temp16);

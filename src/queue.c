@@ -509,8 +509,8 @@ s64 queue_dequeue_block(cqueue *q, cblockinfo *blkinfo)
         return FSAERR_ENDOFFILE;
     }
     
-    // should not happen since queuelocked_is_first_block_ready means there is at least one block in the queue
-    assert((cur=q->head)!=NULL);
+    cur=q->head;
+    assert(cur!=NULL); // queuelocked_is_first_block_ready means there is at least one block in the queue
     
     // test the first item
     if ((cur->type==QITEM_TYPE_BLOCK) && (cur->status==QITEM_STATUS_DONE))
@@ -581,8 +581,8 @@ s64 queue_dequeue_header_internal(cqueue *q, cheadinfo *headinfo)
         return FSAERR_ENDOFFILE;
     }
     
-    // should not happen since queuelocked_is_first_block_ready means there is at least one block in the queue
-    assert ((cur=q->head)!=NULL);
+    cur=q->head;
+    assert (cur!=NULL); // queuelocked_is_first_block_ready means there is at least one block in the queue
     
     // test the first item
     switch (cur->type)
@@ -712,8 +712,8 @@ s64 queue_destroy_first_item(cqueue *q)
         return FSAERR_ENDOFFILE;
     }
     
-    // should not happen since queuelocked_is_first_block_ready means there is at least one block in the queue
-    assert((cur=q->head)!=NULL);
+    cur=q->head;
+    assert(cur!=NULL); // queuelocked_is_first_block_ready means there is at least one block in the queue
     
     switch (cur->type)
     {

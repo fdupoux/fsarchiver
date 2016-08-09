@@ -189,12 +189,12 @@ int archwriter_write_buffer(carchwriter *ai, struct s_writebuf *wb)
     
     assert(ai);
     assert(wb);
-    
-    if (wb->size <=0)
+
+    if (wb->size == 0)
     {   errprintf("wb->size=%ld\n", (long)wb->size);
         return -1;
     }
-    
+
     if ((lres=write(ai->archfd, (char*)wb->data, (long)wb->size))!=(long)wb->size)
     {
         errprintf("write(size=%ld) returned %ld\n", (long)wb->size, (long)lres);

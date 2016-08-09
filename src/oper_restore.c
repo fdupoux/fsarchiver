@@ -168,7 +168,7 @@ int convert_argv_to_strdicos(cstrdico *dicoargv[], int argc, char *cmdargv[])
 int extractar_listing_print_file(cextractar *exar, int objtype, char *relpath)
 {
     char strprogress[256];
-    u64 progress;
+    s64 progress;
     
     memset(strprogress, 0, sizeof(strprogress));
     if (exar->cost_global>0)
