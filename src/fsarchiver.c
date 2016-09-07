@@ -61,7 +61,7 @@ void usage(char *progname, bool examples)
     
     msgprintf(MSG_FORCE, "====> fsarchiver version %s (%s) - http://www.fsarchiver.org <====\n", FSA_VERSION, FSA_RELDATE);
     msgprintf(MSG_FORCE, "Distributed under the GPL v2 license (GNU General Public License v2).\n");
-    msgprintf(MSG_FORCE, " * usage: %s [<options>] <command> <archive> [<part1> [<part2> [...]]]\n", progname);
+    msgprintf(MSG_FORCE, " * usage: %s [<options>] <command> <archive> [<dev1> [<dev2> [...]]]\n", progname);
     msgprintf(MSG_FORCE, "<commands>\n");
     msgprintf(MSG_FORCE, " * savefs: save filesystems to an archive file (backup a device to a file)\n");
     msgprintf(MSG_FORCE, " * restfs: restore filesystems from an archive (overwrites the existing data)\n");

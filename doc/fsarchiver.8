@@ -36,7 +36,8 @@ https://github.com/fdupoux/fsarchiver/issues
 .I options
 .B ] restfs
 .I archive
-.BI id= n ,dest= device [,mkfs= fstype ,mkfsopt= options ,label= newlabel ,uuid= newuuid ]
+.BI id= n ,dest= device [,mkfs= fstype ,mkfsopt= options ,label= \
+newlabel ,uuid= newuuid ]
 .B ...
 .PP
 .B fsarchiver [
@@ -95,7 +96,7 @@ to
 (similar to a compressed tarball).
 .TP
 .B restdir
-Restore data from 
+Restore data from
 .I archive
 which is not based on a filesystem to
 .IR destination .
@@ -122,6 +123,9 @@ Overwrite the archive if it already exists instead of failing.
 .IP "\fB\-d, \-\-debug\fP"
 Debug mode (can be used several times to increase the level of details).
 The details will be written in /var/log/fsarchiver.log.
+.IP "\fB\-x, \-\-experimental\fP"
+Allow to save filesystems which support is considered experimental in
+fsarchiver.
 .IP "\fB\-A, \-\-allow-rw-mounted\fP"
 Allow to save a filesystem which is mounted in read-write (live backup). By
 default fsarchiver fails with an error if the device is mounted in
