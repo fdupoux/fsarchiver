@@ -173,6 +173,17 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
         strlcatf(mkfsopts, sizeof(mkfsopts), " -m finobt=%d ", (int)optval);
     }
 
+    // Determine if the "rmapbt" mkfs option should be enabled (reverse mapping btree)
+    // - starting with linux-4.8 XFS has added a btree that maps filesystem blocks
+    //   to their owner
+    // - this feature relies on the new v5 on-disk format but it is optional
+    // - this feature will be enabled if the original filesystem was XFSv5 and had it
+    if (xfstoolsver >= PROGVER(4,8,0)) // only use "rmapbt" option when it is supported by mkfs
+    {
+        optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_RMAPBT));
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -m rmapbt=%d ", (int)optval);
+    }
+
     // Attempt to preserve UUID of the filesystem
     // - the "-m uuid=<UUID>" option in mkfs.xfs was added in mkfs.xfs 4.3.0 and is the best way to set UUIDs
     // - the UUID of XFSv4 can be successfully set using either xfs_admin or mkfs.xfs >= 4.3.0
