@@ -217,7 +217,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
     // - when CRCs are enabled via -m crc=1, the ftype functionality is always enabled
     // - ftype is madatory in XFSv5 volumes but it is optional for XFSv4 volumes
     // - the "ftype" option must be specified after the "crc" option in mkfs.xfs < 4.2.0:
-    //   http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/cmds/xfsprogs.git;a=commit;h=b990de8ba4e2df2bc76a140799d3ddb4a0eac4ce
+    //   https://git.kernel.org/cgit/fs/xfs/xfsprogs-dev.git/commit/?id=b990de8ba4e2df2bc76a140799d3ddb4a0eac4ce
     // - do not set ftype=1 with crc=1 as mkfs.xfs may fail when both options are enabled (at least with xfsprogs-3.2.2)
     // - XFSv4 with ftype=1 is supported since linux-3.13. We purposely always
     //   disable ftype for V4 volumes to keep them compatible with older kernels
