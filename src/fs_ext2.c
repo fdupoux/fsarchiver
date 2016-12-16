@@ -313,7 +313,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         }
         
         // run e2fsck to workaround an tune2fs bug in e2fsprogs < 1.41.4 on ext4
-        // http://article.gmane.org/gmane.comp.file-systems.ext4/11181
+        // http://marc.info/?l=linux-ext4&m=123246035924487&w=2
         if (extfstype==EXTFSTYPE_EXT4 && e2fstoolsver<PROGVER(1,41,4))
         {
             if ( ((res=exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "e2fsck -fy %s", partition))!=0) || ((exitst!=0) && (exitst!=1)) )
