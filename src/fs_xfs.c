@@ -232,7 +232,10 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
     // - starting with linux-4.2 XFS can allocate discontinuous inode chunks
     // - this feature relies on the new v5 on-disk format but it is optional
     // - this feature will be enabled if the original filesystem was XFSv5 and had it
-    if (xfstoolsver >= PROGVER(4,2,0)) // only use "sparse" option when it is supported by mkfs
+    // - this feature is supported since mkfs.xfs 4.2.0, but unfortunately
+    //   mkfs.xfs 4.5.0 in RHEL 7.3 carries a custom patch removing the option,
+    //   hence require mkfs.xfs 4.7.0, next version after 4.5.0
+    if (xfstoolsver >= PROGVER(4,7,0)) // only use "sparse" option when it is supported by mkfs
     {
         optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_incompat & XFS_SB_FEAT_INCOMPAT_SPINODES));
         strlcatf(mkfsopts, sizeof(mkfsopts), " -i sparse=%d ", (int)optval);
