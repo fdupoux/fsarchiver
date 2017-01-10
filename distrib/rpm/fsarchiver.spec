@@ -21,13 +21,13 @@ BuildRequires:	lzo-devel
 BuildRequires:	xz-devel
 
 %description
-FSArchiver is a system tool that allows you to save the contents of a 
-file-system to a compressed archive file. The file-system can be restored 
-on a partition which has a different size and it can be restored on a 
-different file-system. Unlike tar/dar, FSArchiver also creates the 
-file-system when it extracts the data to partitions. Everything is 
-checksummed in the archive in order to protect the data. If the archive 
-is corrupt, you just lose the current file, not the whole archive.
+FSArchiver is a system tool that allows you to save the contents of a
+filesystem to a compressed archive file. The filesystem contents can be
+restored on a device which has a different size and it can be restored on a
+different filesystem. Unlike tar/dar, FSArchiver also creates the
+filesystem when it extracts the data to devices. Everything is checksummed
+in the archive in order to protect the data. If the archive is corrupt, you
+just lose the current file, not the whole archive.
 
 %prep
 %setup -q
