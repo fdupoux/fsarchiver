@@ -1,7 +1,8 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
-* 0.8.1 (TODO):
-  - No change yet
+* 0.8.1 (2017-01-10):
+  - Improved support for XFS filesystem (contributions from Marcos Mello)
+  - Updated documentation and comments in the sources (Marcos Mello) 
 * 0.8.0 (2016-08-09):
   - Implemented FAT filesystem support for EFI system partitions
   - Allow user to specify new filesystem label or UUID during restfs
