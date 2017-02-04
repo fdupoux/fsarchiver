@@ -1,4 +1,5 @@
 *.o
+target
 configure
 Makefile.in
 config.log
