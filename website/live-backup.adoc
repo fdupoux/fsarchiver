@@ -30,7 +30,7 @@ you are probably not using LVM.
   /dev/vgmain/vdisk:vgmain:3:1:-1:1:209715200:25600:-1:0:-1:251:31
   /dev/vgmain/chrooti386:vgmain:3:1:-1:2:1572864:192:-1:0:-1:251:32
 --------------------------------------
-You can use [http://www.rubackup.org/ rubackup] to make fsarchiver backups, and
+You can use http://www.rubackup.org/[rubackup] to make fsarchiver backups, and
 it can automatically create an LVM Snapshot just before the backup, and it will
 delete just after the backup has been done.
 

@@ -39,8 +39,8 @@ The ntfs support in fsarchiver is still experimental and incomplete so you must
 be careful and you should not use it on production systems. If you use it on a
 very standard Windows XP and you restore to the same partition it will probably
 work, but there can be problems when you try to restore it on a partition
-located somewhere else (eg: disk number 1 --> disk number 2, or partition
-number 1 --> partition number 2).
+located somewhere else (eg: disk number 1 -> disk number 2, or partition
+number 1 -> partition number 2).
 
 == Limitations
 
