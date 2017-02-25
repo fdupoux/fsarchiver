@@ -27,6 +27,7 @@
 #include <sys/utsname.h>
 #include <sys/mount.h>
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 #include <errno.h>
 #include <uuid.h>
 
