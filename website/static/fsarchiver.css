@@ -1,77 +1,76 @@
 body, html {
-		background-color: gray;
-		background-image: linear-gradient(transparent 50%, rgba(255,255,255,.5) 50%);
-		background-size: 15px 15px;
-		min-width: 500px;
-		font-family: verdana, sans-serif;
-	  padding : 0px;
-	  margin : 0px;
-		border: 0px;
+	background-color: gray;
+	background-image: linear-gradient(transparent 50%, rgba(255,255,255,.5) 50%);
+	background-size: 10px 10px;
+	font-family: verdana, sans-serif;
+	padding : 0px;
+	margin : 0px;
+	border: 0px;
 }
 
 #wrapper {
-		width: 100%;
-    height: 100%;
-    margin: 0px;
-    padding: 0px;
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	padding: 0px;
 }
 
 #header {
-		clear: left;
-		background-color: #FFFFFF;
-    padding: 10px;
-		margin: 10px;
-    border-width: 1px;
-		border-style: solid;
-		border-color: #000000;
-		border-radius: 10px;
+	clear: both;
+	text-align: center;
+	background-color: #FFFFFF;
+	padding: 10px;
+	margin: 5px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+	border-radius: 10px;
+}
+
+#contents {
+	display: -ms-flex;
+	display: -webkit-flex;
+	display: flex;
 }
 
 #colleft {
-		float: left;
-		background-color: #FFFFFF;
-		min-height: 700px;
-		padding: 10px;
-		margin-left: 10px;
-		margin-bottom: 10px;
-		width: 150px;
-    border-width: 1px;
-		border-style: solid;
-		border-color: #000000;
-		border-radius: 10px;
-		line-height: 1.7;
-		font-size: 90%;
+	margin: 5px;
+	background-color: #FFFFFF;
+	padding: 10px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+	border-radius: 10px;
+	line-height: 1.7;
+	font-size: 90%;
 }
 
 #colright {
-		clear: right;
-		background-color: #FFFFFF;
-		min-height: 700px;
-		padding: 10px;
-		margin: 10px;
-	  margin-left: 190px;
-    border-width: 1px;
-		border-style: solid;
-		border-color: #000000;
-		border-radius: 10px;
+	overflow-y: hidden;
+	margin: 5px;
+	background-color: #FFFFFF;
+	padding: 10px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+	border-radius: 10px;
 }
 
 #footer {
-		clear: left;
-		background-color: #FFFFFF;
-    padding: 10px;
-		margin: 10px;
-    border-width: 1px;
-		border-style: solid;
-		border-color: #000000;
-		border-radius: 10px;
+	clear: both;
+	background-color: #FFFFFF;
+	padding: 10px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+	border-radius: 10px;
 }
 
 h1, h2, h3, h4, h5, h6 {
-	  margin-top:5px;
-	  margin-bottom:5px;
+	margin-top:5px;
+	margin-bottom:5px;
 }
 
 table, th, td {
-   border: 1px solid black;
+	border: 1px solid black;
 }
