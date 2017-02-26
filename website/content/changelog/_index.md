@@ -64,7 +64,7 @@ draft = false
   * Fix error handling in restoration: consider ENOSPC as a fatal error and other fixes
   * Fix: remove all volumes of the archive instead of just the first one if save fails
 * **0.6.8 (2010-02-20):**
-  * Fixed compilation error on systems with recent kernel headers by including <sys/stat.h>
+  * Fixed compilation error on systems with recent kernel headers by including `<sys/stat.h>`
   * Fixed critical bug: there was a risk of corruption when the archive was written on a smbfs/cifs filesystem
 * **0.6.7 (2010-01-31):**
   * Added support for sparse files (sparse file on the original disk will be recreated as sparse file)
@@ -96,9 +96,9 @@ draft = false
   * Don't fail when e2fsck returns 1 in extfs_mkfs() since it means the filesystem has been fixed
   * Extended options (stride and stripe_width), max_mount_count, check_interval are now preserved for ext{2,3,4}
   * Display the percentage of the operation which has been completed when verbose >= 1 (sort of progress bar)
-  * Display information about physical disks as well as partitions in "fsarchiver probe <mode>"
+  * Display information about physical disks as well as partitions in `fsarchiver probe <mode>`
   * Fixed bug with archive splitting: the split size was sometimes incorrect due to an integer overflow
-  * Added option "--exclude/-e <pattern>" to exclude files/dirs. It works for both archiving and extracting.
+  * Added option `--exclude/-e <pattern>` to exclude files/dirs. It works for both archiving and extracting.
   * Added support for long options (--option) using getopt_long
   * Removed the dependency on "which" to find the path to a program
   * Accept all libgcrypt versions >= 1.2.4 at runtime in gcry_check_version

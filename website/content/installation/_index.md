@@ -41,19 +41,19 @@ and which does not require the libraries to be installed on your system.
 
 To compile the sources, you have to run follow these instructions:
 
-#### 1. download the latest sources
+#### download the latest sources
 First, you have to download 
 [fsarchiver-0.8.1.tar.gz](https://github.com/fdupoux/fsarchiver/releases/download/0.8.1/fsarchiver-0.8.1.tar.gz).
 Just save it to a temporary directory.
 
-#### 2. extract the sources in a temporary directory
+#### extract the sources in a temporary directory
 ```
 mkdir -p /var/tmp/fsarchiver
 cd /var/tmp/fsarchiver
 tar xfz /path/to/fsarchiver-x.y.z.tar.gz
 ```
 
-#### 3. compile and install from sources
+#### compile and install from sources
 ``` 
 cd /var/tmp/fsarchiver/fsarchiver-x.y.z
 ./configure --prefix=/usr
@@ -161,7 +161,7 @@ for Suse.
   * First, following the link above with **one click install** -- simplest way.
   * Second, add additional repository and install with GUI-tool YaST.
   * Third, add additional repository and install with CLI-tool zypper.
-* To add a repository with the CLI: **zypper ar <repository-url>**
+* To add a repository with the CLI: **zypper ar repository-url**
 * To install fsarchiver with the CLI: **zypper in fsarchiver**
 
 ### installation on gentoo

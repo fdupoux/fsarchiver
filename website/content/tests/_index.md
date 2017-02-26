@@ -66,7 +66,7 @@ linux distributions.
 ## How to see the extended attributes
 Here is a command that show the extended attributes of your files:
 ```
-[root@fedora8 ~]# getfattr -P -d -R -h -m . /etc/
+# getfattr -P -d -R -h -m . /etc/
 getfattr: Removing leading '/' from absolute path names
 # file: etc
 security.selinux="system_u:object_r:etc_t:s0\000"
