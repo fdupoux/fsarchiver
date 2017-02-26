@@ -1,14 +1,18 @@
-FSArchiver - Frequently asked questions 
-=======================================
++++
+weight = 600
+title = "Frequently asked questions"
+nameInMenu = "FAQ"
+draft = false
++++
 
-== Can the restored file-system be a boot filesystem (like the root partition) ?
+## Can the restored file-system be a boot filesystem (like the root partition) ?
 Yes, FSArchiver can backup the root file-system, but you may have to run
 grub-installer again after you restore the file-system where the boot-loader
 (grub) is installed. FSArchiver has been successfully able to save and restore
 the root file-system of a Fedora-8 with SELinux on it as you can see in the
-link:status.html[status page].
+[status page](/status).
 
-== When I save the root file system, and restore it as another file-system, is the fstab modified ?
+## When I save the root file system, and restore it as another file-system, is the fstab modified ?
 FSArchiver is working at the file-system, it's not supposed to know anything
 about the contents of the file-system. It's just supposed to preserve the
 files/directories and their attributes, and the human has to think about the
@@ -17,10 +21,10 @@ fstab, ...). FSArchiver also aims to preserve the important file-system
 attributes, such as the file-system label / UUID. We assume the system
 administrator knows what he is doing, and fixing the fstab is trivial, so the
 administrator will just have to edit fsatb before he reboots. You can also set
-the file-system as *auto* in *fstab* so that it can boot
+the file-system as **auto** in **fstab** so that it can boot
 on any file-system.
 
-== What file-systems are currently supported ?
+## What file-systems are currently supported ?
 FSArchiver is able to save/restore all linux file-systems (ext2, ext3, ext4,
 reiserfs, reiser4, xfs, jfs, btrfs) as well as ntfs (fat is not supported).
 The specific file-system attributes are supported for all these file-systems.

@@ -1,7 +1,11 @@
-FSArchiver - Internals: multi-threading
-=======================================
++++
+weight = 2100
+title = "Internals: multi-threading"
+nameInMenu = "Multi-threading"
+draft = false
++++
 
-== About multi-threading
+## About multi-threading
 Today all the new processors are dual-core or quad-core. But all the 
 standard compression tools are single threaded. It means that when
 you use "tar cfz" for "tar cfj", to compress a tarball using gzip
@@ -12,7 +16,7 @@ processors to compress faster. For instance, compressing on an intel
 Q6600 quad-core with bzip2 is really fast, and with lzma it's not too
 slow.
 
-== Implementation of the multi-threading
+## Implementation of the multi-threading
 FSArchiver is using three kinds of threads even if you don't use the
 option "-j". There is a main thread, a archive-io thread, and one or
 more compression/decompression threads. When you use option "-j" you
@@ -39,19 +43,19 @@ the queue is defined by FSA_MAX_QUEUESIZE. It says how many data
 blocks can be stored in the queue at a given time. When this limit
 is reached, the thread which fills the queue will have to wait.
 
-== Overview of the threads
+## Overview of the threads
 Here are how the threads work:
 
 * when we write an archive (savefs / savedir):
-** the mainthread (create.c) is writing items to the queue
-** the compression thread is reading and writing in the queue
-** the archio thread is reading items to the disk (queue writer)
+  * the mainthread (create.c) is writing items to the queue
+  * the compression thread is reading and writing in the queue
+  * the archio thread is reading items to the disk (queue writer)
 * when we read an archive (restfs / restrdir / archinfo):
-** the mainthread (extract.c) is reading items from the queue
-** the decompression thread is reading and writing in the queue
-** the archio thread is writing items to the disk (queue reader)
+  * the mainthread (extract.c) is reading items from the queue
+  * the decompression thread is reading and writing in the queue
+  * the archio thread is writing items to the disk (queue reader)
 
-== Queue and synchronization
+## Queue and synchronization
 The queue is what links all the threads together. It's a critical
 section of the code so it's very important that it contains no bug.
 The consistency of this queue is guaranteed with a mutex (to make 
@@ -86,7 +90,7 @@ In case of errors:
    while (queue_get_end_of_queue(&g_queue)==false)
       queue_destroy_first_item(&g_queue);
 
-== General rules for multi-threading
+## General rules for multi-threading
 
 * all the important decisions (aborting, creating/destroying threads, ...) are
 taken in the main thread (implemented in either create.c or extract.c)

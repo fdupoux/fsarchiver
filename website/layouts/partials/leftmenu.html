@@ -1,0 +1,13 @@
+<div id="colleft">
+    <div><a href="{{ .Site.BaseURL  }}">Homepage</a></div>
+    <div><a href="https://www.fsarchiver.org/forums/">Forums</a></div>
+    <div><a href="https://github.com/fdupoux/fsarchiver">Repository</a></div>
+    <div><a href="https://github.com/fdupoux/fsarchiver/issues">Bugs</a></div>
+    <hr/>
+    {{- range .Site.Pages }}
+      <div><a href="{{ .Permalink }}">{{ .Params.nameInMenu }}</a></div>
+    {{- end }}
+    <hr/>
+    <div><a href="http://www.system-rescue-cd.org/">SystemRescueCd</a></div>
+    <div><a href="http://www.system-rescue-cd.org/Sysresccd-manual-en_LVM_Making-consistent-backups-with-LVM">LVM Backups</a></div>
+</div>

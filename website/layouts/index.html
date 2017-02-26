@@ -1,0 +1,15 @@
+{{ partial "header.html" . }}
+<body>
+<div id="wrapper">
+    <div id="header">
+        {{ partial "title.html" . }}
+    </div>
+    <div id="contents">
+        {{ partial "leftmenu.html" . }}
+        <div id="colright">
+            {{ .Content }}
+        </div>
+    </div>
+</div>
+</body>
+{{ partial "footer.html" . }}

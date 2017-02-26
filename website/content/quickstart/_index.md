@@ -1,27 +1,31 @@
-FSArchiver - Quick Start guide
-==============================
++++
+weight = 800
+title = "Quick Start guide"
+nameInMenu = "Quick Start"
+draft = false
++++
 
-== About this guide
-You may first read the page about link:installation.html[installation] if you
-plan to use FSArchiver from the linux system which is installed on your
+## About this guide
+You may first read the page about [installation](/installation) if you
+plan to use FSArchiver from the Linux system which is installed on your
 computer. This sections tells you how to use FSArchiver once it has been
 installed, or from a livecd
 
-== How to save filesystems to an archive
-Here is *how to use FSArchiver* to backup a partition of your disk. Let's
-consider your linux operating system is installed on */dev/sda1* and
-you want to back it up to a file on */mnt/backup*. You can run this
+## How to save filesystems to an archive
+Here is **how to use FSArchiver** to backup a partition of your disk. Let's
+consider your linux operating system is installed on **/dev/sda1** and
+you want to back it up to a file on **/mnt/backup**. You can run this
 command from a livecd:
---------------------------------------
+```
 fsarchiver savefs /mnt/backup/gentoo-rootfs.fsa /dev/sda1
---------------------------------------
+```
 You can also archive several filesystems in a single archive file:
---------------------------------------
+```
 fsarchiver savefs /mnt/backup/gentoo-rootfs.fsa /dev/sda1 /dev/sda2 /dev/volgroup/lv01
---------------------------------------
+```
 
 Here is an example of output when we save two filesystems to an archive:
---------------------------------------
+```
 # fsarchiver savefs -o /backup/backup-fsa/backup-fsa025-gentoo-amd64-20090103-01.fsa /dev/sda1 /dev/sda2 -v -j4 -A
 filesystem features: [has_journal,resize_inode,dir_index,filetype,sparse_super,large_file]
 ============= archiving filesystem /dev/sda1 =============
@@ -46,9 +50,9 @@ filesystem features: [has_journal,resize_inode,dir_index,filetype,sparse_super,l
 -[01][DIR     ] /fdoverlay/profiles
 -[01][DIR     ] /fdoverlay
 -[01][DIR     ] /
---------------------------------------
+```
 
-== How to extract filesystems from an archive
+## How to extract filesystems from an archive
 FSArchiver supports multiple filesystems per archive. For that reason, you have
 to specify which filesystem you want to restore. Each filesystem has a number
 starting at 0. The first filesystem in the archive will be filesystem number 0,
@@ -57,37 +61,37 @@ at a time, or several filesystems with just one command.
 
 Here is how to restore a filesystem from an archive when there is only one
 filesystem in that archive:
---------------------------------------
+```
 fsarchiver restfs /mnt/backup/gentoo-rootfs.fsa id=0,dest=/dev/sda1
---------------------------------------
+```
 There is how to restore the second filesystem from an archive (second = number 1):
---------------------------------------
+```
 fsarchiver restfs /mnt/backup/archive-multple-filesystems.fsa id=1,dest=/dev/sdb1
---------------------------------------
+```
 You can also restore both the first and the second filesystem in the same time: (numbers 0 and 1)
---------------------------------------
+```
 fsarchiver restfs /mnt/backup/archive-multple-filesystems.fsa id=0,dest=/dev/sda1 id=1,dest=/dev/sdb1
---------------------------------------
+```
 
-Option *-F* was used to convert a filesystem in old version. For
+Option **-F** was used to convert a filesystem in old version. For
 instance, it allows to restore a filesystem which was ext2 when it was saved as
 reiserfs on the new partition. Now, you have to specify option *mkfs=xxx* with
 the destination partition. Here is how to restore the first filesystem from an
 archive to /dev/sda1 and to convert it to reiserfs in the same time:
---------------------------------------
+```
 fsarchiver restfs /mnt/backup/gentoo-rootfs.fsa id=0,dest=/dev/sda1,mkfs=reiserfs
---------------------------------------
+```
 
-== Display info about an archive
+## Display info about an archive
 It may be useful to know what has been saved in an archive. You can do this using
-*archinfo*. It will tell you how many filesystems there are, their properties,
+**archinfo**. It will tell you how many filesystems there are, their properties,
 the original size of the filesystem and how much space is used:
---------------------------------------
+```
 fsarchiver archinfo /backup/backup-fsa/sysimg-t3p5g965-debian-20100131-0716.fsa
---------------------------------------
+```
 
 Here is an example of output:
---------------------------------------
+```
 # fsarchiver archinfo /backup/backup-fsa/sysimg-t3p5g965-debian-20100131-0716.fsa
 ====================== archive information ======================
 Archive type:                   filesystems
@@ -117,48 +121,48 @@ Filesystem uuid:                4b0da78f-7f02-4487-a1e2-774c9b412277
 Original device:                /dev/vgmain/snapdeb
 Original filesystem size:       11.81 GB (12682706944 bytes)
 Space used in filesystem:       7.11 GB (7635599360 bytes)
---------------------------------------
+```
 
-== Multi-thread compression
-FSArchiver also supports multi-threaded link:compression.html[compression]. If you have
+## Multi-thread compression
+FSArchiver also supports multi-threaded [compression](/compression/). If you have
 a multi-core processor (eg: dual-core or quad-core) you should create several
 compression jobs so that all the cores are used. It will make the compression or
 decompression a lot faster. For instance, if you have a dual-core, you should
-use option *-j2* to create two compression threads to use the power of the two
-cores. If you have a quad-core cpu, option *-j4* is recommended,
+use option **-j2** to create two compression threads to use the power of the two
+cores. If you have a quad-core cpu, option **-j4** is recommended,
 except if you want to leave one core idle for other programs. In that case you
-can use *-j3*. Here is an example of multi-threaded compression:
---------------------------------------
+can use **-j3**. Here is an example of multi-threaded compression:
+```
 fsarchiver -j3 -o savefs /mnt/backup/gentoo-rootfs.fsa /dev/sda1
---------------------------------------
+```
 
-== Splitting the archive into several volumes
+## Splitting the archive into several volumes
 If the archive file is very big, you may want to split it into several small
 files. For instance, if the size of your backup is 8GB and you want to save it
 on DVD+RW discs, it may be useful to split the archive into volumes of 4.3GB.
 File splitting is supported in FSArchiver-0.3.0 and newer. To use it when you
-create an archive, you just have to use option *-s* to specific the
+create an archive, you just have to use option **-s** to specific the
 size you want for each volume, in mega-bytes.
---------------------------------------
+```
 fsarchiver savefs -s 4300 /data/backup-rhel-5.2-fsa033.fsa /dev/sda1
---------------------------------------
-The first volume always have an *.fsa* extension. The names of the
-next volumes will terminate with *.f01*, *.f02*, *.f03*, ...
+```
+The first volume always have an **.fsa** extension. The names of the
+next volumes will terminate with **.f01**, **.f02**, **.f03**, ...
 When you restore the archive, you just have to specify the path to the first
 volume on the command line, and it will automatically use the next volumes if
 they are in the same directory. Else it will display a prompt, where you can
 specify another location for a volume.
 
-== Execution environment
+## Execution environment
 FSArchiver requires the file-system tools to be installed to save the filesystem
-attributes (when you do a *fsarchiver savefs*) and it also requires these tools
-to recreate the file-system when you do a *fsarchive restfs*. Anyway, you only
+attributes (when you do a **fsarchiver savefs**) and it also requires these tools
+to recreate the file-system when you do a **fsarchive restfs**. Anyway, you only
 need the tools of the current file-system to be installed. In other words, you
 don't require xfsprogs to be installed if you only work on an ext3 file-system. 
 
 For these reasons, it's a good idea to run FSArchiver from an environment with
-all the system tools installed. The best environment is the
-http://www.system-rescue-cd.org[latest SystemRescueCd version], since it comes
+all the system tools installed. The best environment is
+[SystemRescueCd](http://www.system-rescue-cd.org), since it comes
 with all the linux file-system tools and a very recent FSArchiver version.
 
 It's also important that you make sure that SELinux is not enabled in the kernel
@@ -173,11 +177,11 @@ file-system. The SELinux support is disabled by default if you use FSArchiver
 from SystemRescueCd-1.1.3 or newer, so your SELinux labels will be preserved if
 you use FSArchiver from that environment.
 
-== Detection of the filesystems
+## Detection of the filesystems
 FSArchiver is able to detect the filesystems which are installed on all the
 disks of a computer. This is very useful when you want to work on a partition
 when you don't know what is its device name.
---------------------------------------
+```
 # fsarchiver probe simple
 [=====DEVICE=====] [==FILESYS==] [=====LABEL=====] [====SIZE====] [MAJ] [MIN]
 [/dev/sda1       ] [ext3       ] [boot           ] [   768.72 MB] [  8] [  1]
@@ -187,10 +191,10 @@ when you don't know what is its device name.
 [/dev/sda5       ] [lvm2pv     ] [               ] [   134.38 GB] [  8] [  5]
 [/dev/sda6       ] [lvm2pv     ] [               ] [   106.24 GB] [  8] [  6]
 [/dev/sdb1       ] [reiserfs   ] [usb8gb         ] [     7.46 GB] [  8] [ 17]
---------------------------------------
+```
 
-== Command line and its arguments
---------------------------------------
+## Command line and its arguments
+```
 ====> fsarchiver version 0.6.12 (2010-12-25) - http://www.fsarchiver.org <====
 Distributed under the GPL v2 license (GNU General Public License v2).
  * usage: fsarchiver [<options>] <command> <archive> [<part1> [<part2> [...]]]
@@ -249,4 +253,4 @@ Distributed under the GPL v2 license (GNU General Public License v2).
    fsarchiver restdir /data/linux-sources.fsa /tmp/extract
  * show information about an archive and its file systems:
    fsarchiver archinfo /data/myarchive2.fsa
---------------------------------------
+```

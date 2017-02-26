@@ -1,5 +1,6 @@
 *.o
 target
+public
 configure
 Makefile.in
 config.log

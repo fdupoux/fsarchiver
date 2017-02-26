@@ -1,13 +1,17 @@
-FSArchiver - Internals: file format
-===================================
++++
+weight = 2200
+title = "Internals: file format"
+nameInMenu = "File format"
+draft = false
++++
 
-== About the file format
+## About the file format
 The file format is made of two sort of structures: headers and 
 data-blocks. The headers are all a dictionnary where the key is an
 integer. That way we can add new things in headers in next versions
 without having to break the file format.
 
-== Global archive layout
+## Global archive layout
 
 * 1) All fsarchiver archives are made of one or multiple volumes. Each volume
 starts with an FSA_MAGIC_VOLH header and terminates with a FSA_MAGIC_VOLF header.
@@ -37,7 +41,7 @@ splitting. That way an s_writebuf is like an atomic item that cannot be split.
 The consequence it that it's not possible to respect exactly the volume size
 specified by the user, it will always be a bit smaller.
 
-== About regular files management
+## About regular files management
 Creating a normal tar.gz file is like compressing a tar file. It means if there
 is a corruption in the tar.gz file, we can't ungzip it and then we can untar it.
 Just a single corruption in one byte at the beginning of the file make it
@@ -66,13 +70,14 @@ algorithm chosen to compress
 the data. In general, a data block is 256KB (it can be bigger) and the threshold
 will be 256KB/4 = 64KB.
 
-== How files are stored in the archive==
+## How files are stored in the archive
 There are many sort of objects in a filesystem:
-*1) special files (symbolic links, hard links, directories, ...) all these files
+
+* 1) special files (symbolic links, hard links, directories, ...) all these files
 just have one header in the archive. It contains all their attributes (name,
 permissions, xattr, time stats, ...)
 
-*2) normal/big regular files (bigger than the threshold) [REGFILE ] these files
+* 2) normal/big regular files (bigger than the threshold) [REGFILE ] these files
 have their header first (FSA_MAGIC_OBJT) with the file attributes, and then one
 or several data blocks (depending on how big the file is), and then a file
 footer (FSA_MAGIC_FILF) with the md5sum of the contents. The md5sum can't be
@@ -81,7 +86,7 @@ to read the file twice: first pass to compute the  checksum, and a second pass
 to copy the contents the data blocks. (think about a very large file, say 5GB
 which is written to an fsa archive which is split into small volumes, say 100MB)
 
-*3) small regular files (smaller than the threshold)  [REGFILEM] small files are
+* 3) small regular files (smaller than the threshold)  [REGFILEM] small files are
 written to the archive when we have a full set of small files, or at the end of
 the savefs/savedir operation. During the savefs, all the small files are stored
 in a structure called s_regmulti. When this structure is full, it's copied to
@@ -98,7 +103,7 @@ headers, we write a single shared data-block (which is compressed and may be
 encrypted as any other data block). There is no header/footer after the shared
 data lock in the archive.
 
-== About datablocks
+## About datablocks
 Each data block which is written to the archive has its own header
 (FSA_MAGIC_BLKH). This header stores block attributes: original
 block size, compressed size, compression algorithm used, 
@@ -110,7 +115,7 @@ compressed block is smaller. When the compression makes a block
 bigger than the original one, fsarchiver automatically ignores
 the compressed version and keeps the uncompressed block.
 
-== About endianess
+## About endianess
 fsarchiver should be endianess safe. All the integers are converted
 to little-endian before they are written to the disk. So it's
 neutral on intel platforms, and it requires a conversion on all the
@@ -121,7 +126,7 @@ that manage the headers: write-header-to-disk and read-header-from-disk
 functions. All the higer level functions in the code just have to
 add a number to the header, they don't have to worry about endianess.
 
-== About headers
+## About headers
 All the information which is not the files contents itself (meta-data)
 are stored in a generic management system called headers. It's not just
 a normal C structure which is written to disk. A specific object 
@@ -150,7 +155,7 @@ be used since we also compare the random 32bit archive id, and the id
 of the nested archive header will be different so the program will know
 that it has to ignore that header and continue to search.
 
-== About checksumming
+## About checksumming
 Almost everything in the archive is checksummed to make sure the program
 will never silently restore corrupt data. The headers that contains all 
 the meta-data (file names, permissions, attributes, ...) are checksummed
