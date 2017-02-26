@@ -18,13 +18,18 @@ body, html {
 #header {
 	clear: both;
 	text-align: center;
-	background-color: #FFFFFF;
+	background-color: #3D51F4;
 	padding: 10px;
 	margin: 5px;
 	border-width: 1px;
 	border-style: solid;
 	border-color: #000000;
 	border-radius: 10px;
+}
+
+#topmenu {
+	padding: 10px;
+	text-align: center;
 }
 
 #contents {
@@ -35,7 +40,7 @@ body, html {
 
 #colleft {
 	margin: 5px;
-	background-color: #FFFFFF;
+	background-color: #ECEFF3;
 	padding: 10px;
 	border-width: 1px;
 	border-style: solid;
@@ -48,7 +53,7 @@ body, html {
 #colright {
 	overflow-y: hidden;
 	margin: 5px;
-	background-color: #FFFFFF;
+	background-color: #ECEFF3;
 	padding: 10px;
 	border-width: 1px;
 	border-style: solid;
@@ -58,7 +63,7 @@ body, html {
 
 #footer {
 	clear: both;
-	background-color: #FFFFFF;
+	background-color: #ECEFF3;
 	padding: 10px;
 	border-width: 1px;
 	border-style: solid;
@@ -73,4 +78,27 @@ h1, h2, h3, h4, h5, h6 {
 
 table, th, td {
 	border: 1px solid black;
+}
+
+#topmenu ul {
+	padding: 0;
+	margin: 0;
+	font-weight: bold;
+	list-style: none;
+}
+#topmenu li {
+	display: inline;
+	padding: 0 1em;
+}
+#topmenu li > a:link,
+#topmenu li > a:visited {
+	color: #FF0000;
+	white-space: nowrap;
+	text-decoration: none;
+}
+#topmenu li > a:hover,
+#topmenu li > a:active {
+	color: #FF0000;
+	background-color: yellow;
+	text-decoration: none;
 }
