@@ -100,7 +100,7 @@ long as fsarchiver continues to run). In that case, using a lower compression
 level is recommended since it's likely to work. 
 
 You can read the following [
-topic about memory problems](http://www.fsarchiver.org/forums/viewtopic.php?p=2259).
+topic about memory problems](http://forums.fsarchiver.org/viewtopic.php?p=2259).
 You can see that there is a huge difference between a typical savefs command
 using -z8 (172100 KiB are used) and -z9 (754076 KiB are used).
 

@@ -107,4 +107,4 @@ root file-system, the best thing to do is to run FSArchiver from this livecd.
 * You can track the changes using the [detailed ChangeLog](/changelog/) page.
 
 ## Contact
-You can ask technical questions, and general questions in the [forums](https://www.fsarchiver.org/forums/).
+You can ask technical questions, and general questions in the [forums](https://forums.fsarchiver.org/).
