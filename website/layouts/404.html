@@ -1,0 +1,22 @@
+{{ partial "header.html" . }}
+<body>
+<div id="wrapper">
+    <div id="header">
+        {{ partial "title.html" . }}
+        {{ partial "topmenu.html" . }}
+    </div>
+    <div id="contents">
+        {{ partial "leftmenu.html" . }}
+        <div id="colright">
+            <h1>Error 404</h1>
+            <hr/>
+            <p>Page not found</p>
+            <p>This error page is displayed because the page corresponding to
+            the address which was requested cannot be found on the server. If
+            you have typed the address mnaually in the address bar please check
+            it was correct.</p>         
+        </div>
+    </div>
+</div>
+</body>
+{{ partial "footer.html" . }}
