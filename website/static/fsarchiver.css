@@ -18,7 +18,7 @@ body, html {
 	text-align: center;
 	background-color: #FFFFCC;
 	padding: 10px;
-	margin: 5px;
+	margin: 2px;
 	border-width: 1px;
 	border-style: solid;
 	border-color: #000000;
@@ -37,7 +37,7 @@ body, html {
 }
 
 #colleft {
-	margin: 5px;
+	margin: 2px;
 	background-color: #ECEFF3;
 	padding: 10px;
 	border-width: 1px;
@@ -50,7 +50,7 @@ body, html {
 
 #colright {
 	overflow-y: hidden;
-	margin: 5px;
+	margin: 2px;
 	background-color: #ECEFF3;
 	padding: 10px;
 	border-width: 1px;
@@ -74,8 +74,32 @@ h1, h2, h3, h4, h5, h6 {
 	margin-bottom:5px;
 }
 
+h1 {
+	font-size: 160%;
+}
+
+h2 {
+	font-size: 130%;
+}
+
+h3 {
+	font-size: 105%;
+}
+
 table, th, td {
 	border: 1px solid black;
+}
+
+th {
+	background :#888888;
+}
+
+tr:nth-child(even) {
+	background: #CCCCCC;
+}
+
+tr:nth-child(odd) {
+	background: #FFFFFF;
 }
 
 #topmenu ul {

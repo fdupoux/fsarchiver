@@ -5,7 +5,8 @@ nameInMenu = "Partimage"
 draft = false
 +++
 
-Here is a table that summarizes the differences between partimage and fsarchiver: 
+Here is a table that summarizes the differences between partimage and
+fsarchiver. This page shows the pros and cons of each solution.
 
 |                            **Description**                                          |    **fsarchiver**    |    **partimage**     |
 |:------------------------------------------------------------------------------------|:--------------------:|:--------------------:|
