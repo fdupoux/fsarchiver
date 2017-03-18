@@ -19,7 +19,10 @@ standalone binary file to copy)
 
 ### Compilation from sources
 If you want to compile it from sources, you will need to have the following
-libraries installed on your system, including their header files. On RPM based distributions, you often have to install packages such as libXXX-devel.rpm to have the header files, since the base package (libXXX.rpm) does not provide these files. Here are the required libraries:
+libraries installed on your system, including their header files. On RPM based
+distributions, you often have to install packages such as libXXX-devel.rpm to
+have the header files, since the base package (libXXX.rpm) does not provide
+these files. Here are the required libraries:
 
 * zlib (and zlib-devel)
 * liblzo (and lzo-devel)
@@ -42,8 +45,8 @@ and which does not require the libraries to be installed on your system.
 To compile the sources, you have to run follow these instructions:
 
 #### download the latest sources
-First, you have to download 
-[fsarchiver-0.8.1.tar.gz](https://github.com/fdupoux/fsarchiver/releases/download/0.8.1/fsarchiver-0.8.1.tar.gz).
+First, you have to download [fsarchiver-0.8.1.tar.gz]
+(https://github.com/fdupoux/fsarchiver/releases/download/0.8.1/fsarchiver-0.8.1.tar.gz).
 Just save it to a temporary directory.
 
 #### extract the sources in a temporary directory
@@ -144,7 +147,7 @@ cd fsarchiver-0.8.1
 ```
 
 ### installation on arch-linux (using pacman)
-There is now an official package for fsarchiver in arch-linux: for both
+There is now an official package for fsarchiver in ArchLinux: for both
 [i686](http://www.archlinux.org/packages/extra/i686/fsarchiver/) and
 [x86_64](http://www.archlinux.org/packages/extra/x86_64/fsarchiver/).
 You can install it with the following command:
@@ -166,10 +169,11 @@ for Suse.
 
 ### installation on gentoo
 Gentoo implements the support for packages using ebuild files. There is now an
-[official ebuild for
-fsarchiver](http://packages.gentoo.org/packages/app-backup/fsarchiver) in gentoo, so you can directly install it using the **emerge** command
-as long as your portage tree is recent. You may also have to change the keywords
-to make the installation possible:
+[official ebuild for fsarchiver]
+(http://packages.gentoo.org/packages/app-backup/fsarchiver) in gentoo, so you
+can directly install it using the **emerge** command as long as your portage
+tree is recent. You may also have to change the keywords to make the
+installation possible:
 
 Add app-backup/fsarchiver to your /etc/portage/package.keywords if required:
 

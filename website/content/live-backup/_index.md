@@ -20,11 +20,11 @@ make a filesystem snapshot of these Logical-Volumes. A snapshot if a frozen copy
 of a Logical-Volume made at a given time. After that time, the original
 partition can still be modified normally, and the snapshot provides a consistent
 filesystem that can be backed up. To create an LVM snapshot, you have to use
-lvcreate with option **--snapshot**, and then the snapshot can be mounted
+lvcreate with option `--snapshot`, and then the snapshot can be mounted
 read-only on a directory. By default, all the partitions except /boot are
 configured as Logical-Volumes with recent Redhat-Enterprise and Fedora
 distributions. You can have the list of all your Logical-Volumes with the
-command called **lvdisplay**. If this command is not installed on your system,
+command called `lvdisplay`. If this command is not installed on your system,
 you are probably not using LVM.
 ```
 # lvdisplay -c
@@ -34,7 +34,7 @@ you are probably not using LVM.
   /dev/vgmain/vdisk:vgmain:3:1:-1:1:209715200:25600:-1:0:-1:251:31
   /dev/vgmain/chrooti386:vgmain:3:1:-1:2:1572864:192:-1:0:-1:251:32
 ```
-You can use http://www.rubackup.org/[rubackup] to make fsarchiver backups, and
+You can use [rubackup](http://www.rubackup.org/) to make fsarchiver backups, and
 it can automatically create an LVM Snapshot just before the backup, and it will
 delete just after the backup has been done.
 
@@ -78,8 +78,8 @@ it's necessary to restore from a Linux-Rescue system. We recommend that you
 use [SystemRescueCd](http://www.system-rescue-cd.org) for multiple reasons:
 
 * it comes with a recent version of fsarchiver
-* you can boot it from the cdrom, an
-[usb stick](http://www.system-rescue-cd.org/Sysresccd-manual-en_How_to_install_SystemRescueCd_on_an_USB-stick),
-or [from the network](http://www.system-rescue-cd.org/Sysresccd-manual-en_PXE_network_booting).
+* you can boot it from the cdrom, an [usb stick]
+(http://www.system-rescue-cd.org/Installing-SystemRescueCd-on-a-USB-stick/),
+or [from the network](http://www.system-rescue-cd.org/manual/PXE_network_booting/).
 * it contains [all the filesystem tools](http://www.system-rescue-cd.org/System-tools)
 that fsarchiver may need

@@ -7,7 +7,7 @@ draft = false
 
 ## About the file format
 The file format is made of two sort of structures: headers and 
-data-blocks. The headers are all a dictionnary where the key is an
+data-blocks. The headers are all a dictionary where the key is an
 integer. That way we can add new things in headers in next versions
 without having to break the file format.
 
