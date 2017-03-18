@@ -16,7 +16,7 @@ body, html {
 #header {
 	clear: both;
 	text-align: center;
-	background-color: #FFFFCC;
+	background-color: #f4dc02;
 	padding: 10px;
 	margin: 2px;
 	border-width: 1px;
@@ -38,7 +38,7 @@ body, html {
 
 #colleft {
 	margin: 2px;
-	background-color: #ECEFF3;
+	background-color: #fff6ad;
 	padding: 10px;
 	border-width: 1px;
 	border-style: solid;
@@ -51,7 +51,7 @@ body, html {
 #colright {
 	overflow-y: hidden;
 	margin: 2px;
-	background-color: #ECEFF3;
+	background-color: #fff6ad;
 	padding: 10px;
 	border-width: 1px;
 	border-style: solid;
