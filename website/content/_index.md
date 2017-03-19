@@ -37,7 +37,7 @@ with a read-write support. It will **preserve all the standard file attributes**
 extended-attributes, ...), as long as the kernel has support for it enabled. 
 It allows to preserve all the windows file attributes (ACL, standard 
 attributes, ...). It can be used with LVM snapshots in order to 
-[make consistent backups of all filesystems](http://www.system-rescue-cd.org/Sysresccd-manual-en_LVM_Making-consistent-backups-with-LVM)
+[make consistent backups of all filesystems](http://www.system-rescue-cd.org/lvm-guide-en/Making-consistent-backups-with-LVM/)
 including the root filesystem.
 
 FSArchiver has been **packaged by most popular Linux distributions** (Fedora, 
