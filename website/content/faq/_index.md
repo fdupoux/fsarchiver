@@ -25,11 +25,11 @@ the file-system as **auto** in **fstab** so that it can boot
 on any file-system.
 
 ## What file-systems are currently supported ?
-FSArchiver is able to save/restore all linux file-systems (ext2, ext3, ext4,
-reiserfs, reiser4, xfs, jfs, btrfs) as well as ntfs (fat is not supported).
-The specific file-system attributes are supported for all these file-systems.
-It means that both the data (file contents, file attributes except acl) and
-file-system attributes (label, uuid, block size) are preserved as well as
-several advanced file-system attributes such as inode-size on ext{2,3,4}.
-Anyway, several advanced file-systems attributes still need to be implemented,
-such as the journal attributes for ext{2,3,4}.
+FSArchiver is able to save/restore all Linux file-systems (ext2, ext3, ext4,
+reiserfs, reiser4, xfs, jfs, btrfs) as well as FAT16/FAT32 for backing up an EFS
+(EFI file system). The specific file-system attributes are supported for all
+these file-systems. It means that both the data (file contents, file attributes)
+and file-system attributes (label, uuid, block size) are preserved as well as
+several advanced file-system attributes such as inode-size on ext4. Anyway,
+several advanced file-systems attributes still need to be implemented, such as
+the journal attributes for ext4.
