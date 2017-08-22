@@ -155,12 +155,16 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     char progname[64];
     u64 e2fstoolsver;
     int compat_type;
+    s64 devblkcount;
+    u64 devblksize;
+    s64 threshold64bit;
+    s64 devsize;
     u64 temp64;
     int exitst;
     int ret=0;
     int res;
     int i;
-    
+
     // init    
     memset(options, 0, sizeof(options));
     snprintf(progname, sizeof(progname), "mke2fs");
@@ -174,6 +178,10 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     }
     e2fstoolsver=check_prog_version(progname);
     
+    // ---- check what is the extfs block size to use
+    if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTBLOCKSIZE, &devblksize)!=0)
+        devblksize=4096;
+
     // ---- filesystem revision (good-old-rev or dynamic)
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTREVISION, &fsextrevision)!=0)
         fsextrevision=EXT2_DYNAMIC_REV; // don't fail (case of fs conversion to extfs)
@@ -189,14 +197,13 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
 
     strlcatf(options, sizeof(options), " %s ", fsoptions);
     
+    strlcatf(options, sizeof(options), " -b %ld ", (long)devblksize);
+
     // ---- set the advanced filesystem settings from the dico
     if (strlen(mkfslabel) > 0)
         strlcatf(options, sizeof(options), " -L '%.16s' ", mkfslabel);
     else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -L '%.16s' ", buffer);
-    
-    if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTBLOCKSIZE, &temp64)==0)
-        strlcatf(options, sizeof(options), " -b %ld ", (long)temp64);
     
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSINODESIZE, &temp64)==0)
         strlcatf(options, sizeof(options), " -I %ld ", (long)temp64);
@@ -214,7 +221,8 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     // ---- check that fsarchiver is aware of all the filesystem features used on that filesystem
     if (extfs_check_compatibility(features_tab[E2P_FEATURE_COMPAT], features_tab[E2P_FEATURE_INCOMPAT], features_tab[E2P_FEATURE_RO_INCOMPAT])!=0)
     {   errprintf("this filesystem has ext{2,3,4} features which are not supported by this fsarchiver version.\n");
-        return -1;
+        ret=-1;
+        goto extfs_mkfs_cleanup;
     }
     
     // ---- get original filesystem type
@@ -229,7 +237,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         if (mkfeatures[i].firstfs > extfstype)
             features_tab[compat_type] &= ~mkfeatures[i].mask;
     }
-    
+
     // add new features if the filesystem to create is newer than the filesystem type that was backed up
     // eg: user did a "savefs" of an ext3 and does a "restfs mkfs=ext4" --> add features to force ext4
     // it's a bit more difficult because we only want to add such a feature if no feature of the new
@@ -243,7 +251,46 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     {   fsextrevision=EXT2_DYNAMIC_REV;
         features_tab[E2P_FEATURE_INCOMPAT]|=EXT3_FEATURE_INCOMPAT_EXTENTS;
     }
-    
+
+    // get size of the target device
+    if ((devsize=get_device_size(partition))<0)
+    {   errprintf("failed to check the size of the target device: [%s]\n", partition);
+        ret=-1;
+        goto extfs_mkfs_cleanup;
+    }
+
+    // special logic required if the target device is equal or more than 2^32 blocks long
+    devblkcount=devsize/devblksize;
+    threshold64bit=(1LL<<32LL);
+    msgprintf(MSG_VERB2, "the filesystem block size is %ld bytes long\n", (long)devblksize);
+    msgprintf(MSG_VERB2, "device [%s] size is %lld bytes (%lld blocks) long\n", partition, (long long)devsize, (long long)devblkcount);
+    if (devblkcount >= threshold64bit)
+    {   msgprintf(MSG_VERB1, "device [%s] is at least %lld blocks long and requires ext4\n"
+          "with the [64bit] feature\n", partition, (long long)threshold64bit);
+        if (extfstype<EXTFSTYPE_EXT4)
+        {   errprintf("ext2/ext3 do not support large devices with %lld or more blocks\n"
+              "please convert the filesystem using the 'mkfs=ext4' option with restfs\n", (long long)threshold64bit);
+            ret=-1;
+            goto extfs_mkfs_cleanup;
+        }
+        if (e2fstoolsver<PROGVER(1,42,0))
+        {   errprintf("e2fsprogs 1.42 or later is required for the [64bit] feature to support large\n"
+              "devices with %lld or more blocks\n", (long long)threshold64bit);
+            ret=-1;
+            goto extfs_mkfs_cleanup;
+        }
+        // The filesystem cannot be created without the "64bit" feature enabled on large devices
+        features_tab[E2P_FEATURE_INCOMPAT] |= FSA_EXT4_FEATURE_INCOMPAT_64BIT;
+        msgprintf(MSG_VERB2, "device [%s] will have the [64bit] feature automatically enabled\n", partition);
+        // The "resize_inode" feature must always be disabled on large devices
+        features_tab[E2P_FEATURE_COMPAT] &= ~FSA_EXT2_FEATURE_COMPAT_RESIZE_INODE;
+        msgprintf(MSG_VERB2, "device [%s] will have the [resize_inode] feature automatically disabled\n", partition);
+        // The "uninit_bg" feature is highly recommended on large devices and has been supported for a long time
+        // If "metadata_csum" is enabled, mke2fs will disable "uninit_bg" automatically hence will not be an issue
+        features_tab[E2P_FEATURE_RO_INCOMPAT] |= FSA_EXT4_FEATURE_RO_COMPAT_GDT_CSUM;
+        msgprintf(MSG_VERB2, "device [%s] will have the [uninit_bg] feature enabled\n", partition);
+    }
+
     // convert int features to string to be passed to mkfs
     for (i=0; mkfeatures[i].name; i++)
     {
