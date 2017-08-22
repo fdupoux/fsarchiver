@@ -616,3 +616,17 @@ int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol
     
     return 0;
 }
+
+s64 get_device_size(char *partition)
+{
+    s64 devsize;
+    int fd;
+
+    if ((fd=open64(partition, O_RDONLY|O_LARGEFILE))<0)
+        return -1;
+    if ((devsize=lseek64(fd, 0, SEEK_END))<0)
+        return -1;
+    close(fd);
+
+    return devsize;
+}
