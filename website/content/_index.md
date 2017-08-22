@@ -98,7 +98,7 @@ the whole tar is compressed with gzip. In that case, the data which are written
 after the corruption are lost.
 
 ## Download
-* You can download either [the sources](https://github.com/fdupoux/fsarchiver/releases/download/0.8.1/fsarchiver-0.8.1.tar.gz)
+* You can download either [the sources](https://github.com/fdupoux/fsarchiver/releases/download/0.8.2/fsarchiver-0.8.2.tar.gz)
 or a static binary from the [github releases page](https://github.com/fdupoux/fsarchiver/releases).
 * You can also download [SystemRescueCd](http://www.system-rescue-cd.org/) which is
 a livecd that provides a recent FSArchiver and all the file-system tools and

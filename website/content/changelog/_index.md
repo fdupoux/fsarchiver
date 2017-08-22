@@ -5,6 +5,9 @@ nameInMenu = "ChangeLog"
 draft = false
 +++
 
+* **0.8.2 (2017-08-22):**
+  * Add support for the latest ext4 filesystem features
+  * Improved support of large block device when restoring extfs filesystems
 * **0.8.1 (2017-01-10):**
   * Improved support for XFS filesystem (contributions from Marcos Mello)
   * Updated documentation and comments in the sources (Marcos Mello)

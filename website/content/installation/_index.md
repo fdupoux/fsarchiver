@@ -45,8 +45,8 @@ and which does not require the libraries to be installed on your system.
 To compile the sources, you have to run follow these instructions:
 
 #### download the latest sources
-First, you have to download [fsarchiver-0.8.1.tar.gz]
-(https://github.com/fdupoux/fsarchiver/releases/download/0.8.1/fsarchiver-0.8.1.tar.gz).
+First, you have to download [fsarchiver-0.8.2.tar.gz]
+(https://github.com/fdupoux/fsarchiver/releases/download/0.8.2/fsarchiver-0.8.2.tar.gz).
 Just save it to a temporary directory.
 
 #### extract the sources in a temporary directory
@@ -129,11 +129,10 @@ sudo apt-get install fsarchiver
 ```
 
 ### installation on RHEL / CentOS / Scientific-Linux
-You should use these RPM packages that have been built for RHEL6/RHEL7 based
+You should use these RPM packages that have been built for RHEL7 based
 distributions, that is the recommended way for most users:
 
-* [fsarchiver-0.8.1-1.el6.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.1/fsarchiver-0.8.1-1.el6.x86_64.rpm)
-* [fsarchiver-0.8.1-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.1/fsarchiver-0.8.1-1.el7.x86_64.rpm)
+* [fsarchiver-0.8.2-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.2/fsarchiver-0.8.2-1.el7.x86_64.rpm)
 
 If you want to recompile fsarchiver yourself, you can use the following instructions:
 
@@ -141,8 +140,8 @@ Here are the instructions to install the required libraries and to compile the
 sources on RHEL / CentOS / Scientific-Linux:
 ```
 yum install zlib-devel bzip2-devel lzo-devel xz-devel e2fsprogs-devel libgcrypt-devel libattr-devel libblkid-devel
-tar xfz fsarchiver-0.8.1.tar.gz
-cd fsarchiver-0.8.1
+tar xfz fsarchiver-0.8.2.tar.gz
+cd fsarchiver-0.8.2
 ./configure --prefix=/usr && make && make install
 ```
 
