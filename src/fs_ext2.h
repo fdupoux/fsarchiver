@@ -46,6 +46,7 @@ u64 check_prog_version(char *prog);
 #define FSA_EXT2_FEATURE_COMPAT_RESIZE_INODE       0x0010
 #define FSA_EXT2_FEATURE_COMPAT_DIR_INDEX          0x0020
 #define FSA_EXT2_FEATURE_COMPAT_LAZY_BG            0x0040
+#define FSA_EXT4_FEATURE_COMPAT_SPARSE_SUPER2      0x0200
 
 /* for s_feature_ro_compat */
 #define FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER    0x0001
@@ -58,6 +59,8 @@ u64 check_prog_version(char *prog);
 #define FSA_EXT4_FEATURE_RO_COMPAT_QUOTA           0x0100
 #define FSA_EXT4_FEATURE_RO_COMPAT_BIGALLOC        0x0200
 #define FSA_EXT4_FEATURE_RO_COMPAT_METADATA_CSUM   0x0400
+#define FSA_EXT4_FEATURE_RO_COMPAT_READONLY        0x1000
+#define FSA_EXT4_FEATURE_RO_COMPAT_PROJECT         0x2000
 
 /* for s_feature_incompat */
 #define FSA_EXT2_FEATURE_INCOMPAT_FILETYPE         0x0002
@@ -70,9 +73,10 @@ u64 check_prog_version(char *prog);
 #define FSA_EXT4_FEATURE_INCOMPAT_FLEX_BG          0x0200
 #define FSA_EXT4_FEATURE_INCOMPAT_EA_INODE         0x0400
 #define FSA_EXT4_FEATURE_INCOMPAT_DIRDATA          0x1000
-#define FSA_EXT4_FEATURE_INCOMPAT_BG_USE_META_CSUM 0x2000
+#define FSA_EXT4_FEATURE_INCOMPAT_CSUM_SEED        0x2000
 #define FSA_EXT4_FEATURE_INCOMPAT_LARGEDIR         0x4000
 #define FSA_EXT4_FEATURE_INCOMPAT_INLINEDATA       0x8000
+#define FSA_EXT4_FEATURE_INCOMPAT_ENCRYPT          0x10000
 
 #define FSA_EXT2_FEATURE_COMPAT_SUPP               FSA_EXT2_FEATURE_COMPAT_EXT_ATTR
 #define FSA_EXT2_FEATURE_INCOMPAT_SUPP             (FSA_EXT2_FEATURE_INCOMPAT_FILETYPE| \
@@ -100,7 +104,8 @@ u64 check_prog_version(char *prog);
                                                          FSA_EXT2_FEATURE_COMPAT_EXT_ATTR| \
                                                          FSA_EXT2_FEATURE_COMPAT_RESIZE_INODE| \
                                                          FSA_EXT2_FEATURE_COMPAT_DIR_INDEX| \
-                                                         FSA_EXT2_FEATURE_COMPAT_LAZY_BG)
+                                                         FSA_EXT2_FEATURE_COMPAT_LAZY_BG| \
+                                                         FSA_EXT4_FEATURE_COMPAT_SPARSE_SUPER2)
 #define FSA_FEATURE_RO_COMPAT_SUPP                 (u64)(FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER|\
                                                          FSA_EXT2_FEATURE_RO_COMPAT_LARGE_FILE|\
                                                          FSA_EXT2_FEATURE_RO_COMPAT_BTREE_DIR|\
@@ -110,7 +115,9 @@ u64 check_prog_version(char *prog);
                                                          FSA_EXT4_FEATURE_RO_COMPAT_EXTRA_ISIZE|\
                                                          FSA_EXT4_FEATURE_RO_COMPAT_QUOTA|\
                                                          FSA_EXT4_FEATURE_RO_COMPAT_BIGALLOC|\
-                                                         FSA_EXT4_FEATURE_RO_COMPAT_METADATA_CSUM)
+                                                         FSA_EXT4_FEATURE_RO_COMPAT_METADATA_CSUM|\
+                                                         FSA_EXT4_FEATURE_RO_COMPAT_READONLY|\
+                                                         FSA_EXT4_FEATURE_RO_COMPAT_PROJECT)
 #define FSA_FEATURE_INCOMPAT_SUPP                  (u64)(FSA_EXT2_FEATURE_INCOMPAT_FILETYPE|\
                                                          FSA_EXT3_FEATURE_INCOMPAT_RECOVER|\
                                                          FSA_EXT3_FEATURE_INCOMPAT_JOURNAL_DEV|\
@@ -121,9 +128,12 @@ u64 check_prog_version(char *prog);
                                                          FSA_EXT4_FEATURE_INCOMPAT_FLEX_BG|\
                                                          FSA_EXT4_FEATURE_INCOMPAT_EA_INODE|\
                                                          FSA_EXT4_FEATURE_INCOMPAT_DIRDATA|\
-                                                         FSA_EXT4_FEATURE_INCOMPAT_BG_USE_META_CSUM|\
+                                                         FSA_EXT4_FEATURE_INCOMPAT_CSUM_SEED|\
                                                          FSA_EXT4_FEATURE_INCOMPAT_LARGEDIR|\
                                                          FSA_EXT4_FEATURE_INCOMPAT_INLINEDATA)
+
+// FSA_FEATURE_INCOMPAT_SUPP does not include FSA_EXT4_FEATURE_INCOMPAT_ENCRYPT
+// as it would require special handling to mount an encrypted filesystem
 
 // EXT2_FLAG_SOFTSUPP_FEATURES not defined on old e2fsprogs versions
 #ifndef EXT2_FLAG_SOFTSUPP_FEATURES

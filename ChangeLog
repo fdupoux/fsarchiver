@@ -1,7 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.8.2 (YYYY-MM-DD):
-  - TODO: Not released yet
+  - Add support for the latest ext4 filesystem features
 * 0.8.1 (2017-01-10):
   - Improved support for XFS filesystem (contributions from Marcos Mello)
   - Updated documentation and comments in the sources (Marcos Mello) 
