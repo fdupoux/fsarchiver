@@ -74,10 +74,26 @@ then
     AC_CHECK_HEADERS(lzo/lzo1x.h)
 fi
 
+
+dnl option to disable lz4 support (for people who don't have lz4 installed)
+AC_ARG_ENABLE([lz4],
+    [AS_HELP_STRING([--disable-lz4], [don't compile the support for lz4 compression (which requires liblz4)])],
+    [enable_lz4=$enableval],
+    [enable_lz4=yes])
+if test "x$enable_lz4" = "xyes"
+then
+    AC_DEFINE([OPTION_LZ4_SUPPORT], 1, [Define to 1 to enable the support for lz4 compression])
+    PKG_CHECK_MODULES([LZMA], [liblz4])
+fi
+
 dnl check libgcrypt (required for crypto and md5)
 AC_CHECKING([for libgcrypt (library and header files)])
 AC_CHECK_LIB([gcrypt], [gcry_cipher_encrypt], [LIBS="$LIBS -lgcrypt -lgpg-error"], AC_MSG_ERROR([*** libgcrypt not found]))
 AC_CHECK_HEADERS(gcrypt.h)
+
+AC_CHECKING([for lz4 (library and header files)])
+AC_CHECK_LIB([lz4], [LZ4_compress_default], [LIBS="$LIBS -llz4"], AC_MSG_ERROR([*** lz4 not found]))
+AC_CHECK_HEADERS(lz4.h)
 
 dnl check e2fsprogs and its libs
 PKG_CHECK_EXISTS([ext2fs < 1.41.2], [CFLAGS="$CFLAGS -I /usr/include/blkid -I /usr/include/ext2fs -I /usr/include/uuid -I /usr/include/e2p"])
