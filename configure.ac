@@ -83,7 +83,7 @@ AC_ARG_ENABLE([lz4],
 if test "x$enable_lz4" = "xyes"
 then
     AC_DEFINE([OPTION_LZ4_SUPPORT], 1, [Define to 1 to enable the support for lz4 compression])
-    PKG_CHECK_MODULES([LZMA], [liblz4])
+    PKG_CHECK_MODULES([LZ4], [liblz4])
 fi
 
 dnl check libgcrypt (required for crypto and md5)
