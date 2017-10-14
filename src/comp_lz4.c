@@ -35,7 +35,7 @@ int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u6
 
     int res;
     
-    switch (res=LZ4_compress_default((const char*)compbuf, (char*)origbuf, (int)origsize, destsize))
+    switch (res=LZ4_compress((const char*)origbuf, (char*)compbuf, (int)origsize))
     {
         case 0:
             errprintf("LZ4_compress_default(): LZ4 compression failed "
