@@ -33,8 +33,10 @@ int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u6
     int destsize=compbufsize;
 
     int res;
-    
-    switch (res=LZ4_compress((const char*)origbuf, (char*)compbuf, (int)origsize))
+   
+#if LZ4_VERSION_MINOR>1
+
+    switch (res=LZ4_compress_default((const char*)compbuf, (char*)origbuf, (int)origsize, destsize))
     {
         case 0:
             errprintf("LZ4_compress_default(): LZ4 compression failed "
@@ -42,6 +44,17 @@ int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u6
                 "compression level to reduce the memory requirement.\n");
             return FSAERR_ENOMEM;
     }
+
+#else
+    switch (res=LZ4_compress((const char*)origbuf, (char*)compbuf, (int)origsize))
+    {
+        case 0:
+            errprintf("LZ4_compress: LZ4 compression failed "
+                "with an out of memory error.\nYou should use a lower "
+                "compression level to reduce the memory requirement.\n");
+            return FSAERR_ENOMEM;
+    }
+#endif // LZ4_VERSION_MINOR
 
 
     if (res > 0){
@@ -55,17 +68,15 @@ int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u6
 int uncompress_block_lz4(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsize, u8 *compbuf)
 {
     int destsize=origbufsize;
-
     int res;
-    
+
     if((res=LZ4_decompress_safe((char*)compbuf, (char*)origbuf, (int)*origsize, destsize)) > 0)
     {
             *origsize=(u64)destsize;
             return FSAERR_SUCCESS;
     }
 
-
-    errprintf("BZ2_bzBuffToBuffDecompress() failed, res=%d\n", res);
+    errprintf("LZ4_decompress_safe() failed, res=%d\n", res);
     
     return FSAERR_UNKNOWN;
 }
