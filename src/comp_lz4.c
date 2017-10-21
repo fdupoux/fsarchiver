@@ -33,8 +33,8 @@ int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u6
     int destsize=compbufsize;
 
     int res;
-   
-#if LZ4_VERSION_MINOR>1
+#define LZ4_VERSION (LZ$_VERSION_MAYOR*10 + LZ4_VERSION_MINOR)
+#if LZ4_VERSION >= 17
 
     switch (res=LZ4_compress_default((const char*)compbuf, (char*)origbuf, (int)origsize, destsize))
     {
