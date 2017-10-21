@@ -20,14 +20,13 @@
 #  include "config.h"
 #endif
 
-#include <lz4.h>
-
 #include "fsarchiver.h"
 #include "common.h"
 #include "comp_lz4.h"
 #include "error.h"
 
 
+#ifdef OPTION_LZ4_SUPPORT
 
 int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level)
 {
@@ -70,3 +69,5 @@ int uncompress_block_lz4(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsi
     
     return FSAERR_UNKNOWN;
 }
+
+#endif //OPTION_LZ4_SUPPORT

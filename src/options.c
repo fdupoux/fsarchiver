@@ -110,7 +110,7 @@ int options_select_compress_level(int opt)
 #else
 	case 10:
             errprintf("compression level %d is not available: lz4 has been disabled at compilation time\n", opt);
-#endif
+#endif // OPTION_LZ4_SUPPORT
         default:
             errprintf("invalid compression level: %d\n", opt);
             return -1;

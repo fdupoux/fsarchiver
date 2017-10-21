@@ -84,7 +84,7 @@ if test "x$enable_lz4" = "xyes"
 then
     AC_DEFINE([OPTION_LZ4_SUPPORT], 1, [Define to 1 to enable the support for lz4 compression])
     AC_CHECKING([for lz4 (library and header files)])
-    AC_CHECK_LIB([lz4], [LZ4_compress], [LIBS="$LIBS -llz4"], AC_MSG_ERROR([*** lz4 not found]))
+    AC_CHECK_LIB([lz4], [LZ4_compress], [LIBS="$LIBS -llz4"], AC_MSG_ERROR([*** lz4 not found or disable lz4 support using --disable-lz4 ***] ))
     AC_CHECK_HEADERS(lz4.h)
 fi
 
