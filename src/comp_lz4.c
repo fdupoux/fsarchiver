@@ -27,7 +27,6 @@
 
 
 #ifdef OPTION_LZ4_SUPPORT
-
 int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level)
 {
     int destsize=compbufsize;
@@ -35,28 +34,27 @@ int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u6
     int res;
 #define LZ4_VERSION (LZ$_VERSION_MAYOR*10 + LZ4_VERSION_MINOR)
 #if LZ4_VERSION >= 17
-
     switch (res=LZ4_compress_default((const char*)compbuf, (char*)origbuf, (int)origsize, destsize))
     {
-        case 0:
+        if(res == 0){
             errprintf("LZ4_compress_default(): LZ4 compression failed "
                 "with an out of memory error.\nYou should use a lower "
                 "compression level to reduce the memory requirement.\n");
             return FSAERR_ENOMEM;
+	}
     }
 
 #else
     switch (res=LZ4_compress((const char*)origbuf, (char*)compbuf, (int)origsize))
     {
-        case 0:
+        if (res == 0){
             errprintf("LZ4_compress: LZ4 compression failed "
                 "with an out of memory error.\nYou should use a lower "
                 "compression level to reduce the memory requirement.\n");
             return FSAERR_ENOMEM;
+	}
     }
 #endif // LZ4_VERSION_MINOR
-
-
     if (res > 0){
 	    *compsize=(u64)destsize;
             return FSAERR_SUCCESS;
@@ -76,9 +74,15 @@ int uncompress_block_lz4(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsi
             return FSAERR_SUCCESS;
     }
 
+    if(res < 0){
+        errprintf("LZ4_decompress_safe: LZ4 decompression failed"
+            "destination buffer is not large enough"
+            "or the source stream is detected malformed.\n");
+        return FSAERR_ENOMEM;
+    }
+
     errprintf("LZ4_decompress_safe() failed, res=%d\n", res);
     
     return FSAERR_UNKNOWN;
 }
-
 #endif //OPTION_LZ4_SUPPORT

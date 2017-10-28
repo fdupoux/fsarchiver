@@ -74,7 +74,6 @@ then
     AC_CHECK_HEADERS(lzo/lzo1x.h)
 fi
 
-
 dnl option to disable lz4 support (for people who don't have lz4 installed)
 AC_ARG_ENABLE([lz4],
     [AS_HELP_STRING([--disable-lz4], [don't compile the support for lz4 compression (which requires liblz4)])],
@@ -92,7 +91,6 @@ dnl check libgcrypt (required for crypto and md5)
 AC_CHECKING([for libgcrypt (library and header files)])
 AC_CHECK_LIB([gcrypt], [gcry_cipher_encrypt], [LIBS="$LIBS -lgcrypt -lgpg-error"], AC_MSG_ERROR([*** libgcrypt not found]))
 AC_CHECK_HEADERS(gcrypt.h)
-
 
 dnl check e2fsprogs and its libs
 PKG_CHECK_EXISTS([ext2fs < 1.41.2], [CFLAGS="$CFLAGS -I /usr/include/blkid -I /usr/include/ext2fs -I /usr/include/uuid -I /usr/include/e2p"])
