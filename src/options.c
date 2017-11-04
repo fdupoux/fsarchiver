@@ -47,6 +47,14 @@ int options_select_compress_level(int opt)
 {
     switch (opt)
     {
+#ifdef OPTION_LZ4_SUPPORT
+	case 0: // lz4
+	    g_options.compressalgo=COMPRESS_LZ4;
+	    break;
+#else
+	case 0: // lz4
+            errprintf("compression level %d is not available: lz4 has been disabled at compilation time\n", opt);
+#endif // OPTION_LZ4_SUPPORT
 #ifdef OPTION_LZO_SUPPORT
         case 1: // lzo
             g_options.compressalgo=COMPRESS_LZO;
@@ -102,14 +110,6 @@ int options_select_compress_level(int opt)
             errprintf("compression level %d is not available: lzma has been disabled at compilation time\n", opt);
             return -1;
 #endif
-#ifdef OPTION_LZ4_SUPPORT
-	case 10:
-	    g_options.compressalgo=COMPRESS_LZ4;
-	    break;
-#else
-	case 10:
-            errprintf("compression level %d is not available: lz4 has been disabled at compilation time\n", opt);
-#endif // OPTION_LZ4_SUPPORT
         default:
             errprintf("invalid compression level: %d\n", opt);
             return -1;

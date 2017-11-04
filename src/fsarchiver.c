@@ -83,7 +83,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -x: enable support for experimental features (they are disabled by default)\n");
     msgprintf(MSG_FORCE, " -e <pattern>: exclude files and directories that match that pattern\n");
     msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
-    msgprintf(MSG_FORCE, " -z <level>: compression level from 1 (very fast) to 10 (very good) default=3\n");
+    msgprintf(MSG_FORCE, " -z <level>: compression level from 0 (very fast) to 9 (very good) default=3\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one (de)compression thread. useful on multi-core cpu\n");
     msgprintf(MSG_FORCE, " -c <password>: encrypt/decrypt data in archive, \"-c -\" for interactive password\n");
@@ -242,8 +242,8 @@ int process_cmdline(int argc, char **argv)
                 break;
             case 'z': // compression level
                 g_options.fsacomplevel=atoi(optarg);
-                if (g_options.fsacomplevel<1 || g_options.fsacomplevel>10)
-                {   errprintf("[%s] is not a valid compression level, it must be an integer between 1 and 10.\n", optarg);
+                if (g_options.fsacomplevel<0 || g_options.fsacomplevel>9)
+                {   errprintf("[%s] is not a valid compression level, it must be an integer between 0 and 9.\n", optarg);
                     usage(progname, false);
                     return -1;
                 }
