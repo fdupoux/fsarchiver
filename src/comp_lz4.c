@@ -34,7 +34,7 @@ int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u6
 
 #define LZ4_VERSION (LZ4_VERSION_MAJOR*10 + LZ4_VERSION_MINOR)
 #if LZ4_VERSION >= 17
-    res=LZ4_compress_default((const char*)compbuf, (char*)origbuf, (int)origsize, destsize);
+    res=LZ4_compress_default((const char*)origbuf, (char*)compbuf, (int)origsize, destsize);
     if (res==0){
         errprintf("LZ4_compress_default(): failed.\n");
         return FSAERR_UNKNOWN;
