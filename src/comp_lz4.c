@@ -64,11 +64,6 @@ int uncompress_block_lz4(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsi
         return FSAERR_SUCCESS;
     }
 
-    if(res < 0){
-        errprintf("LZ4_decompress_safe: LZ4 decompression failed.\n");
-        return FSAERR_UNKNOWN;
-    }
-
     errprintf("LZ4_decompress_safe() failed, res=%d\n", res);
     
     return FSAERR_UNKNOWN;
