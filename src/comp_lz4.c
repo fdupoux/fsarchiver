@@ -47,7 +47,7 @@ int compress_block_lz4(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u6
     }
 #endif // LZ4_VERSION
     if (res > 0){
-        *compsize=(u64)destsize;
+        *compsize=(u64)res;
         return FSAERR_SUCCESS;
     }
     
@@ -60,7 +60,7 @@ int uncompress_block_lz4(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsi
     int res;
 
     if((res=LZ4_decompress_safe((char*)compbuf, (char*)origbuf, compsize, destsize)) > 0){
-        *origsize=(u64)destsize;
+        *origsize=(u64)res;
         return FSAERR_SUCCESS;
     }
 
