@@ -18,6 +18,7 @@ BuildRequires:	libgcrypt-devel
 BuildRequires:	zlib-devel
 BuildRequires:	bzip2-devel
 BuildRequires:	lzo-devel
+BuildRequires:	lz4-devel
 BuildRequires:	xz-devel
 
 %description

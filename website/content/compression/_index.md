@@ -10,7 +10,10 @@ Recent fsarchiver versions comes with support for four different compression
 algorithms:
 
 * lzo: it is very fast compression but it does not compress well. You can use it
-if you have a very slow cpu
+if you have a very slow cpu. You should consider lz4 if you want fast compression
+* lz4: it is very fast compression but it does not compress well. You can use it
+if you have a very slow cpu. It is similar to lzo but provide better performance
+for decompression hence it is commended over lzo.
 * gzip: it is the most common compression algorithm. It's quite fast and the
 compression ratio is good.
 * bzip2: it is a quite slow compression algorithm, but it has a very good
@@ -51,7 +54,7 @@ multi-threading option at compression as well as decompression, even if it's
 more interesting at compression which needs more power.
 
 ## Compression levels available
-FSArchiver provides nine different compression levels. You can choose the
+FSArchiver provides ten different compression levels. You can choose the
 compression level to use when you create an archive (by doing a **savefs** or
 **savedir**). You just have to use option **-z X** where X is the level to
 use. when you use a low number, the compression will be very quick and less
@@ -62,6 +65,7 @@ lot of time, and also the memory requirement can be very big.
 
 | **Level** | **Equivalent** |
 |:---------:|:--------------:|
+| 0         | lz4            |
 | 1         | lzo -3         |
 | 2         | gzip -3        |
 | 3         | gzip -6        |
