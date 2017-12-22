@@ -5,7 +5,7 @@ nameInMenu = "ChangeLog"
 draft = false
 +++
 
-* **0.8.3:**
+* **0.8.3 (2017-12-22):**
   * Implemented LZ4 compression (Contribution from Cristian Vazquez)
 * **0.8.2 (2017-08-22):**
   * Add support for the latest ext4 filesystem features
