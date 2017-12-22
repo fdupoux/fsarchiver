@@ -5,7 +5,7 @@ language: c
 
 before_install:
   # Install dependencies
-  - sudo apt-get install -y gcc make automake autoconf autotools-dev zlib1g-dev libbz2-dev liblzma-dev liblzo2-dev libgcrypt20-dev e2fslibs-dev uuid-dev libblkid-dev libattr1-dev pkg-config
+  - sudo apt-get install -y gcc make automake autoconf autotools-dev zlib1g-dev libbz2-dev liblzma-dev liblzo2-dev libgcrypt20-dev e2fslibs-dev uuid-dev libblkid-dev libattr1-dev pkg-config liblz4-dev
   # Print information about the environment
   - gcc --version
 

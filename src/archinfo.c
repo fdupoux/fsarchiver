@@ -37,6 +37,7 @@ char *compalgostr(int algo)
         case COMPRESS_GZIP:    return "gzip";
         case COMPRESS_BZIP2:   return "bzip2";
         case COMPRESS_LZMA:    return "lzma";
+	case COMPRESS_LZ4:     return "lz4";
         default:               return "unknown";
     }
 }

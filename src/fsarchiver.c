@@ -34,6 +34,7 @@
 #include "archinfo.h"
 #include "syncthread.h"
 #include "comp_lzo.h"
+#include "comp_lz4.h"
 #include "crypto.h"
 #include "options.h"
 #include "logfile.h"
@@ -46,7 +47,7 @@ char *valid_magic[]={FSA_MAGIC_MAIN, FSA_MAGIC_VOLH, FSA_MAGIC_VOLF,
 
 void usage(char *progname, bool examples)
 {
-    int lzo, lzma;
+    int lzo, lzma, lz4;
 
 #ifdef OPTION_LZO_SUPPORT
     lzo=true;
@@ -58,7 +59,11 @@ void usage(char *progname, bool examples)
 #else
     lzma=false;
 #endif // OPTION_LZMA_SUPPORT
-    
+#ifdef OPTION_LZ4_SUPPORT
+    lz4=true;
+#else
+    lz4=false;
+#endif // OPTION_lZ4_SUPPORT
     msgprintf(MSG_FORCE, "====> fsarchiver version %s (%s) - http://www.fsarchiver.org <====\n", FSA_VERSION, FSA_RELDATE);
     msgprintf(MSG_FORCE, "Distributed under the GPL v2 license (GNU General Public License v2).\n");
     msgprintf(MSG_FORCE, " * usage: %s [<options>] <command> <archive> [<dev1> [<dev2> [...]]]\n", progname);
@@ -78,14 +83,14 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -x: enable support for experimental features (they are disabled by default)\n");
     msgprintf(MSG_FORCE, " -e <pattern>: exclude files and directories that match that pattern\n");
     msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
-    msgprintf(MSG_FORCE, " -z <level>: compression level from 1 (very fast) to 9 (very good) default=3\n");
+    msgprintf(MSG_FORCE, " -z <level>: compression level from 0 (very fast) to 9 (very good) default=3\n");
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one (de)compression thread. useful on multi-core cpu\n");
     msgprintf(MSG_FORCE, " -c <password>: encrypt/decrypt data in archive, \"-c -\" for interactive password\n");
     msgprintf(MSG_FORCE, " -h: show help and information about how to use fsarchiver with examples\n");
     msgprintf(MSG_FORCE, " -V: show program version and exit\n");
     msgprintf(MSG_FORCE, "<information>\n");
-    msgprintf(MSG_FORCE, " * Support included for: lzo=%s, lzma=%s\n", (lzo==true)?"yes":"no", (lzma==true)?"yes":"no");
+    msgprintf(MSG_FORCE, " * Support included for: lzo=%s, lzma=%s, lz4=%s\n", (lzo==true)?"yes":"no", (lzma==true)?"yes":"no", (lz4==true)?"yes":"no");
     msgprintf(MSG_FORCE, " * Support for ntfs filesystems is unstable: don't use it for production.\n");
     
     if (examples==true)
@@ -237,8 +242,8 @@ int process_cmdline(int argc, char **argv)
                 break;
             case 'z': // compression level
                 g_options.fsacomplevel=atoi(optarg);
-                if (g_options.fsacomplevel<1 || g_options.fsacomplevel>9)
-                {   errprintf("[%s] is not a valid compression level, it must be an integer between 1 and 9.\n", optarg);
+                if (g_options.fsacomplevel<0 || g_options.fsacomplevel>9)
+                {   errprintf("[%s] is not a valid compression level, it must be an integer between 0 and 9.\n", optarg);
                     usage(progname, false);
                     return -1;
                 }

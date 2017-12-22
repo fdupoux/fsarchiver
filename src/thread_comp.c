@@ -32,6 +32,7 @@
 #include "comp_bzip2.h"
 #include "comp_lzma.h"
 #include "comp_lzo.h"
+#include "comp_lz4.h"
 #include "crypto.h"
 #include "syncthread.h"
 #include "thread_comp.h"
@@ -83,6 +84,12 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
                 blkinfo->blkcompalgo=COMPRESS_LZMA;
                 break;
 #endif // OPTION_LZMA_SUPPORT
+#ifdef OPTION_LZ4_SUPPORT
+            case COMPRESS_LZ4:
+                res=compress_block_lz4(blkinfo->blkrealsize, &compsize, (u8*)blkinfo->blkdata, (void*)bufcomp, bufsize, complevel);
+                blkinfo->blkcompalgo=COMPRESS_LZ4;
+                break;
+#endif // OPTION_LZ4_SUPPORT
             default:
                 free(bufcomp);
                 msgprintf(2, "invalid compression level: %d\n", (int)compalgo);
@@ -239,6 +246,16 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
                 }
                 break;
 #endif // OPTION_LZMA_SUPPORT
+#ifdef OPTION_LZ4_SUPPORT
+            case COMPRESS_LZ4:
+                if ((res=uncompress_block_lz4(blkinfo->blkcompsize, &checkorigsize, (void*)bufcomp, blkinfo->blkrealsize, (u8*)blkinfo->blkdata))!=0)
+                {   errprintf("uncompress_block_lz4()=%d failed: finalsize=%ld and checkorigsize=%ld\n", 
+                        res, (long)blkinfo->blkarsize, (long)checkorigsize);
+                    memset(bufcomp, 0, blkinfo->blkrealsize);
+                    // TODO: inc(error_counter);
+                }
+                break;
+#endif // OPTION_LZ4_SUPPORT
             default:
                 errprintf("unsupported compression algorithm: %ld\n", (long)blkinfo->blkcompalgo);
                 return -1;
