@@ -26,7 +26,7 @@ these files. Here are the required libraries:
 
 * zlib (and zlib-devel)
 * liblzo (and lzo-devel)
-* liblz4 (and lz4-devel)
+* lz4 (and lz4-devel)
 * bzip2-libs (and bzip2-devel)
 * libgcrypt (and libgcrypt-devel)
 * libblkid (and libblkid-devel)
@@ -113,8 +113,7 @@ all its dependencies.
 yum install fsarchiver
 ```
 ### installation on ubuntu (using apt-get)
-Ubuntu has an [official fsarchiver package](http://packages.ubuntu.com/xenial/fsarchiver)
-in [the universe repository](https://help.ubuntu.com/community/Repositories/Ubuntu).
+Ubuntu has an [official fsarchiver package](http://packages.ubuntu.com/bionic/fsarchiver).
 It can be installed with the standard apt-get command:
 ```
 sudo apt-get update
@@ -147,8 +146,7 @@ cd fsarchiver-0.8.3
 ```
 
 ### installation on arch-linux (using pacman)
-There is now an official package for fsarchiver in ArchLinux: for both
-[i686](http://www.archlinux.org/packages/extra/i686/fsarchiver/) and
+There is now an official package for fsarchiver in ArchLinux for 
 [x86_64](http://www.archlinux.org/packages/extra/x86_64/fsarchiver/).
 You can install it with the following command:
 ```
