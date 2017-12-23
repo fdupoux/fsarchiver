@@ -24,7 +24,7 @@ fsarchiver_LDADD	= -lpthread -lrt \
 fsarchiver_CFLAGS	= @CFLAGS@ -Wall -std=gnu99 -rdynamic -ggdb \
                           $(LZMA_CFLAGS) \
                           $(EXT2FS_CFLAGS) \
-                          $(COM_ERR_LIBS) \
+                          $(COM_ERR_CFLAGS) \
                           $(E2P_CFLAGS) \
                           $(BLKID_CFLAGS) \
                           $(UUID_CFLAGS)
