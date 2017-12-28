@@ -165,17 +165,19 @@ all the system tools installed. The best environment is
 [SystemRescueCd](http://www.system-rescue-cd.org), since it comes
 with all the linux file-system tools and a very recent FSArchiver version.
 
-It's also important that you make sure that SELinux is not enabled in the kernel
-running FSArchiver when you save a file-system which has been labeled by SELinux,
-or you can use FSArchiver with SELinux enabled if you are sure that the context
-where it's running has enough privileges to read the extended-attributes related
-to SELinux. In the other cases, the kernel could return *unlabeled* instead of
-the real value of the *security.selinux* attribute. Then FSArchiver would not
-preserve these attributes and then the system would not work when you restore
-your root filesystem, or you would have to ask the SELinux to relabel the
-file-system. The SELinux support is disabled by default if you use FSArchiver
-from SystemRescueCd-1.1.3 or newer, so your SELinux labels will be preserved if
-you use FSArchiver from that environment.
+It's also important to make sure that SELinux is not enabled in the kernel running
+FSArchiver when you save a file-system which has been labeled by SELinux. You can
+use FSArchiver with SELinux enabled if you are sure that the context where it's
+running has enough privileges to read the extended-attributes related to SELinux.
+Another option is temporarily boot with the selinux=0 option, but be aware it has
+the side effect of forcing (at least in RHEL) a full file-system relabel next time
+you boot with SELinux enabled again. In the other cases, the kernel could return
+*unlabeled* instead of the real value of the *security.selinux* attribute. Then
+FSArchiver would not preserve these attributes and the system would not work when you
+restore your root filesystem, or you would have to ask the SELinux to relabel it.
+The SELinux support is disabled by default if you use FSArchiver from
+SystemRescueCd-1.1.3 or newer, so your SELinux labels will be preserved if you use
+FSArchiver from that environment.
 
 ## Detection of the filesystems
 FSArchiver is able to detect the filesystems which are installed on all the
@@ -195,11 +197,11 @@ when you don't know what is its device name.
 
 ## Command line and its arguments
 ```
-====> fsarchiver version 0.6.12 (2010-12-25) - http://www.fsarchiver.org <====
+====> fsarchiver version 0.8.3 (2017-12-22) - http://www.fsarchiver.org <====
 Distributed under the GPL v2 license (GNU General Public License v2).
- * usage: fsarchiver [<options>] <command> <archive> [<part1> [<part2> [...]]]
+ * usage: fsarchiver [<options>] <command> <archive> [<dev1> [<dev2> [...]]]
 <commands>
- * savefs: save filesystems to an archive file (backup a partition to a file)
+ * savefs: save filesystems to an archive file (backup a device to a file)
  * restfs: restore filesystems from an archive (overwrites the existing data)
  * savedir: save directories to the archive (similar to a compressed tarball)
  * restdir: restore data from an archive which is not based on a filesystem
@@ -210,18 +212,19 @@ Distributed under the GPL v2 license (GNU General Public License v2).
  -v: verbose mode (can be used several times to increase the level of details)
  -d: debug mode (can be used several times to increase the level of details)
  -A: allow to save a filesystem which is mounted in read-write (live backup)
- -a: allow running savefs when partition mounted without the acl/xattr options
+ -a: allow to save a filesystem when acls and xattrs are not supported
+ -x: enable support for experimental features (they are disabled by default)
  -e <pattern>: exclude files and directories that match that pattern
  -L <label>: set the label of the archive (comment about the contents)
- -z <level>: compression level from 1 (very fast)  to  9 (very good) default=3
+ -z <level>: compression level from 0 (very fast) to 9 (very good) default=3
  -s <mbsize>: split the archive into several files of <mbsize> megabytes each
- -j <count>: create more than one compression thread. useful on multi-core cpu
+ -j <count>: create more than one (de)compression thread. useful on multi-core cpu
  -c <password>: encrypt/decrypt data in archive, "-c -" for interactive password
  -h: show help and information about how to use fsarchiver with examples
  -V: show program version and exit
 <information>
- * Support included for: lzo=yes, lzma=yes
- * support for ntfs filesystems is unstable: don't use it for production.
+ * Support included for: lzo=yes, lzma=yes, lz4=yes
+ * Support for ntfs filesystems is unstable: don't use it for production.
 <examples>
  * save only one filesystem (/dev/sda1) to an archive:
    fsarchiver savefs /data/myarchive1.fsa /dev/sda1
@@ -235,6 +238,10 @@ Distributed under the GPL v2 license (GNU General Public License v2).
    fsarchiver restfs /data/arch2.fsa id=0,dest=/dev/sda1 id=1,dest=/dev/sdb1
  * restore a filesystem from an archive and convert it to reiserfs:
    fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=reiserfs
+ * restore a filesystem from an archive and specify extra mkfs options:
+   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,mkfs=ext4,mkfsopt="-I 256"
+ * restore a filesystem from an archive and specify a new label and a new UUID:
+   fsarchiver restfs /data/myarchive1.fsa id=0,dest=/dev/sda1,label=root,uuid=5f6e5f4f-dc2a-4dbd-a6ea-9ca997cde75e
  * save the contents of /usr/src/linux to an archive (similar to tar):
    fsarchiver savedir /data/linux-sources.fsa /usr/src/linux
  * save a filesystem (/dev/sda1) to an archive split into volumes of 680MB:
@@ -247,10 +254,10 @@ Distributed under the GPL v2 license (GNU General Public License v2).
    fsarchiver savefs /data/myarchive.fsa --exclude=/usr/share
  * save a filesystem (/dev/sda1) to an encrypted archive:
    fsarchiver savefs -c mypassword /data/myarchive1.fsa /dev/sda1
- * Same as before but prompt for password in the terminal:
+ * same as before but prompt for password in the terminal:
    fsarchiver savefs -c - /data/myarchive1.fsa /dev/sda1
  * extract an archive made of simple files to /tmp/extract:
    fsarchiver restdir /data/linux-sources.fsa /tmp/extract
- * show information about an archive and its file systems:
+ * show information about an archive and its filesystems:
    fsarchiver archinfo /data/myarchive2.fsa
 ```

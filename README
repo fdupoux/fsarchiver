@@ -11,8 +11,9 @@ different filesystem. Unlike tar/dar, FSArchiver also creates the
 filesystem when it extracts the data to devices. Everything is checksummed
 in the archive in order to protect the data. If the archive is corrupt, you
 just lose the current file, not the whole archive. FSArchiver is released
-under the GPLv2 license. You should read the Quick start guide if you are
-using FSArchiver for the first time.
+under the GPLv2 license. You should read the Quick Start guide
+[http://www.fsarchiver.org/quickstart/] if you are using FSArchiver for the
+first time.
 
 Detailed description
 --------------------
