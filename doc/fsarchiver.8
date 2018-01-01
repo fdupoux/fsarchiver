@@ -15,8 +15,8 @@ just lose the current file, not the whole archive.
 .SH LINKS
 .SS Official project homepage:
 http://www.fsarchiver.org
-.SS Quick Start Guide:
-http://www.fsarchiver.org/QuickStart
+.SS Quick Start guide:
+http://www.fsarchiver.org/quickstart/
 .SS Forums where to ask questions:
 http://www.fsarchiver.org/forums/
 .SS Git repository:
@@ -135,7 +135,7 @@ backup. Using LVM snapshots is the recommended way to make backups since it
 will provide consistency, but it is only available for filesystems which
 are on LVM logical volumes.
 .IP "\fB\-a, \-\-allow-no-acl-xattr\fP"
-Allow to to save a filesystem when ACLs and extended attributes are not
+Allow to save a filesystem when ACLs and extended attributes are not
 supported (or are disabled) by the kernel. By default fsarchiver fails with
 an error if it cannot access ACLs and extended attributes, since they would
 not be saved. If you do not need ACLs and extended attributes preserved
@@ -157,7 +157,7 @@ memory requirement increases a lot with the best compression levels, and it
 is multiplied by the number of compression threads (option -j). Level 9 is
 considered as an extreme compression level and requires an huge amount of
 memory to run. For more details please read this page:
-http://www.fsarchiver.org/Compression
+http://www.fsarchiver.org/compression/
 .IP "\fB\-s mbsize, \-\-split=mbsize\fP"
 Split the archive into several files of mbsize megabytes each.
 .IP "\fB\-j count, \-\-jobs=count\fP"
