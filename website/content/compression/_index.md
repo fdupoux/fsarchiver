@@ -6,8 +6,7 @@ draft = false
 +++
 
 ## About
-Recent fsarchiver versions comes with support for four different compression
-algorithms:
+Different compression algorithms are supported:
 
 * lzo: very fast compression but it does not compress well. You can use it
 if you have a very slow cpu. You should consider lz4 if you want fast decompression.
