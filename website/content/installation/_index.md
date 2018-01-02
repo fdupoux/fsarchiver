@@ -142,7 +142,7 @@ distributions, that is the recommended way for most users:
 
 * [fsarchiver-0.8.3-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.3/fsarchiver-0.8.3-1.el7.x86_64.rpm)
 
-If you want to recompile fsarchiver yourself, use the following instructions:
+If you want to compile fsarchiver yourself, use the following instructions:
 ```
 yum install zlib-devel bzip2-devel lzo-devel lz4-devel xz-devel e2fsprogs-devel libgcrypt-devel libattr-devel libblkid-devel
 tar xfz fsarchiver-0.8.3.tar.gz
