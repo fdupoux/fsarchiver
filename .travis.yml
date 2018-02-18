@@ -13,7 +13,7 @@ install:
   # Generate build files
   - ./autogen.sh
   # Build application
-  - ./configure
+  - ./configure --disable-zstd
   - make
 
 script:
