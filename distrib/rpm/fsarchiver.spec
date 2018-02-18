@@ -20,6 +20,7 @@ BuildRequires:	bzip2-devel
 BuildRequires:	lzo-devel
 BuildRequires:	lz4-devel
 BuildRequires:	xz-devel
+BuildRequires:	libzstd-devel
 
 %description
 FSArchiver is a system tool that allows you to save the contents of a
