@@ -88,8 +88,10 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -x: enable support for experimental features (they are disabled by default)\n");
     msgprintf(MSG_FORCE, " -e <pattern>: exclude files and directories that match that pattern\n");
     msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
-    msgprintf(MSG_FORCE, " -z <level>: legacy compression level from 0 (very fast) to 9 (very good) default=3\n");
+    msgprintf(MSG_FORCE, " -z <level>: legacy compression level from 0 (very fast) to 9 (very good)\n");
+#ifdef OPTION_ZSTD_SUPPORT
     msgprintf(MSG_FORCE, " -Z <level>: zstd compression level from 1 (very fast) to 22 (very good)\n");
+#endif // OPTION_ZSTD_SUPPORT
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one (de)compression thread. useful on multi-core cpu\n");
     msgprintf(MSG_FORCE, " -c <password>: encrypt/decrypt data in archive, \"-c -\" for interactive password\n");
@@ -147,7 +149,9 @@ static struct option const long_options[] =
     {"verbose", no_argument, NULL, 'v'},
     {"debug", no_argument, NULL, 'd'},
     {"compress", required_argument, NULL, 'z'},
+#ifdef OPTION_ZSTD_SUPPORT
     {"zstd", required_argument, NULL, 'Z'},
+#endif // OPTION_ZSTD_SUPPORT
     {"jobs", required_argument, NULL, 'j'},
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
@@ -188,13 +192,21 @@ int process_cmdline(int argc, char **argv)
     g_options.verboselevel=0;
     g_options.debuglevel=0;
     g_options.compressjobs=1;
-    g_options.fsacomplevel=3; // fsa level 3 = "gzip -6"
-    g_options.compressalgo=FSA_DEF_COMPRESS_ALGO;
-    g_options.compresslevel=FSA_DEF_COMPRESS_LEVEL; // default level for gzip
     g_options.datablocksize=FSA_DEF_BLKSIZE;
     g_options.encryptalgo=ENCRYPT_NONE;
     snprintf(g_options.archlabel, sizeof(g_options.archlabel), "<none>");
     g_options.encryptpass[0]=0;
+
+    // set default compression mode
+#ifdef OPTION_ZSTD_SUPPORT
+    g_options.fsacomplevel=FSA_DEF_ZSTD_LEVEL;
+    g_options.compressalgo=COMPRESS_ZSTD;
+    g_options.compresslevel=FSA_DEF_ZSTD_LEVEL;
+#else
+    g_options.fsacomplevel=3; // fsa level 3 = "gzip -6"
+    g_options.compressalgo=FSA_DEF_COMPRESS_ALGO;
+    g_options.compresslevel=FSA_DEF_COMPRESS_LEVEL; // default level for gzip
+#endif // OPTION_ZSTD_SUPPORT
 
     while ((c = getopt_long(argc, argv, "oaAvdz:Z:j:hVs:c:L:e:x", long_options, NULL)) != EOF)
     {
@@ -260,6 +272,7 @@ int process_cmdline(int argc, char **argv)
                     msgprintf(MSG_FORCE, "Compression levels >= 8 may require a huge amount of memory\n"
                         "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
                 break;
+#ifdef OPTION_ZSTD_SUPPORT
             case 'Z': // zstd compression level
                 g_options.compressalgo=COMPRESS_ZSTD;
                 g_options.compresslevel=atoi(optarg);
@@ -273,6 +286,7 @@ int process_cmdline(int argc, char **argv)
                     msgprintf(MSG_FORCE, "Compression levels >= 20 may require a huge amount of memory\n"
                         "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
                 break;
+#endif // OPTION_ZSTD_SUPPORT
             case 'c': // encryption
                 g_options.encryptalgo=ENCRYPT_BLOWFISH;
                 if ((strlen(optarg)<FSA_MIN_PASSLEN || strlen(optarg)>FSA_MAX_PASSLEN) && strcmp(optarg, "-")!=0)

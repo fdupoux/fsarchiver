@@ -124,8 +124,9 @@ enum {OLDERR_FATAL=1,
 #define FSA_MAX_QUEUESIZE        32
 #define FSA_MAX_BLKSIZE          921600
 #define FSA_DEF_BLKSIZE          262144
-#define FSA_DEF_COMPRESS_ALGO    COMPRESS_GZIP  // compress using gzip by default
-#define FSA_DEF_COMPRESS_LEVEL   6              // compress with "gzip -6" by default
+#define FSA_DEF_COMPRESS_ALGO    COMPRESS_GZIP  // legacy compression is using gzip by default
+#define FSA_DEF_COMPRESS_LEVEL   6              // legacy compression is with "gzip -6" by default
+#define FSA_DEF_ZSTD_LEVEL       8              // default compression level when zstd is used
 #define FSA_MAX_SMALLFILECOUNT   512            // there can be up to FSA_MAX_SMALLFILECOUNT files copied in a single data block
 #define FSA_MAX_SMALLFILESIZE    131072         // files smaller than that will be grouped with other small files in a single data block
 #define FSA_COST_PER_FILE        16384          // how much it cost to copy an empty file/dir/link: used to eval the progress bar
