@@ -152,10 +152,17 @@ Set the label of the archive: it is just a comment about its contents. It
 can be used to remember a particular thing about the archive or the state
 of the filesystem for instance.
 .IP "\fB\-z level, \-\-compress=level\fP"
-Valid compression levels are between 0 (very fast) and 9 (very good). The
+Legacy compression levels are between 0 (very fast) and 9 (very good). The
 memory requirement increases a lot with the best compression levels, and it
 is multiplied by the number of compression threads (option -j). Level 9 is
 considered as an extreme compression level and requires an huge amount of
+memory to run. For more details please read this page:
+http://www.fsarchiver.org/compression/
+.IP "\fB\-Z level, \-\-zstd=level\fP"
+Zstd compression levels are between 1 (very fast) and 22 (very good). The
+memory requirement increases a lot with the best compression levels, and it
+is multiplied by the number of compression threads (option -j). Levels above
+20 are considered as extreme compression levels and requires an huge amount of
 memory to run. For more details please read this page:
 http://www.fsarchiver.org/compression/
 .IP "\fB\-s mbsize, \-\-split=mbsize\fP"
