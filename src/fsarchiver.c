@@ -166,6 +166,7 @@ static struct option const long_options[] =
 int process_cmdline(int argc, char **argv)
 {
     char *partition[FSA_MAX_FSPERARCH];
+    char longopts[256];
     bool runasroot=true;
     char *probemode;
     sigset_t mask_set;
@@ -202,13 +203,15 @@ int process_cmdline(int argc, char **argv)
     g_options.fsacomplevel=FSA_DEF_ZSTD_LEVEL;
     g_options.compressalgo=COMPRESS_ZSTD;
     g_options.compresslevel=FSA_DEF_ZSTD_LEVEL;
+    snprintf(longopts, sizeof(longopts), "oaAvdj:hVs:c:L:e:xz:Z:");
 #else
     g_options.fsacomplevel=3; // fsa level 3 = "gzip -6"
     g_options.compressalgo=FSA_DEF_COMPRESS_ALGO;
     g_options.compresslevel=FSA_DEF_COMPRESS_LEVEL; // default level for gzip
+    snprintf(longopts, sizeof(longopts), "oaAvdj:hVs:c:L:e:xz:");
 #endif // OPTION_ZSTD_SUPPORT
 
-    while ((c = getopt_long(argc, argv, "oaAvdz:Z:j:hVs:c:L:e:x", long_options, NULL)) != EOF)
+    while ((c = getopt_long(argc, argv, longopts, long_options, NULL)) != EOF)
     {
         switch (c)
         {
