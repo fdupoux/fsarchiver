@@ -29,33 +29,29 @@
 #ifdef OPTION_ZSTD_SUPPORT
 int compress_block_zstd(u64 origsize, u64 *compsize, u8 *origbuf, u8 *compbuf, u64 compbufsize, int level)
 {
-    int destsize=compbufsize;
-    int res;
+    int res=0;
 
-    res=ZSTD_compress((char*)compbuf, destsize, (const char*)origbuf, (int)origsize, level);
-    if (res < 0) {
-        errprintf("ZSTD_compress(): failed.\n");
+    if (ZSTD_isError((res=ZSTD_compress((char*)compbuf, compbufsize, (const char*)origbuf, (int)origsize, level))))
+    {   errprintf("ZSTD_compress(): failed: res=%d\n", res);
         return FSAERR_UNKNOWN;
-    } else {
-        *compsize=(u64)res;
+    }
+    else
+    {   *compsize=(u64)res;
         return FSAERR_SUCCESS;
     }
-
-    return FSAERR_UNKNOWN;
 }
 
 int uncompress_block_zstd(u64 compsize, u64 *origsize, u8 *origbuf, u64 origbufsize, u8 *compbuf)
 {
-    int destsize=origbufsize;
-    int res;
+    int res=0;
 
-    if((res=ZSTD_decompress((char*)origbuf, destsize, (char*)compbuf, compsize)) > 0){
-        *origsize=(u64)res;
+    if (ZSTD_isError((res=ZSTD_decompress((char*)origbuf, origbufsize, (char*)compbuf, compsize))))
+    {   errprintf("ZSTD_decompress(): failed: res=%d\n", res);
+        return FSAERR_UNKNOWN;
+    }
+    else
+    {   *origsize=(u64)res;
         return FSAERR_SUCCESS;
     }
-
-    errprintf("ZSTD_decompress() failed, res=%d\n", res);
-
-    return FSAERR_UNKNOWN;
 }
 #endif // OPTION_ZSTD_SUPPORT
