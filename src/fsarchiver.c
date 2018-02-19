@@ -285,11 +285,14 @@ int process_cmdline(int argc, char **argv)
                     usage(progname, false);
                     return -1;
                 }
+                g_options.datablocksize=(g_options.compresslevel <= 19)?(FSA_DEF_BLKSIZE):(FSA_MAX_BLKSIZE);
                 if (g_options.compresslevel>=20)
-                    msgprintf(MSG_FORCE, "Compression levels >= 20 may require a huge amount of memory\n"
+                {   msgprintf(MSG_FORCE, "Compression levels >= 20 may require a huge amount of memory\n"
                         "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
+                }
 #else
                 errprintf("zstd compression is not available as its support has been disabled at compilation time\n");
+                return -1;
 #endif // OPTION_ZSTD_SUPPORT
                 break;
             case 'c': // encryption
