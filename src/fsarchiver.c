@@ -271,6 +271,11 @@ int process_cmdline(int argc, char **argv)
                 }
                 if (options_select_compress_level(g_options.fsacomplevel)<0)
                     return -1;
+#ifdef OPTION_ZSTD_SUPPORT
+                msgprintf(MSG_FORCE, "Legacy compression methods (-z) are deprecated.\n"
+                    "It is recommended to switch to zstd using the -Z option.\n"
+                    "Please read \"http://www.fsarchiver.org/Compression\" for more details.\n");
+#endif // OPTION_ZSTD_SUPPORT
                 if (g_options.fsacomplevel>=8)
                     msgprintf(MSG_FORCE, "Compression levels >= 8 may require a huge amount of memory\n"
                         "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
