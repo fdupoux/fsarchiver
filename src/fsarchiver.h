@@ -123,7 +123,7 @@ enum {OLDERR_FATAL=1,
 #define FSA_MAX_COMPJOBS         32
 #define FSA_MAX_QUEUESIZE        32
 #define FSA_MAX_BLKSIZE          921600
-#define FSA_DEF_BLKSIZE          262144
+#define FSA_DEF_BLKSIZE          524288
 #define FSA_DEF_COMPRESS_ALGO    COMPRESS_GZIP  // legacy compression is using gzip by default
 #define FSA_DEF_COMPRESS_LEVEL   6              // legacy compression is with "gzip -6" by default
 #define FSA_DEF_ZSTD_LEVEL       8              // default compression level when zstd is used
