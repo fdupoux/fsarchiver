@@ -149,9 +149,7 @@ static struct option const long_options[] =
     {"verbose", no_argument, NULL, 'v'},
     {"debug", no_argument, NULL, 'd'},
     {"compress", required_argument, NULL, 'z'},
-#ifdef OPTION_ZSTD_SUPPORT
     {"zstd", required_argument, NULL, 'Z'},
-#endif // OPTION_ZSTD_SUPPORT
     {"jobs", required_argument, NULL, 'j'},
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
@@ -166,7 +164,6 @@ static struct option const long_options[] =
 int process_cmdline(int argc, char **argv)
 {
     char *partition[FSA_MAX_FSPERARCH];
-    char longopts[256];
     bool runasroot=true;
     char *probemode;
     sigset_t mask_set;
@@ -203,15 +200,13 @@ int process_cmdline(int argc, char **argv)
     g_options.fsacomplevel=FSA_DEF_ZSTD_LEVEL;
     g_options.compressalgo=COMPRESS_ZSTD;
     g_options.compresslevel=FSA_DEF_ZSTD_LEVEL;
-    snprintf(longopts, sizeof(longopts), "oaAvdj:hVs:c:L:e:xz:Z:");
 #else
     g_options.fsacomplevel=3; // fsa level 3 = "gzip -6"
     g_options.compressalgo=FSA_DEF_COMPRESS_ALGO;
     g_options.compresslevel=FSA_DEF_COMPRESS_LEVEL; // default level for gzip
-    snprintf(longopts, sizeof(longopts), "oaAvdj:hVs:c:L:e:xz:");
 #endif // OPTION_ZSTD_SUPPORT
 
-    while ((c = getopt_long(argc, argv, longopts, long_options, NULL)) != EOF)
+    while ((c = getopt_long(argc, argv, "oaAvdj:hVs:c:L:e:xz:Z:", long_options, NULL)) != EOF)
     {
         switch (c)
         {
@@ -280,8 +275,8 @@ int process_cmdline(int argc, char **argv)
                     msgprintf(MSG_FORCE, "Compression levels >= 8 may require a huge amount of memory\n"
                         "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
                 break;
-#ifdef OPTION_ZSTD_SUPPORT
             case 'Z': // zstd compression level
+#ifdef OPTION_ZSTD_SUPPORT
                 g_options.compressalgo=COMPRESS_ZSTD;
                 g_options.compresslevel=atoi(optarg);
                 g_options.fsacomplevel=atoi(optarg);
@@ -293,8 +288,10 @@ int process_cmdline(int argc, char **argv)
                 if (g_options.compresslevel>=20)
                     msgprintf(MSG_FORCE, "Compression levels >= 20 may require a huge amount of memory\n"
                         "Please read the man page or \"http://www.fsarchiver.org/Compression\" for more details.\n");
-                break;
+#else
+                errprintf("zstd compression is not available as its support has been disabled at compilation time\n");
 #endif // OPTION_ZSTD_SUPPORT
+                break;
             case 'c': // encryption
                 g_options.encryptalgo=ENCRYPT_BLOWFISH;
                 if ((strlen(optarg)<FSA_MIN_PASSLEN || strlen(optarg)>FSA_MAX_PASSLEN) && strcmp(optarg, "-")!=0)
