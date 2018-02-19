@@ -16,23 +16,25 @@ for decompression hence it is recommended over lzo.
 * gzip: most common compression algorithm. It is quite fast and the compression
 ratio is good.
 * bzip2: quite slow compression algorithm, but it has a very good compression ratio.
-* xz/lzma: quite recent algorithm. It has an excellent compression ratio but it is
-very slow to compress. Compared to bzip2, it is much faster to decompress.
-* zstd: provides better ratio/speed than other algorithms for most situations
-(from good speed to good ratio). Hence it is the recommended compression method
-in recent fsarchiver versions
+* xz/lzma: it has an excellent compression ratio but it is very slow to compress
+and much faster than bzip2 to decompress.
+* zstd: quite recent algorithm which provides better ratio/speed than other
+algorithms in most situations (from good speed to good ratio). Hence it is the
+recommended compression method in recent fsarchiver versions.
 
 Each algorithm provides several levels of speed/efficiency. The compression
 algorithm you will use depends on how fast your processor is, how much disk
-space you have, and how big the archive can be. By default, fsarchiver is
-compressing using gzip with its sixth level of compression.
+space you have, and how big the archive can be.
 
 ## Installation
 All these compression algorithms are implemented in libraries that fsarchiver is
 using. It means you need these libraries to be installed on your computer to
 compile fsarchiver with the support for these compression algorithms. gzip,
 bzip2 and xz are very common so it must not be a problem. lzo is not always
-installed so you may have to install it, or to disable support for it.
+installed so you may have to install it, or to disable support for it. lz4 has
+become popular and should be available in all recent distributions. Also zstd
+is quite recent but very popular and well supported in recent Linux
+distributions, but it may not have an official package in older distributions.
 
 ## Multi-threading
 fsarchiver is able to do multi-threading. Unlike many compression programs that
