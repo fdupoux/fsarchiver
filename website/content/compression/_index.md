@@ -110,7 +110,7 @@ be much faster than xz. The bzip2 algorithm has become irrelevant as both xz and
 zstd provide better combinations of ratio/speed for high compression levels.
 
 ## Memory requirement
-You must be aware that high lzma compression levels require a lot of memory
+You must be aware that high xz and zstd compression levels require a lot of memory
 especially at compression time. These compression levels are recommended on
 recent computers having multiple cpu cores and large amounts of memory. If the
 compression fails because lack of memory, the uncompressed version of the data
