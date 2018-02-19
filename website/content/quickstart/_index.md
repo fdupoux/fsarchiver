@@ -158,7 +158,7 @@ FSArchiver requires the file-system tools to be installed to save the filesystem
 attributes (when you do a **fsarchiver savefs**) and it also requires these tools
 to recreate the file-system when you do a **fsarchive restfs**. Anyway, you only
 need the tools of the current file-system to be installed. In other words, you
-don't require xfsprogs to be installed if you only work on an ext3 file-system. 
+don't require xfsprogs to be installed if you only work on an ext3 file-system.
 
 For these reasons, it's a good idea to run FSArchiver from an environment with
 all the system tools installed. The best environment is
@@ -197,7 +197,7 @@ when you don't know what is its device name.
 
 ## Command line and its arguments
 ```
-====> fsarchiver version 0.8.3 (2017-12-22) - http://www.fsarchiver.org <====
+====> fsarchiver version 0.8.4 (2018-02-19) - http://www.fsarchiver.org <====
 Distributed under the GPL v2 license (GNU General Public License v2).
  * usage: fsarchiver [<options>] <command> <archive> [<dev1> [<dev2> [...]]]
 <commands>
@@ -216,7 +216,8 @@ Distributed under the GPL v2 license (GNU General Public License v2).
  -x: enable support for experimental features (they are disabled by default)
  -e <pattern>: exclude files and directories that match that pattern
  -L <label>: set the label of the archive (comment about the contents)
- -z <level>: compression level from 0 (very fast) to 9 (very good) default=3
+ -z <level>: legacy compression level from 0 (very fast) to 9 (very good)
+ -Z <level>: zstd compression level from 1 (very fast) to 22 (very good)
  -s <mbsize>: split the archive into several files of <mbsize> megabytes each
  -j <count>: create more than one (de)compression thread. useful on multi-core cpu
  -c <password>: encrypt/decrypt data in archive, "-c -" for interactive password

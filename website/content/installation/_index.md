@@ -29,11 +29,12 @@ these files. Here are the required libraries:
 * libblkid (and libblkid-devel)
 * e2fsprogs-libs (e2fsprogs-devel)
 * [xz-utils](http://tukaani.org/xz/) (and xz-devel)
+* [zstd](https://facebook.github.io/zstd/) (and libzstd-devel)
 
 You can selectively disable support for missing libraries or header files. For example,
-on a system that lacks xz/lzma and lzo:
+on a system that lacks lzo and zstd:
 ```
-./configure --prefix=/usr --disable-lzma --disable-lzo && make && make install
+./configure --prefix=/usr --disable-lzo --disable-zstd && make && make install
 ```
 
 You can also use the static binary that provides support for all compression levels
@@ -42,8 +43,8 @@ and does not require the libraries to be installed on your system.
 To compile the sources, you have to run follow these instructions:
 
 #### Download the latest sources
-First, you have to download [fsarchiver-0.8.3.tar.gz]
-(https://github.com/fdupoux/fsarchiver/releases/download/0.8.3/fsarchiver-0.8.3.tar.gz).
+First, you have to download [fsarchiver-0.8.4.tar.gz]
+(https://github.com/fdupoux/fsarchiver/releases/download/0.8.4/fsarchiver-0.8.4.tar.gz).
 Just save it to a temporary directory.
 
 #### Extract the sources in a temporary directory
@@ -54,7 +55,7 @@ tar xfz /path/to/fsarchiver-x.y.z.tar.gz
 ```
 
 #### Compile and install from sources
-``` 
+```
 cd /var/tmp/fsarchiver/fsarchiver-x.y.z
 ./configure --prefix=/usr
 make && make install
@@ -140,13 +141,13 @@ pacman -S fsarchiver
 You should use these RPM packages that have been built for RHEL7 based
 distributions, that is the recommended way for most users:
 
-* [fsarchiver-0.8.3-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.3/fsarchiver-0.8.3-1.el7.x86_64.rpm)
+* [fsarchiver-0.8.4-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.4/fsarchiver-0.8.4-1.el7.x86_64.rpm)
 
 If you want to compile fsarchiver yourself, use the following instructions:
 ```
 yum install zlib-devel bzip2-devel lzo-devel lz4-devel xz-devel e2fsprogs-devel libgcrypt-devel libattr-devel libblkid-devel
-tar xfz fsarchiver-0.8.3.tar.gz
-cd fsarchiver-0.8.3
+tar xfz fsarchiver-0.8.4.tar.gz
+cd fsarchiver-0.8.4
 ./configure --prefix=/usr && make && make install
 ```
 

@@ -5,6 +5,8 @@ nameInMenu = "ChangeLog"
 draft = false
 +++
 
+* **0.8.4 (2018-02-19):**:
+  * Added support for zstd compression algorithm (New option "-Z")
 * **0.8.3 (2017-12-22):**
   * Implemented LZ4 compression (Contribution from Cristian Vazquez)
 * **0.8.2 (2017-08-22):**
