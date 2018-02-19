@@ -1,7 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.8.4:
-  - Not released yet
+  - Added support for zstd compression algorithm (New option -Z)
 * 0.8.3 (2017-12-22):
   - Implemented LZ4 compression (Contribution from Cristian Vazquez)
 * 0.8.2 (2017-08-22):
@@ -9,7 +9,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
   - Improved support of large block device when restoring extfs filesystems
 * 0.8.1 (2017-01-10):
   - Improved support for XFS filesystem (contributions from Marcos Mello)
-  - Updated documentation and comments in the sources (Marcos Mello) 
+  - Updated documentation and comments in the sources (Marcos Mello)
 * 0.8.0 (2016-08-09):
   - Implemented FAT filesystem support for EFI system partitions
   - Allow user to specify new filesystem label or UUID during restfs
@@ -78,7 +78,7 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
   - Allow non root users to use "fsarchiver archinfo" as long as they have read permissions on the archive
 * 0.6.6 (2010-01-24):
   - Fix: don't remove the archive file when savefs/savedir fails because the archive already exists
-  - Partitions already mounted are remounted with MS_BIND to have access to files hidden by mounted filesystems 
+  - Partitions already mounted are remounted with MS_BIND to have access to files hidden by mounted filesystems
   - Analyse filesystems only when they are all accessible to prevent having to wait and then get an error
   - Moved management of data files (open/write/md5sum) from extract.c to a separate object (datafile.c)
   - Important internal changes, renaming of functions/files, and simplifications for better consistency
@@ -260,38 +260,38 @@ fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
   - Internal: replaced OBJTYPE_END with a specific end of filesystem header
 * 0.2.3 (2008-12-30):
   - Ability to restore archives with corrupt files or blocks headers
-  - Internal: merged std-attr+ext-attr into a single dico (using sections) 
+  - Internal: merged std-attr+ext-attr into a single dico (using sections)
 * 0.2.2 (2008-12-29):
   - Support for large files (files bigger than 2GB)
-  - Thanks to Setsuna for having reported problems with large files 
+  - Thanks to Setsuna for having reported problems with large files
 * 0.2.1 (2008-12-27):
-  - Ability to restore archives with corrupt file contents 
+  - Ability to restore archives with corrupt file contents
 * 0.2.0 (2008-12-25):
-  - Support for multi-threaded compression (option -j) 
+  - Support for multi-threaded compression (option -j)
 * 0.1.9 (2008-12-23):
   - Bug fix: it was not possible to restore an ext{2,3,4} partition if it was mounted read/write during the savefs
   - Bug fix: opening an archive may fail in restfs for no reason
-  - Thanks to Setsuna for these bug reports 
+  - Thanks to Setsuna for these bug reports
 * 0.1.8 (2008-12-07):
   - Preservation of the reiser4 filesystem attributes (label, uuid, block-size)
-  - Preservation of the jfs filesystem attributes (label, uuid) 
+  - Preservation of the jfs filesystem attributes (label, uuid)
 * 0.1.7 (2008-12-07):
-  - Preservation of the xfs filesystem attributes (label, uuid, block-size) 
+  - Preservation of the xfs filesystem attributes (label, uuid, block-size)
 * 0.1.6 (2008-12-02):
-  - Preservation of the ext2/ext3/ext4 filesystem-features and default mount-options 
+  - Preservation of the ext2/ext3/ext4 filesystem-features and default mount-options
 * 0.1.5 (2008-11-30):
-  - Fixed bugs related to the standard and extended attributes 
+  - Fixed bugs related to the standard and extended attributes
 * 0.1.4 (2008-11-28):
   - Preservation of the reiserfs-3.x attributes (label, uuid, block-size)
-  - Fixed bugs about atime/mtime properties which could have be dropped for files 
+  - Fixed bugs about atime/mtime properties which could have be dropped for files
 * 0.1.3 (2008-11-23):
   - Preservation of the ext2/ext3 attributes (label, uuid, block-size)
-  - Added support for bzip2 compression 
+  - Added support for bzip2 compression
 * 0.1.2 (2008-11-15):
   - Improved checksumming (md5 per file and checksum per block)
-  - Added support for the extended attributes (aka EA, xattr) 
+  - Added support for the extended attributes (aka EA, xattr)
 * 0.1.1 (2008-11-12):
   - Improved restoration of corrupt archives
-  - Signal handler to cleanly stop the current operation 
+  - Signal handler to cleanly stop the current operation
 * 0.1.0 (2008-11-10):
   - First public release

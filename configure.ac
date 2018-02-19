@@ -87,6 +87,19 @@ then
     AC_CHECK_HEADERS(lz4.h)
 fi
 
+dnl option to disable zstd support (for people who don't have zstd installed)
+AC_ARG_ENABLE([zstd],
+    [AS_HELP_STRING([--disable-zstd], [don't compile the support for zstd compression (which requires libzstd)])],
+    [enable_zstd=$enableval],
+    [enable_zstd=yes])
+if test "x$enable_zstd" = "xyes"
+then
+    AC_DEFINE([OPTION_ZSTD_SUPPORT], 1, [Define to 1 to enable the support for zstd compression])
+    AC_CHECKING([for zstd (library and header files)])
+    AC_CHECK_LIB([zstd], [ZSTD_compress], [LIBS="$LIBS -lzstd"], AC_MSG_ERROR([*** zstd not found or disable zstd support using --disable-zstd ***] ))
+    AC_CHECK_HEADERS(zstd.h)
+fi
+
 dnl check libgcrypt (required for crypto and md5)
 AC_CHECKING([for libgcrypt (library and header files)])
 AC_CHECK_LIB([gcrypt], [gcry_cipher_encrypt], [LIBS="$LIBS -lgcrypt -lgpg-error"], AC_MSG_ERROR([*** libgcrypt not found]))
