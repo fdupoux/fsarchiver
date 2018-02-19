@@ -18,6 +18,9 @@ ratio is good.
 * bzip2: quite slow compression algorithm, but it has a very good compression ratio.
 * xz/lzma: quite recent algorithm. It has an excellent compression ratio but it is
 very slow to compress. Compared to bzip2, it is much faster to decompress.
+* zstd: provides better ratio/speed than other algorithms for most situations
+(from good speed to good ratio). Hence it is the recommended compression method
+in recent fsarchiver versions
 
 Each algorithm provides several levels of speed/efficiency. The compression
 algorithm you will use depends on how fast your processor is, how much disk
@@ -49,8 +52,18 @@ take too much time to compress. Keep in mind that you can use the
 multi-threading option at compression as well as decompression, even if it's
 more interesting at compression which needs more power.
 
-## Compression levels available
-FSArchiver provides ten different compression levels. You can choose the
+## Compression levels options
+There are two options which you can use to choose the compression level you want
+to use. The legacy option is "-z" (lowercase) and it provides 10 compression
+levels with various speeds and ratios. These 10 levels correspond to five
+compression algorithms (lz4, lzo, gzip, bzip2, xz). The new option is "-Z"
+(uppercase) and it provides 22 compression levels which are all implemented by
+zstd. This algorithm provides better combinations of speed/ratio than other
+algorithms in most cases. Hence it is recommended to switch to this new
+compression option.
+
+## Legacy compression levels
+FSArchiver provides ten legacy compression levels. You can choose the
 compression level to use when you create an archive (by doing a **savefs** or
 **savedir**). You just have to use option **-z X** where X is the level to
 use. When you use a low number, the compression will be very quick and less
@@ -72,22 +85,29 @@ lot of time, and also the memory requirement can be very big.
 | 8         | lzma -6        |
 | 9         | lzma -9        |
 
+## New compression levels
+FSArchiver 0.8.4 introduced support for zstd compression. This algorithm
+provides better combinations of speed/ratio than legacy algorithms in most
+cases. It is almost as fast as lz4 with level 1 and it its ratio is almost as
+good as xz with level 22. Compression methods in the medium of the range (gzip
+and bzip2) have become irrelevant as zstd can provide results which are both
+better and faster.
+
+You can choose the compression level when you create an archive (by doing a
+**savefs** or **savedir**). You just have to use option **-Z X** where X is the
+level to use. When you use a low number, the compression will be very quick and
+less efficient. The memory requirement for compressing and decompressing will be
+small. The higher the compression level is, the better the compression will be
+and the smaller the archive will be.
+
 ## High compression levels
-bzip2 and lzma are the best compression algorithms available. In general, bzip2
-is 15% better than gzip, and lzma is 15% better than bzip2. Better means that
-the archive is 15% smaller in these examples.
-
-Lzma has another interesting feature: its decompression is very fast, about
-three times faster than bzip2, even if its compression is better. So if you
-accept to spend more time at compression, -z8 will provide a file which is
-smaller than what an average bzip2 could do, and it will decompress faster.
-It's very interesting if you want to create an archive just once, and to
-extract it several times (ex: software deployment).
-
-If you don't want the compression to be too slow, you can also use -z7
-which will be just as good as bzip2, with smilar compression time, but a lot
-faster to decompress. So the fastest lzma option is often a better
-choice than bzip2.
+xz and zstd provide the best compression ratios, hence a smaller archive file.
+The xz decompression is faster than bzip2, and the zstd decompression is even
+faster than xz for similar ratios. Hence it is recommended to use zstd with a
+high compression level if you want to minimize the size of archive files. The
+ratio and compression speed is similar to xz, and the zstd decompression will
+be much faster than xz. The bzip2 algorithm has become irrelevant as both xz and
+zstd provide better combinations of ratio/speed for high compression levels.
 
 ## Memory requirement
 You must be aware that high lzma compression levels require a lot of memory
