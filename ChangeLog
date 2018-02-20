@@ -1,7 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
 * 0.8.5:
-  - No change yet
+  - Fixed build issue related to xattr.h (Contribution from Lars Wendler)
 * 0.8.4 (2018-02-19):
   - Added support for zstd compression algorithm (New option "-Z")
 * 0.8.3 (2017-12-22):
