@@ -114,7 +114,7 @@ PKG_CHECK_MODULES([BLKID], [blkid])
 PKG_CHECK_MODULES([UUID], [uuid])
 
 dnl Check for header files installed with a library
-AC_CHECK_HEADER([attr/xattr.h],, [AC_MSG_ERROR([attr/xattr.h not found. you may have to install a package called attr, libattr, libattr-devel])])
+AC_CHECK_HEADER([sys/xattr.h],, [AC_MSG_ERROR([sys/xattr.h not found.])])
 
 dnl Check for standard header files.
 AC_CHECK_HEADERS([malloc.h unistd.h pthread.h])
