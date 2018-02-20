@@ -29,7 +29,8 @@
 #include <sys/param.h>
 #include <sys/statvfs.h>
 #include <sys/stat.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
+#include <errno.h>
 #include <zlib.h>
 #include <assert.h>
 #include <gcrypt.h>
@@ -58,6 +59,10 @@
 #include "crypto.h"
 #include "error.h"
 #include "queue.h"
+
+#ifndef ENOATTR
+#define ENOATTR ENODATA
+#endif
 
 typedef struct s_savear
 {   carchwriter ai;

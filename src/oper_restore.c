@@ -24,7 +24,8 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
+#include <errno.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <gcrypt.h>
