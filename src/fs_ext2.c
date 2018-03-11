@@ -51,7 +51,7 @@ struct s_features
 };
 
 // These are the features to be passed on the command line (cf "man ext4")
-struct s_features mkfeatures[] = // cf e2fsprogs-1.42.3/lib/e2p/feature.c
+struct s_features mkfeatures[] = // cf e2fsprogs-1.44.0/lib/e2p/feature.c
 {
     {"has_journal",   FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL,      E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT3, PROGVER(1,39,0)},
     {"ext_attr",      FSA_EXT2_FEATURE_COMPAT_EXT_ATTR,         E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT2, PROGVER(1,40,5)},
@@ -66,6 +66,8 @@ struct s_features mkfeatures[] = // cf e2fsprogs-1.42.3/lib/e2p/feature.c
     {"mmp",           FSA_EXT4_FEATURE_INCOMPAT_MMP,            E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT4, PROGVER(1,42,0)},
     {"64bit",         FSA_EXT4_FEATURE_INCOMPAT_64BIT,          E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT4, PROGVER(1,42,0)},
     {"inline_data",   FSA_EXT4_FEATURE_INCOMPAT_INLINEDATA,     E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT4, PROGVER(1,43,0)},
+    {"ea_inode",      FSA_EXT4_FEATURE_INCOMPAT_EA_INODE,       E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT4, PROGVER(1,44,0)},
+    {"large_dir",     FSA_EXT4_FEATURE_INCOMPAT_LARGEDIR,       E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT4, PROGVER(1,44,0)},
     {"large_file",    FSA_EXT2_FEATURE_RO_COMPAT_LARGE_FILE,    E2P_FEATURE_RO_INCOMPAT, EXTFSTYPE_EXT2, PROGVER(1,40,7)},
     {"huge_file",     FSA_EXT4_FEATURE_RO_COMPAT_HUGE_FILE,     E2P_FEATURE_RO_INCOMPAT, EXTFSTYPE_EXT4, PROGVER(1,41,0)},
     {"sparse_super",  FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER,  E2P_FEATURE_RO_INCOMPAT, EXTFSTYPE_EXT2, PROGVER(1,8,0)},
