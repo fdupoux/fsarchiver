@@ -107,19 +107,19 @@ int ext4_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char 
 int extfs_get_fstype_from_compat_flags(u32 compat, u32 incompat, u32 ro_compat)
 {
     int fstype=EXTFSTYPE_EXT2;
-    
+
     // distinguish between ext3 and ext2
     if (compat & FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL)
         fstype=EXTFSTYPE_EXT3;
-    
+
     // any features which ext2 doesn't understand
     if ((ro_compat & FSA_EXT2_FEATURE_RO_COMPAT_UNSUPPORTED) || (incompat & FSA_EXT2_FEATURE_INCOMPAT_UNSUPPORTED))
         fstype=EXTFSTYPE_EXT3;
-    
+
     // ext4 has at least one feature which ext3 doesn't understand
     if ((ro_compat & FSA_EXT3_FEATURE_RO_COMPAT_UNSUPPORTED) || (incompat & FSA_EXT3_FEATURE_INCOMPAT_UNSUPPORTED))
         fstype=EXTFSTYPE_EXT4;
-    
+
     return fstype;
 }
 
@@ -128,17 +128,17 @@ int extfs_check_compatibility(u64 compat, u64 incompat, u64 ro_compat)
     // to preserve the filesystem attributes, fsa must know all the features including the COMPAT ones
     if (compat & ~FSA_FEATURE_COMPAT_SUPP)
         return -1;
-    
+
     if (incompat & ~FSA_FEATURE_INCOMPAT_SUPP)
         return -1;
-    
+
     if (ro_compat & ~FSA_FEATURE_RO_COMPAT_SUPP)
         return -1;
-    
+
     // TODO: check journal features
     /*if (!(flags & EXT2_FLAG_JOURNAL_DEV_OK) && (fs->super->s_feature_incompat & EXT3_FEATURE_INCOMPAT_JOURNAL_DEV)) 
         goto check_support_for_features_error;*/
-    
+
     return 0;
 }
 
@@ -151,6 +151,8 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     char buffer[2048];
     char command[2048];
     char options[2048];
+    char uuid[64];
+    bool mke2fsuuid=false;
     char temp[1024];
     char progname[64];
     u64 e2fstoolsver;
@@ -165,11 +167,12 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     int res;
     int i;
 
-    // init    
+    // init
     memset(options, 0, sizeof(options));
+    memset(uuid, 0, sizeof(uuid));
     snprintf(progname, sizeof(progname), "mke2fs");
     strlist_init(&strfeatures);
-    
+
     // ---- check that mkfs is installed and get its version
     if (exec_command(command, sizeof(command), NULL, NULL, 0, NULL, 0, "%s -V", progname)!=0)
     {   errprintf("%s not found. please install a recent e2fsprogs on your system or check the PATH.\n", progname);
@@ -177,7 +180,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         goto extfs_mkfs_cleanup;
     }
     e2fstoolsver=check_prog_version(progname);
-    
+
     // ---- check what is the extfs block size to use
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTBLOCKSIZE, &devblksize)!=0)
         devblksize=4096;
@@ -185,10 +188,10 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     // ---- filesystem revision (good-old-rev or dynamic)
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTREVISION, &fsextrevision)!=0)
         fsextrevision=EXT2_DYNAMIC_REV; // don't fail (case of fs conversion to extfs)
-    
+
     // "mke2fs -q" prevents problems in exec_command when too many output details printed
     strlcatf(options, sizeof(options), " -q ");
-    
+
     // "mke2fs -F" removes confirmation prompt when device is a whole disk such as /dev/sda
     strlcatf(options, sizeof(options), " -F ");
 
@@ -196,7 +199,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     strlcatf(options, sizeof(options), " -r %d ", (int)fsextrevision);
 
     strlcatf(options, sizeof(options), " %s ", fsoptions);
-    
+
     strlcatf(options, sizeof(options), " -b %ld ", (long)devblksize);
 
     // ---- set the advanced filesystem settings from the dico
@@ -204,10 +207,20 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         strlcatf(options, sizeof(options), " -L '%.16s' ", mkfslabel);
     else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -L '%.16s' ", buffer);
-    
+
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSINODESIZE, &temp64)==0)
         strlcatf(options, sizeof(options), " -I %ld ", (long)temp64);
-    
+
+    // ---- set UUID with mke2fs if supported
+    if (strlen(mkfsuuid) > 0)
+        snprintf(uuid, sizeof(uuid), "%s", mkfsuuid);
+    else if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0)
+        snprintf(uuid, sizeof(uuid), "%s", buffer);
+    if (e2fstoolsver>=PROGVER(1,41,4) && strlen(uuid)==36)
+    {   strlcatf(options, sizeof(options), " -U %s ", uuid);
+        mke2fsuuid=true;
+    }
+
     // ---- get original filesystem features (if the original filesystem was an ext{2,3,4})
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATURECOMPAT, &features_tab[E2P_FEATURE_COMPAT])!=0 ||
         dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREINCOMPAT, &features_tab[E2P_FEATURE_INCOMPAT])!=0 ||
@@ -217,19 +230,19 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         features_tab[E2P_FEATURE_INCOMPAT]=EXT2_FEATURE_INCOMPAT_FILETYPE;
         features_tab[E2P_FEATURE_RO_INCOMPAT]=EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER;
     }
-    
+
     // ---- check that fsarchiver is aware of all the filesystem features used on that filesystem
     if (extfs_check_compatibility(features_tab[E2P_FEATURE_COMPAT], features_tab[E2P_FEATURE_INCOMPAT], features_tab[E2P_FEATURE_RO_INCOMPAT])!=0)
     {   errprintf("this filesystem has ext{2,3,4} features which are not supported by this fsarchiver version.\n");
         ret=-1;
         goto extfs_mkfs_cleanup;
     }
-    
+
     // ---- get original filesystem type
     origextfstype=extfs_get_fstype_from_compat_flags(features_tab[E2P_FEATURE_COMPAT], 
             features_tab[E2P_FEATURE_INCOMPAT], features_tab[E2P_FEATURE_RO_INCOMPAT]);
     msgprintf(MSG_VERB2, "the filesystem type determined by the original filesystem features is [%s]\n", format_fstype(origextfstype));
-    
+
     // remove all the features not supported by the filesystem to create (conversion = downgrade fs)
     for (i=0; mkfeatures[i].name; i++)
     {
@@ -308,14 +321,14 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
             }
         }
     }
-    
+
     // if extfs revision is dynamic and there are features in the list
     if (fsextrevision!=EXT2_GOOD_OLD_REV && strlist_count(&strfeatures)>0)
     {   strlist_merge(&strfeatures, temp, sizeof(temp), ',');
         strlcatf(options, sizeof(options), " -O %s ", temp);
         msgprintf(MSG_VERB2, "features: mkfs_options+=[-O %s]\n", temp);
     }
-    
+
     // ---- check mke2fs version requirement
     msgprintf(MSG_VERB2, "mke2fs version detected: %s\n", format_prog_version(e2fstoolsver, temp, sizeof(temp)));
     msgprintf(MSG_VERB2, "mke2fs version required: %s\n", format_prog_version(e2fsprogs_minver[extfstype], temp, sizeof(temp)));
@@ -325,13 +338,13 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         ret=-1;
         goto extfs_mkfs_cleanup;
     }
-    
+
     // ---- extended options
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE, &temp64)==0)
         strlcatf(options, sizeof(options), " -E stride=%ld ", (long)temp64);
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, &temp64)==0) && e2fstoolsver>=PROGVER(1,40,7))
         strlcatf(options, sizeof(options), " -E stripe-width=%ld ", (long)temp64);
-    
+
     // ---- execute mke2fs
     msgprintf(MSG_VERB2, "exec: %s\n", command);
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "%s %s %s", progname, partition, options)!=0 || exitst!=0)
@@ -339,23 +352,22 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         ret=-1;
         goto extfs_mkfs_cleanup;
     }
-    
+
     // ---- use tune2fs to set the other advanced options
     memset(options, 0, sizeof(options));
-    if (strlen(mkfsuuid) > 0)
-        strlcatf(options, sizeof(options), " -U %s ", mkfsuuid);
-    else if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0 && strlen(buffer)==36)
-        strlcatf(options, sizeof(options), " -U %s ", buffer);
-    
+
+    if (!mke2fsuuid && strlen(uuid)==36)
+        strlcatf(options, sizeof(options), " -U %s ", uuid);
+
     if (dico_get_string(d, 0, FSYSHEADKEY_FSEXTDEFMNTOPT, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -o %s ", buffer);
-    
+
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFSCKMAXMNTCOUNT, &temp64)==0)
         strlcatf(options, sizeof(options), " -c %ld ", (long)temp64);
-    
+
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFSCKCHECKINTERVAL, &temp64)==0)
         strlcatf(options, sizeof(options), " -i %ldd ", (long)(temp64/86400L));
-    
+
     if (options[0])
     {
         if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "tune2fs %s %s", partition, options)!=0 || exitst!=0)
@@ -363,10 +375,11 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
             ret=-1;
             goto extfs_mkfs_cleanup;
         }
-        
-        // run e2fsck to workaround an tune2fs bug in e2fsprogs < 1.41.4 on ext4
+
+        // if UUID was not set by mke2fs, we have e2fsprogs < 1.41.4
+        // tune2fs will mess up ext4 filesystem when changing its UUID
         // http://marc.info/?l=linux-ext4&m=123246035924487&w=2
-        if (extfstype==EXTFSTYPE_EXT4 && e2fstoolsver<PROGVER(1,41,4))
+        if (extfstype==EXTFSTYPE_EXT4 && !mke2fsuuid)
         {
             if ( ((res=exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "e2fsck -fy %s", partition))!=0) || ((exitst!=0) && (exitst!=1)) )
             {   errprintf("command [%s] failed with return status=%d\n", command, exitst);
@@ -375,7 +388,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
             }
         }
     }
-    
+
 extfs_mkfs_cleanup:
     strlist_destroy(&strfeatures);
     return ret;
@@ -394,14 +407,14 @@ int extfs_getinfo(cdico *d, char *devname)
     u32 mask, m;
     int count;
     int i;
-    
+
     // ---- open partition
     if (ext2fs_open(devname, EXT2_FLAG_JOURNAL_DEV_OK | EXT2_FLAG_SOFTSUPP_FEATURES, use_superblock,  use_blocksize, unix_io_manager, &fs)!=0)
     {   errprintf("ext2fs_open(%s) failed\n", devname);
         return -1;
     }
     super=(struct fsa_ext2_sb *)fs->super;
-    
+
     // --- label
     memset(label, 0, sizeof(label));
     if (super->s_volume_name[0])
@@ -409,7 +422,7 @@ int extfs_getinfo(cdico *d, char *devname)
         strncpy(label, super->s_volume_name, sizeof(super->s_volume_name));
     }
     dico_add_string(d, 0, FSYSHEADKEY_FSLABEL, label);
-    
+
     // ---- uuid
     /*if ((str=e2p_uuid2str(super->s_uuid))!=NULL)
         dico_add_string(d, 0, FSYSHEADKEY_FSUUID, str);*/
@@ -417,19 +430,19 @@ int extfs_getinfo(cdico *d, char *devname)
     uuid_unparse_lower((u8*)super->s_uuid, uuid);
     dico_add_string(d, 0, FSYSHEADKEY_FSUUID, uuid);
     msgprintf(MSG_DEBUG1, "extfs_uuid=[%s]\n", uuid); 
-    
+
     // ---- block size
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTBLOCKSIZE, EXT2_BLOCK_SIZE(super));
-    
+
     // ---- filesystem revision (good-old-rev or dynamic)
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTREVISION, super->s_rev_level);
-    
+
     // ---- inode size
     if (super->s_rev_level >= EXT2_DYNAMIC_REV)
         dico_add_u64(d, 0, FSYSHEADKEY_FSINODESIZE, super->s_inode_size);
     else
         dico_add_u64(d, 0, FSYSHEADKEY_FSINODESIZE, EXT2_GOOD_OLD_INODE_SIZE); // Good old rev
-    
+
     // ---- extended options
     if (super->s_raid_stride > 0)
     {   dico_add_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIDE, super->s_raid_stride);
@@ -439,13 +452,13 @@ int extfs_getinfo(cdico *d, char *devname)
     {   dico_add_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, super->s_raid_stripe_width);
         msgprintf(MSG_DEBUG1, "extfs_raid_stripe_width: %u\n", super->s_raid_stripe_width);
     }
-    
+
     // ---- fsck details: max_mount_count and check_interval
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFSCKMAXMNTCOUNT, max(super->s_max_mnt_count,0));
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFSCKCHECKINTERVAL, super->s_checkinterval);
     msgprintf(MSG_DEBUG1, "extfs_max_mount_count: %ld\n", (long)max(super->s_max_mnt_count,0));
     msgprintf(MSG_DEBUG1, "extfs_check_interval: %ld\n", (long)super->s_checkinterval);
-    
+
     // ---- default mount options
     memset(mntopt, 0, sizeof(mntopt));
     count=0;
@@ -466,26 +479,26 @@ int extfs_getinfo(cdico *d, char *devname)
     }
     dico_add_string(d, 0, FSYSHEADKEY_FSEXTDEFMNTOPT, mntopt);
     msgprintf(MSG_DEBUG1, "default mount options: [%s]\n", mntopt);
-    
+
     // ---- filesystem features
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATURECOMPAT, (u64)super->s_feature_compat);
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREINCOMPAT, (u64)super->s_feature_incompat);
     dico_add_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREROCOMPAT, (u64)super->s_feature_ro_compat);
-    
+
     origextfstype=extfs_get_fstype_from_compat_flags((u64)super->s_feature_compat, (u64)super->s_feature_incompat, (u64)super->s_feature_ro_compat);
     msgprintf(MSG_DEBUG1, "the filesystem type determined by the features is [%s]\n", format_fstype(origextfstype));
-    
+
     // ---- check that fsarchiver is aware of all the filesystem features used on that filesystem
     if (extfs_check_compatibility((u64)super->s_feature_compat, (u64)super->s_feature_incompat, (u64)super->s_feature_ro_compat)!=0)
     {   errprintf("this filesystem has ext{2,3,4} features which are not supported by this fsarchiver version.\n");
         return -1;
     }
-    
+
     // ---- minimum fsarchiver version required to restore
     dico_add_u64(d, 0, FSYSHEADKEY_MINFSAVERSION, FSA_VERSION_BUILD(0, 6, 4, 0));
-            
+
     ext2fs_close(fs);
-    
+
     return 0;
 }
 
@@ -496,26 +509,26 @@ int extfs_mount(char *partition, char *mntbuf, char *fsbuf, int flags, char *mnt
     ext2_filsys fs;
     int origextfstype;
     char fsname[32];
-    
+
     msgprintf(MSG_DEBUG1, "extfs_mount(partition=[%s], mnt=[%s], fsbuf=[%s])\n", partition, mntbuf, fsbuf);
-    
+
     if (ext2fs_open(partition, EXT2_FLAG_JOURNAL_DEV_OK | EXT2_FLAG_SOFTSUPP_FEATURES, use_superblock,  use_blocksize, unix_io_manager, &fs)!=0)
     {   msgprintf(MSG_DEBUG1, "ext2fs_open(%s) failed\n", partition);
         return -1;
     }
-    
+
     origextfstype=extfs_get_fstype_from_compat_flags((u64)fs->super->s_feature_compat, 
             (u64)fs->super->s_feature_incompat, (u64)fs->super->s_feature_ro_compat);
     snprintf(fsname, sizeof(fsname), "%s", format_fstype(origextfstype));
     msgprintf(MSG_VERB2, "the filesystem of [%s] type determined by the features is [%s]\n", partition, fsname);
-    
+
     ext2fs_close(fs);
-    
+
     if (strcmp(fsname, fsbuf)!=0)
     {   msgprintf(MSG_DEBUG1, "extfs_mount: the filesystem requested [%s] does not match the filesystem detected [%s]\n", fsbuf, fsname);
         return -1;
     }
-    
+
     return generic_mount(partition, mntbuf, fsbuf, "user_xattr,acl", flags);
 }
 
@@ -530,16 +543,16 @@ int extfs_test(char *partition, int extfstype) // returns true if it's that sort
     int use_blocksize=0;
     int extfstypedetected;
     ext2_filsys fs;
-    
+
     if (ext2fs_open(partition, EXT2_FLAG_JOURNAL_DEV_OK | EXT2_FLAG_SOFTSUPP_FEATURES, use_superblock,  use_blocksize, unix_io_manager, &fs)!=0)
         return false;
-    
+
     extfstypedetected=extfs_get_fstype_from_compat_flags((u64)fs->super->s_feature_compat, 
             (u64)fs->super->s_feature_incompat, (u64)fs->super->s_feature_ro_compat);
     msgprintf(MSG_DEBUG1, "the filesystem type determined by the extfs features is [%s]\n", format_fstype(extfstypedetected));
-    
+
     ext2fs_close(fs);
-    
+
     // if detected is what is tested, say yes
     return (extfstypedetected==extfstype);
 }
@@ -563,10 +576,10 @@ int extfs_get_reqmntopt(char *partition, cstrlist *reqopt, cstrlist *badopt)
 {
     if (!reqopt || !badopt)
         return -1;
-    
+
     strlist_add(badopt, "nouser_xattr");
     strlist_add(badopt, "noacl");
-    
+
     return 0;
 }
 
@@ -581,16 +594,16 @@ u64 check_prog_version(char *prog)
     char *result;
     int foundversion;
     int x, y, z;
-    
+
     // init
     memset(options, 0, sizeof(options));
     memset(stderrbuf, 0, sizeof(stderrbuf));
-    
+
     if (exec_command(command, sizeof(command), NULL, NULL, 0, stderrbuf, sizeof(stderrbuf), "%s -V", prog)!=0)
     {   errprintf("program %s was not found or has bad permissions.\n", prog);
         return -1;
     }
-    
+
     foundversion=false;
     result=strtok_r(stderrbuf, delims, &saveptr);
     while (result != NULL && foundversion==false)
@@ -599,19 +612,19 @@ u64 check_prog_version(char *prog)
         else
             result = strtok_r(NULL, delims, &saveptr);
     }
-    
+
     if (foundversion==false)
     {   errprintf("can't parse %s version number: no match\n", prog);
         return 0;
     }
-    
+
     x=y=z=0;
     sscanf(result, "%1023s %d.%d.%d", temp1, &x, &y, &z);
-    
+
     if (x==0 && y==0)
     {   errprintf("can't parse %s version number: x=y=0\n", prog);
         return 0;
     }
-    
+
     return PROGVER(x,y,z);
 }
