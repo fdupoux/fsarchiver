@@ -211,11 +211,13 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSINODESIZE, &temp64)==0)
         strlcatf(options, sizeof(options), " -I %ld ", (long)temp64);
 
-    // ---- set UUID with mke2fs if supported
+    // ---- determine which UUID must be set on this filesystem
     if (strlen(mkfsuuid) > 0)
         snprintf(uuid, sizeof(uuid), "%s", mkfsuuid);
     else if (dico_get_string(d, 0, FSYSHEADKEY_FSUUID, buffer, sizeof(buffer))==0)
         snprintf(uuid, sizeof(uuid), "%s", buffer);
+
+    // ---- set UUID with mke2fs if supported
     if (e2fstoolsver>=PROGVER(1,41,4) && strlen(uuid)==36)
     {   strlcatf(options, sizeof(options), " -U %s ", uuid);
         mke2fsuuid=true;
