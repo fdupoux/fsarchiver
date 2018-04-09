@@ -197,9 +197,6 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     // "mke2fs -F" removes confirmation prompt when device is a whole disk such as /dev/sda
     strlcatf(options, sizeof(options), " -F ");
 
-    // filesystem revision: good-old-rev or dynamic
-    strlcatf(options, sizeof(options), " -r %d ", (int)fsextrevision);
-
     strlcatf(options, sizeof(options), " %s ", fsoptions);
 
     strlcatf(options, sizeof(options), " -b %ld ", (long)devblksize);
@@ -325,6 +322,9 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
             }
         }
     }
+
+    // filesystem revision: good-old-rev or dynamic
+    strlcatf(options, sizeof(options), " -r %d ", (int)fsextrevision);
 
     // if extfs revision is dynamic and there are features in the list
     if (fsextrevision!=EXT2_GOOD_OLD_REV && strlist_count(&strfeatures)>0)
