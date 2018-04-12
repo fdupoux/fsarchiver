@@ -161,6 +161,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     int compat_type;
     s64 devblkcount;
     u64 devblksize;
+    u64 devisize;
     s64 threshold64bit;
     s64 devsize;
     u64 temp64;
@@ -187,6 +188,10 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTBLOCKSIZE, &devblksize)!=0)
         devblksize=4096;
 
+    // ---- check what is the extfs inode size to use
+    if (dico_get_u64(d, 0, FSYSHEADKEY_FSINODESIZE, &devisize)!=0)
+        devisize=256;
+
     // ---- filesystem revision (good-old-rev or dynamic)
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTREVISION, &fsextrevision)!=0)
         fsextrevision=EXT2_DYNAMIC_REV; // don't fail (case of fs conversion to extfs)
@@ -207,9 +212,6 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
         strlcatf(options, sizeof(options), " -L '%.16s' ", buffer);
 
-    if (dico_get_u64(d, 0, FSYSHEADKEY_FSINODESIZE, &temp64)==0)
-        strlcatf(options, sizeof(options), " -I %ld ", (long)temp64);
-
     // ---- determine which UUID must be set on this filesystem
     if (strlen(mkfsuuid) > 0)
         snprintf(uuid, sizeof(uuid), "%s", mkfsuuid);
@@ -227,7 +229,9 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREINCOMPAT, &features_tab[E2P_FEATURE_INCOMPAT])!=0 ||
         dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREROCOMPAT, &features_tab[E2P_FEATURE_RO_INCOMPAT])!=0)
     {   // dont fail the original filesystem may not be ext{2,3,4}. in that case set defaults features
-        features_tab[E2P_FEATURE_COMPAT]=EXT2_FEATURE_COMPAT_RESIZE_INODE|EXT2_FEATURE_COMPAT_DIR_INDEX;
+        features_tab[E2P_FEATURE_COMPAT]=EXT2_FEATURE_COMPAT_RESIZE_INODE|\
+                                         EXT2_FEATURE_COMPAT_DIR_INDEX|\
+                                         EXT2_FEATURE_COMPAT_EXT_ATTR;
         features_tab[E2P_FEATURE_INCOMPAT]=EXT2_FEATURE_INCOMPAT_FILETYPE;
         features_tab[E2P_FEATURE_RO_INCOMPAT]=EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER;
     }
@@ -262,8 +266,17 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         features_tab[E2P_FEATURE_COMPAT]|=EXT3_FEATURE_COMPAT_HAS_JOURNAL;
     }
     if (origextfstype<EXTFSTYPE_EXT4 && extfstype>=EXTFSTYPE_EXT4) // upgrade ext{2,3} to ext4
-    {   fsextrevision=EXT2_DYNAMIC_REV;
-        features_tab[E2P_FEATURE_INCOMPAT]|=EXT3_FEATURE_INCOMPAT_EXTENTS;
+    {   // ext4 default features from mke2fs 1.41:
+        // extents,huge_file,flex_bg,uninit_bg,dir_nlink,extra_isize
+        // recent mke2fs versions enable more features, but we are conservative here
+        fsextrevision=EXT2_DYNAMIC_REV;
+        devisize=256;
+        features_tab[E2P_FEATURE_INCOMPAT]|=EXT3_FEATURE_INCOMPAT_EXTENTS|\
+                                            EXT4_FEATURE_INCOMPAT_FLEX_BG;
+        features_tab[E2P_FEATURE_RO_INCOMPAT]|=EXT4_FEATURE_RO_COMPAT_DIR_NLINK|\
+                                               EXT4_FEATURE_RO_COMPAT_EXTRA_ISIZE|\
+                                               EXT4_FEATURE_RO_COMPAT_GDT_CSUM|\
+                                               EXT4_FEATURE_RO_COMPAT_HUGE_FILE;
     }
 
     // get size of the target device
@@ -322,6 +335,9 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
             }
         }
     }
+
+    // inode size
+    strlcatf(options, sizeof(options), " -I %ld ", (long)devisize);
 
     // filesystem revision: good-old-rev or dynamic
     strlcatf(options, sizeof(options), " -r %d ", (int)fsextrevision);
