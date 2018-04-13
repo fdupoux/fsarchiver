@@ -227,8 +227,10 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     // ---- get original filesystem features (if the original filesystem was an ext{2,3,4})
     if (dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATURECOMPAT, &features_tab[E2P_FEATURE_COMPAT])!=0 ||
         dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREINCOMPAT, &features_tab[E2P_FEATURE_INCOMPAT])!=0 ||
-        dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREROCOMPAT, &features_tab[E2P_FEATURE_RO_INCOMPAT])!=0)
+        dico_get_u64(d, 0, FSYSHEADKEY_FSEXTFEATUREROCOMPAT, &features_tab[E2P_FEATURE_RO_INCOMPAT])!=0 ||
+        fsextrevision==EXT2_GOOD_OLD_REV)
     {   // dont fail the original filesystem may not be ext{2,3,4}. in that case set defaults features
+        // ext2 revision 0 does not have features, set defaults too in case user wants to upgrade it
         features_tab[E2P_FEATURE_COMPAT]=EXT2_FEATURE_COMPAT_RESIZE_INODE|\
                                          EXT2_FEATURE_COMPAT_DIR_INDEX|\
                                          EXT2_FEATURE_COMPAT_EXT_ATTR;
