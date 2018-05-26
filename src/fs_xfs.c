@@ -231,7 +231,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
     // Determine if the "sparse" mkfs option should be enabled (sparse inode allocation)
     // - starting with linux-4.2 XFS can allocate discontinuous inode chunks
     // - this feature relies on the new v5 on-disk format but it is optional
-    // - this feature is enabled by default when using xfsprogs 4.16 or later
+    // - this feature is enabled by default when using xfsprogs 4.16.0 or later
     // - this feature will be enabled if the original filesystem was XFSv5 and had it
     // - this feature is supported since mkfs.xfs 4.2.0, but unfortunately
     //   mkfs.xfs 4.5.0 in RHEL 7.3 carries a custom patch removing the option,
