@@ -135,10 +135,25 @@ u64 check_prog_version(char *prog);
 // FSA_FEATURE_INCOMPAT_SUPP does not include FSA_EXT4_FEATURE_INCOMPAT_ENCRYPT
 // as it would require special handling to mount an encrypted filesystem
 
-// EXT2_FLAG_SOFTSUPP_FEATURES not defined on old e2fsprogs versions
+// old e2fsprogs compatibility glue
 #ifndef EXT2_FLAG_SOFTSUPP_FEATURES
 #define EXT2_FLAG_SOFTSUPP_FEATURES                0x8000
-#endif 
+#endif
+#ifndef EXT4_FEATURE_INCOMPAT_FLEX_BG
+#define EXT4_FEATURE_INCOMPAT_FLEX_BG              0x0200
+#endif
+#ifndef EXT4_FEATURE_RO_COMPAT_HUGE_FILE
+#define EXT4_FEATURE_RO_COMPAT_HUGE_FILE           0x0008
+#endif
+#ifndef EXT4_FEATURE_RO_COMPAT_GDT_CSUM
+#define EXT4_FEATURE_RO_COMPAT_GDT_CSUM            0x0010
+#endif
+#ifndef EXT4_FEATURE_RO_COMPAT_DIR_NLINK
+#define EXT4_FEATURE_RO_COMPAT_DIR_NLINK           0x0020
+#endif
+#ifndef EXT4_FEATURE_RO_COMPAT_EXTRA_ISIZE
+#define EXT4_FEATURE_RO_COMPAT_EXTRA_ISIZE         0x0040
+#endif
 
 // this struct is incomplete in e2fsprogs-1.39.x/ext2fs.h
 struct fsa_ext2_sb
