@@ -43,8 +43,8 @@ and does not require the libraries to be installed on your system.
 To compile the sources, you have to run follow these instructions:
 
 #### Download the latest sources
-First, you have to download [fsarchiver-0.8.4.tar.gz]
-(https://github.com/fdupoux/fsarchiver/releases/download/0.8.4/fsarchiver-0.8.4.tar.gz).
+First, you have to download [fsarchiver-0.8.5.tar.gz]
+(https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5.tar.gz).
 Just save it to a temporary directory.
 
 #### Extract the sources in a temporary directory
@@ -141,21 +141,21 @@ pacman -S fsarchiver
 You should use these RPM packages that have been built for RHEL7 based
 distributions, that is the recommended way for most users:
 
-* [fsarchiver-0.8.4-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.4/fsarchiver-0.8.4-1.el7.x86_64.rpm)
+* [fsarchiver-0.8.5-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5-1.el7.x86_64.rpm)
 
 NOTE: Installing fsarchiver's rpm requires [EPEL](https://fedoraproject.org/wiki/EPEL) enabled.
 
 Use the following commands to install:
 ```
 yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-yum install https://github.com/fdupoux/fsarchiver/releases/download/0.8.4/fsarchiver-0.8.4-1.el7.x86_64.rpm
+yum install https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5-1.el7.x86_64.rpm
 ```
 
 If you want to compile fsarchiver yourself, use the following instructions:
 ```
 yum install zlib-devel bzip2-devel lzo-devel lz4-devel xz-devel e2fsprogs-devel libgcrypt-devel libattr-devel libblkid-devel
-tar xfz fsarchiver-0.8.4.tar.gz
-cd fsarchiver-0.8.4
+tar xfz fsarchiver-0.8.5.tar.gz
+cd fsarchiver-0.8.5
 ./configure --prefix=/usr && make && make install
 ```
 

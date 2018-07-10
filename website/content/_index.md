@@ -6,45 +6,45 @@ draft = false
 +++
 
 ## About FSArchiver
-FSArchiver is a system tool that allows you to **save the contents of a 
-file-system to a compressed archive file**. The file-system can be restored on 
-a partition which has a different size and it can be restored on a different 
-file-system. Unlike tar/dar, **FSArchiver also creates the file-system when it 
-extracts the data** to partitions. Everything is **checksummed** in the 
-archive in order to protect the data. If the archive is corrupt, you just loose 
-the current file, not the whole archive. Fsarchiver is released under the 
+FSArchiver is a system tool that allows you to **save the contents of a
+file-system to a compressed archive file**. The file-system can be restored on
+a partition which has a different size and it can be restored on a different
+file-system. Unlike tar/dar, **FSArchiver also creates the file-system when it
+extracts the data** to partitions. Everything is **checksummed** in the
+archive in order to protect the data. If the archive is corrupt, you just loose
+the current file, not the whole archive. Fsarchiver is released under the
 GPL-v2 license. You should read the [Quick start guide](/quickstart/)
 if you are using FSArchiver for the first time
 
 ## Detailed description
-The purpose of this project is to provide a **safe and flexible file-system 
-backup/deployment tool**. Other open-source file-systems tools such as partimage 
-already exist. These tools are working at the filesystem blocks level, so it is 
-not possible to restore the backup to a smaller partition, and restoring to a 
-bigger partition forces you to resize the filesystem by hand. To have more 
+The purpose of this project is to provide a **safe and flexible file-system
+backup/deployment tool**. Other open-source file-systems tools such as partimage
+already exist. These tools are working at the filesystem blocks level, so it is
+not possible to restore the backup to a smaller partition, and restoring to a
+bigger partition forces you to resize the filesystem by hand. To have more
 details about it, read [comparison with partimage](/partimage/)
 
-The purpose is to have a **very flexible** program. FSArchiver can extract an 
-archive to a partition which is *smaller that the original one* as long as 
-there is enough space to store the data. It can also **restore the data on a 
-different file-system**, so it can use it when you want to **convert your 
+The purpose is to have a **very flexible** program. FSArchiver can extract an
+archive to a partition which is *smaller that the original one* as long as
+there is enough space to store the data. It can also **restore the data on a
+different file-system**, so it can use it when you want to **convert your
 file-system**: you can backup an ext3 file-system, and restore it as a reiserfs.
 
-FSArchiver is working at the file level. It can make an archive of filesystems 
-(ext4, ext3, xfs, btrfs, reiserfs, ntfs, ...) that the running kernel can mount 
-with a read-write support. It will **preserve all the standard file attributes** 
-(permissions, timestamps, symbolic-links, hard-links, 
-extended-attributes, ...), as long as the kernel has support for it enabled. 
-It allows to preserve all the windows file attributes (ACL, standard 
-attributes, ...). It can be used with LVM snapshots in order to 
+FSArchiver is working at the file level. It can make an archive of filesystems
+(ext4, ext3, xfs, btrfs, reiserfs, ntfs, ...) that the running kernel can mount
+with a read-write support. It will **preserve all the standard file attributes**
+(permissions, timestamps, symbolic-links, hard-links,
+extended-attributes, ...), as long as the kernel has support for it enabled.
+It allows to preserve all the windows file attributes (ACL, standard
+attributes, ...). It can be used with LVM snapshots in order to
 [make consistent backups of all filesystems](http://www.system-rescue-cd.org/lvm-guide-en/Making-consistent-backups-with-LVM/)
 including the root filesystem.
 
-FSArchiver has been **packaged by most popular Linux distributions** (Fedora, 
-Debian, Ubuntu, OpenSUSE, ArchLinux, Gentoo) hence it can be installed very 
-easily from the standard package repositories using the standard yum / apt-get 
-/ emerge / pacman commands. It can also be used from SystemRescueCd, as it 
-comes with all run-time dependencies, so that you can restore your system and 
+FSArchiver has been **packaged by most popular Linux distributions** (Fedora,
+Debian, Ubuntu, OpenSUSE, ArchLinux, Gentoo) hence it can be installed very
+easily from the standard package repositories using the standard yum / apt-get
+/ emerge / pacman commands. It can also be used from SystemRescueCd, as it
+comes with all run-time dependencies, so that you can restore your system and
 data after a problem.
 
 ## Implemented features
@@ -70,10 +70,10 @@ to make your archive smaller.
 * Encryption of the archive using a password. Based on blowfish from libgcrypt.
 
 ## Limitations
-There are several limitations anyway: it cannot preserve filesystem attributes 
-that are very specific. For instance, if you create a snapshot in a btrfs 
-volume (the new-generation file system for linux), FSArchiver won't know 
-anything about that, and it will just backup the contents seen when you mount 
+There are several limitations anyway: it cannot preserve filesystem attributes
+that are very specific. For instance, if you create a snapshot in a btrfs
+volume (the new-generation file system for linux), FSArchiver won't know
+anything about that, and it will just backup the contents seen when you mount
 the partition.
 
 FSArchiver is safe when it makes backups of partitions which are not mounted or

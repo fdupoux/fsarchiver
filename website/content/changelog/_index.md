@@ -5,7 +5,11 @@ nameInMenu = "ChangeLog"
 draft = false
 +++
 
-* **0.8.4 (2018-02-19):**:
+* **0.8.5 (2018-07-10):**
+  * Improved support for extfs filesystems (Contribution from Marcos Mello)
+  * Fixed build issue with e2fsprogs < 1.41 (Contribution from Marcos Mello)
+  * Fixed build issue related to xattr.h (Contribution from Lars Wendler)
+* **0.8.4 (2018-02-19):**
   * Added support for zstd compression algorithm (New option "-Z")
 * **0.8.3 (2017-12-22):**
   * Implemented LZ4 compression (Contribution from Cristian Vazquez)

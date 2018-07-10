@@ -197,7 +197,7 @@ when you don't know what is its device name.
 
 ## Command line and its arguments
 ```
-====> fsarchiver version 0.8.4 (2018-02-19) - http://www.fsarchiver.org <====
+====> fsarchiver version 0.8.5 (2018-07-10) - http://www.fsarchiver.org <====
 Distributed under the GPL v2 license (GNU General Public License v2).
  * usage: fsarchiver [<options>] <command> <archive> [<dev1> [<dev2> [...]]]
 <commands>
