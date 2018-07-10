@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.8.6:
+  - No change yet
 * 0.8.5 (2018-07-10):
   - Improved support for extfs filesystems (Contribution from Marcos Mello)
   - Fixed build issue with e2fsprogs < 1.41 (Contribution from Marcos Mello)
