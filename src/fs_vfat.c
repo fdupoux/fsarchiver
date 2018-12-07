@@ -48,7 +48,7 @@ int vfat_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char 
 
     // ---- check that mkfs.vfat is installed
     if (exec_command(command, sizeof(command), NULL, stdoutbuf, sizeof(stdoutbuf), NULL, 0, "mkfs.vfat --help")!=0)
-    {   errprintf("mkfs.vfat not found. please install mkfs.vfat on your system or check the PATH.\n");
+    {   errprintf("mkfs.vfat not found. please install dosfstools on your system or check the PATH.\n");
         return -1;
     }
 
