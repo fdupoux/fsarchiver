@@ -19,7 +19,7 @@ fsarchiver. This page shows the pros and cons of each solution.
 | Requires filesystem tools such as mkfs to be installed to save the filesystem       | No                        | No                   |
 | Requires filesystem tools such as mkfs to be installed to restore the filesystem    | Yes                       | No                   |
 | Checksumming of the data and ability to restore corrupt archives                    | Yes                       | No                   |
-| Compression algorithms which are supported                                          | lzo, lz4, gzip, bzip2, xz | gzip, bzip2          |
+| Compression algorithms which are supported                                          | lzo, lz4, zstd, gzip, bzip2, xz | gzip, bzip2          |
 | Multi-threaded compression to make it faster on computers with multiple cores/cpu   | Yes                       | No                   |
 | Ability to encrypt the data with a password                                         | Yes                       | No                   |
 | Information taken into account to save the filesystem                               | Files                     | Blocks               |
