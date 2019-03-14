@@ -34,6 +34,7 @@ struct s_archwriter
     u32    archid; // 32bit archive id for checking (random number generated at creation)
     u32    curvol; // current volume number, starts at 0, incremented when we change the volume
     bool   newarch; // true when the archive has been created by then current process
+    bool   isfifo;
     char   filefmt[FSA_MAX_FILEFMTLEN]; // file format of that archive
     char   creatver[FSA_MAX_PROGVERLEN]; // fsa version used to create archive
     char   label[FSA_MAX_LABELLEN]; // archive label defined by the user
@@ -59,5 +60,6 @@ int archwriter_split_check(carchwriter *ai, struct s_writebuf *wb);
 int archwriter_split_if_necessary(carchwriter *ai, struct s_writebuf *wb);
 int archwriter_dowrite_block(carchwriter *ai, struct s_blockinfo *blkinfo);
 int archwriter_dowrite_header(carchwriter *ai, struct s_headinfo *headinfo);
+void archwriter_detect_fifo(carchwriter *ai);
 
 #endif // __ARCHWRITER_H__

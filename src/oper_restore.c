@@ -1367,6 +1367,8 @@ int oper_restore(char *archive, int argc, char **argv, int oper)
     
     // set archive path
     snprintf(exar.ai.basepath, PATH_MAX, "%s", archive);
+
+    msgprintf(MSG_FORCE, "setting basepath from archive: %s\n", exar.ai.basepath);
     
     // convert the command line arguments to dicos and init g_fsbitmap
     switch (oper)

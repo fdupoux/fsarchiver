@@ -50,5 +50,9 @@ int stats_show(struct s_stats, int fsid);
 u64 stats_errcount(struct s_stats stats);
 int exclude_check(struct s_strlist *patlist, char *string);
 int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol);
+bool is_fifo(char* filename);
+
+// const int SKIP_BLOCK_SIZE = 1024*1024*1024;
+// #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 #endif // __COMMON_H__

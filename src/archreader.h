@@ -41,6 +41,7 @@ struct s_archreader
     u64    minfsaver; // minimum fsarchiver version required to restore that archive
     u32    hasdirsinfohead; // true if the archive has a "DiRs" header (introduced in 0.6.7)
     int    filefmtver; // set to 1 for "FsArCh_001" or 2 for "FsArCh_002"
+    char   isfifo; // set when the archive is being read from a fifo/pipe
     char   filefmt[FSA_MAX_FILEFMTLEN]; // file format of that archive
     char   creatver[FSA_MAX_PROGVERLEN]; // fsa version used to create archive
     char   label[FSA_MAX_LABELLEN]; // archive label defined by the user
@@ -50,13 +51,13 @@ struct s_archreader
 
 int archreader_init(carchreader *ai);
 int archreader_destroy(carchreader *ai);
-int archreader_open(carchreader *ai);
+int archreader_open(carchreader *ai, char *magic, struct s_dico **d, bool allowseek, u16 *fsid);
 int archreader_close(carchreader *ai);
 int archreader_incvolume(carchreader *ai, bool waitkeypress);
 int archreader_volpath(carchreader *ai);
 int archreader_read_data(carchreader *ai, void *data, u64 size);
 int archreader_read_dico(carchreader *ai, struct s_dico *d);
-int archreader_read_volheader(carchreader *ai);
+int archreader_read_volheader(carchreader *ai, char *magic, struct s_dico *d, u16 fsid);
 int archreader_read_header(carchreader *ai, char *magic, struct s_dico **d, bool allowseek, u16 *fsid);
 int archreader_read_block(carchreader *ai, struct s_dico *in_blkdico, int in_skipblock, int *out_sumok, struct s_blockinfo *out_blkinfo);
 

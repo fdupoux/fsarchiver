@@ -40,7 +40,7 @@
 #include "error.h"
 #include "queue.h"
 
-char *valid_magic[]={FSA_MAGIC_MAIN, FSA_MAGIC_VOLH, FSA_MAGIC_VOLF, 
+char *valid_magic[]={FSA_MAGIC_MAIN, FSA_MAGIC_VOLH, FSA_MAGIC_VOLH2, FSA_MAGIC_VOLF,
     FSA_MAGIC_FSIN, FSA_MAGIC_FSYB, FSA_MAGIC_DATF, FSA_MAGIC_OBJT, 
     FSA_MAGIC_BLKH, FSA_MAGIC_FILF, FSA_MAGIC_DIRS, NULL};
 
@@ -67,6 +67,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " * probe [detailed]: show list of filesystems detected on the disks\n");
     msgprintf(MSG_FORCE, "<options>\n");
     msgprintf(MSG_FORCE, " -o: overwrite the archive if it already exists instead of failing\n");
+    msgprintf(MSG_FORCE, " -S: don't allow seeking\n");
     msgprintf(MSG_FORCE, " -v: verbose mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -d: debug mode (can be used several times to increase the level of details)\n");
     msgprintf(MSG_FORCE, " -A: allow to save a filesystem which is mounted in read-write (live backup)\n");
@@ -160,6 +161,7 @@ int process_cmdline(int argc, char **argv)
     
     // set default options
     g_options.overwrite=false;
+    g_options.noseek=false;
     g_options.allowsaverw=false;
     g_options.dontcheckmountopts=false;
     g_options.verboselevel=0;
@@ -179,6 +181,9 @@ int process_cmdline(int argc, char **argv)
         {
             case 'o': // overwrite existing archives
                 g_options.overwrite=true;
+                break;
+            case 'S': // don't allow seek/lseek() on archives
+                g_options.noseek=true;
                 break;
             case 'a': // don't check the mount options for already-mounted filesystems
                 g_options.dontcheckmountopts=true;
@@ -374,6 +379,8 @@ int process_cmdline(int argc, char **argv)
             }
             break;
     }
+
+    msgprintf(MSG_FORCE, "archive: %s\n", archive);
     
     // list of partitions to backup/restore
     for (fscount=0; (fscount < argc) && (argv[fscount]); fscount++)
@@ -385,9 +392,10 @@ int process_cmdline(int argc, char **argv)
     sigaddset(&mask_set, SIGTERM);
     sigprocmask(SIG_SETMASK, &mask_set, NULL);
     
-    if (g_options.debuglevel>0)
+    if (g_options.debuglevel>0) {
         logfile_open();
-    
+    }
+
     switch (cmd)
     {
         case OPER_SAVEFS:

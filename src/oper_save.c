@@ -1126,14 +1126,20 @@ int oper_save(char *archive, int argc, char **argv, int archtype)
     // init
     memset(&save, 0, sizeof(save));
     save.cost_global=0;
-    
+
     // init archive
     archwriter_init(&save.ai);
     archwriter_generate_id(&save.ai);
-    
+
     // pass options to archive
-    path_force_extension(save.ai.basepath, PATH_MAX, archive, ".fsa");
-    
+    if (!is_fifo(archive)) {
+        path_force_extension(save.ai.basepath, PATH_MAX, archive, ".fsa");
+        msgprintf(MSG_DEBUG3, "basepath %s [not a fifo]\n", save.ai.basepath);
+    } else {
+        snprintf(save.ai.basepath, PATH_MAX, "%s", archive);
+        msgprintf(MSG_DEBUG3, "basepath %s [fifo]\n", save.ai.basepath);
+    }
+
     // init misc data struct to zero
     thread_writer=0;
     for (i=0; i<FSA_MAX_COMPJOBS; i++)

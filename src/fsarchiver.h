@@ -138,6 +138,7 @@ enum {OLDERR_FATAL=1,
 // ----------------------------- fsarchiver magics --------------------------------------------------
 #define FSA_SIZEOF_MAGIC         4
 #define FSA_MAGIC_VOLH           "FsA0" // volume header (one per volume at the very beginning)
+#define FSA_MAGIC_VOLH2          "FsA2" // volume header for v2 streaming format (one per volume at the very beginning)
 #define FSA_MAGIC_VOLF           "FsAE" // volume footer (one per volume at the very end)
 #define FSA_MAGIC_MAIN           "ArCh" // archive header (one per archive at the beginning of the first volume)
 #define FSA_MAGIC_FSIN           "FsIn" // filesys info (one per filesystem at the beginning of the archive)

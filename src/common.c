@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -585,16 +586,38 @@ int exclude_check(cstrlist *patlist, char *string)
     return false;
 }
 
+bool is_fifo(char* filename) {
+    int res;
+    struct stat64 st;
+
+    res=stat64(filename, &st);
+    if (res == 0 && S_ISFIFO(st.st_mode)) {
+        return true;
+    }
+
+    return false;
+}
+
 int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol)
 {
     char prefix[PATH_MAX];
     int pathlen;
-    
-    if ((pathlen=strlen(basepath))<4) // all archives terminates with ".fsa"
+
+    // check for tiny path
+    if ((pathlen=strlen(basepath))<1)
     {   errprintf("archive has an invalid basepath: [%s]\n", basepath);
         return -1;
     }
-    
+
+    // check for fifo that should not be altered
+    if (is_fifo(basepath)) {
+        msgprintf(MSG_FORCE, "the base path for fifo: %s\n", basepath);
+        snprintf(newvolbuf, bufsize, "%s", basepath);
+        return 0;
+    } else {
+        msgprintf(MSG_FORCE, "was not fifo? %s\n", basepath);
+    }
+
     if (curvol==0) // first volume
     {
         if (realpath(basepath, newvolbuf)!=newvolbuf)

@@ -19,6 +19,7 @@
 #  include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -134,21 +135,23 @@ void *thread_reader_fct(void *args)
     {   errprintf("ai is NULL\n");
         goto thread_reader_fct_error;
     }
+
+    msgprintf(MSG_FORCE, "basepath: %s\n", ai->basepath);
     
     // open archive file
     if (archreader_volpath(ai)!=0)
     {   errprintf("archreader_volpath() failed\n");
         goto thread_reader_fct_error;
     }
-    
-    if (archreader_open(ai)!=0)
+
+    if (archreader_open(ai, magic, &dico, false, &fsid)!=0)
     {   errprintf("archreader_open(%s) failed\n", ai->basepath);
         goto thread_reader_fct_error;
     }
     
-    // read volume header
-    if (archreader_read_volheader(ai)!=0)
-    {   errprintf("archio_read_volheader() failed\n");
+     // read volume header
+    if (archreader_read_volheader(ai, magic, dico, fsid)!=0)
+    {   errprintf("archio_read_volheader() failed%s\n", "");
         goto thread_reader_fct_error;
     }
     
@@ -199,6 +202,10 @@ void *thread_reader_fct(void *args)
             msgprintf(MSG_VERB2, "End of volume [%s]\n", ai->volpath);
             if (endofarchive!=true)
             {
+                // we should not encounter split volumes in a stream, or at least it's NYI
+                assert(!(ai->isfifo));
+                assert(false);
+
                 archreader_incvolume(ai, false);
                 while (regfile_exists(ai->volpath)!=true)
                 {
@@ -213,12 +220,13 @@ void *thread_reader_fct(void *args)
                 }
                 
                 msgprintf(MSG_VERB2, "New volume is [%s]\n", ai->volpath);
-                if (archreader_open(ai)!=0)
-                {   msgprintf(MSG_STACK, "archreader_open() failed\n");
+                if (archreader_open(ai, magic, &dico, false, &fsid)!=0)
+                {   msgprintf(MSG_STACK, "archreader_open() failed%s\n", "");
                     goto thread_reader_fct_error;
                 }
-                if (archreader_read_volheader(ai)!=0)
-                {      msgprintf(MSG_STACK, "archio_read_volheader() failed\n");
+
+                if (archreader_read_volheader(ai, magic, dico, fsid)!=0)
+                {      msgprintf(MSG_STACK, "archio_read_volheader() failed%s\n", "");
                     goto thread_reader_fct_error;
                 }
             }

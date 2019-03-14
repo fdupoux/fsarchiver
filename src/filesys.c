@@ -203,6 +203,7 @@ int generic_get_mntinfo(char *devname, int *readwrite, char *mntbuf, int maxmntb
                 }
 
                 msgprintf(MSG_DEBUG1, "mountinfo entry: major=[%ld] minor=[%ld] filesys=[%s] col_opt=[%s] col_mnt=[%s]\n", major, minor, col_fs, col_opt, col_mnt);
+                msgprintf(MSG_DEBUG1, "blerf%s\n", "");
 
                 if ((major==major(devstat.st_rdev)) && (minor==minor(devstat.st_rdev)))
                 {

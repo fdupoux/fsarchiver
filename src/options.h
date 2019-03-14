@@ -26,6 +26,7 @@ typedef struct s_options coptions;
 // struct that stores the options passed on the command line
 struct s_options
 {   bool     overwrite;
+    bool     noseek;
     bool     allowsaverw;
     bool     dontcheckmountopts;
     int      verboselevel;

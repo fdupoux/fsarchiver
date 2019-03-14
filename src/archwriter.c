@@ -50,6 +50,7 @@ int archwriter_init(carchwriter *ai)
     ai->archfd=-1;
     ai->archid=0;
     ai->curvol=0;
+    ai->isfifo=false;
     return 0;
 }
 
@@ -84,17 +85,20 @@ int archwriter_create(carchwriter *ai)
     archflags=O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE;
     archperm=S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH;
     
-    // if the archive already exists and is a not regular file
+    // if the archive already exists and is a not regular file or fifo
     res=stat64(ai->volpath, &st);
-    if (res==0 && !S_ISREG(st.st_mode))
-    {   errprintf("%s already exists, and is not a regular file.\n", ai->basepath);
+    if (res==0 && !S_ISREG(st.st_mode) & !S_ISFIFO(st.st_mode)) {
+        errprintf("%s already exists, and is not a regular file or a pipe.\n", ai->basepath);
+        return -1;
+    } else if (S_ISFIFO(st.st_mode)) {
+        msgprintf(MSG_DEBUG4, "%s is fifo\n", ai->basepath);
+        archflags=O_WRONLY;
+        ai->isfifo = true;
+    } else if ((g_options.overwrite==0) && (res==0) && S_ISREG(st.st_mode)) { // archive exists and is a regular file
+        errprintf("%s already exists, please remove it first.\n", ai->basepath);
         return -1;
     }
-    else if ((g_options.overwrite==0) && (res==0) && S_ISREG(st.st_mode)) // archive exists and is a regular file
-    {   errprintf("%s already exists, please remove it first.\n", ai->basepath);
-        return -1;
-    }
-    
+
     // check if it's a network filesystem
     /*snprintf(testpath, sizeof(testpath), "%s.test", ai->volpath);
     if (((tempfd=open64(testpath, basicflags, archperm))<0) ||
@@ -104,13 +108,13 @@ int archwriter_create(carchwriter *ai)
     {   errprintf("Cannot check the filesystem type on file %s\n", testpath);
         return -1;
     }
-    
+
     if (svfs.f_type==FSA_CIFS_MAGIC_NUMBER || svfs.f_type==FSA_SMB_SUPER_MAGIC)
     {   sysprintf ("writing an archive on a smbfs/cifs filesystem is "
             "not allowed, since it can produce corrupt archives.\n");
         return -1;
     }*/
-    
+
     ai->archfd=open64(ai->volpath, archflags, archperm);
     if (ai->archfd < 0)
     {   sysprintf ("cannot create archive %s\n", ai->volpath);
@@ -119,14 +123,14 @@ int archwriter_create(carchwriter *ai)
     ai->newarch=true;
     
     strlist_add(&ai->vollist, ai->volpath);
-    
+
     /* lockf is causing corruption when the archive is written on a smbfs/cifs filesystem */
     /*if (lockf(ai->archfd, F_LOCK, 0)!=0)
     {   sysprintf("Cannot lock archive file: %s\n", ai->volpath);
         close(ai->archfd);
         return -1;
     }*/
-    
+
     return 0;
 }
 
@@ -152,7 +156,7 @@ int archwriter_remove(carchwriter *ai)
     int i;
     
     assert(ai);
-    
+
     if (ai->archfd >= 0)
     {
         archwriter_close(ai);
@@ -226,6 +230,7 @@ int archwriter_volpath(carchwriter *ai)
 {
     int res;
     res=get_path_to_volume(ai->volpath, PATH_MAX, ai->basepath, ai->curvol);
+    msgprintf(MSG_DEBUG1, "vol path for %s, %s\n", ai->basepath, ai->volpath);
     return res;
 }
 
@@ -267,7 +272,7 @@ int archwriter_write_volheader(carchwriter *ai)
     dico_add_string(voldico, 0, VOLUMEHEADKEY_PROGVERCREAT, FSA_VERSION);
     
     // write header to buffer
-    if (writebuf_add_header(wb, voldico, FSA_MAGIC_VOLH, ai->archid, FSA_FILESYSID_NULL)!=0)
+    if (writebuf_add_header(wb, voldico, FSA_MAGIC_VOLH2, ai->archid, FSA_FILESYSID_NULL)!=0)
     {   errprintf("archio_write_header() failed\n");
         return -1;
     }
@@ -326,20 +331,24 @@ int archwriter_write_volfooter(carchwriter *ai, bool lastvol)
 
 int archwriter_split_check(carchwriter *ai, struct s_writebuf *wb)
 {
-    s64 cursize;
-    
     assert(ai);
+
+    if (ai->isfifo) {
+        return false;
+    }
+
+    s64 cursize;
 
     if (((cursize=archwriter_get_currentpos(ai))>=0) && (g_options.splitsize>0 && cursize+wb->size > g_options.splitsize))
     {
         msgprintf(MSG_DEBUG4, "splitchk: YES --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
-            (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
+                  (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
         return true;
     }
     else
     {
         msgprintf(MSG_DEBUG4, "splitchk: NO --> cursize=%lld, g_options.splitsize=%lld, cursize+wb->size=%lld, wb->size=%lld\n",
-            (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
+                  (long long)cursize, (long long)g_options.splitsize, (long long)cursize+wb->size, (long long)wb->size);
         return false;
     }
 }
@@ -348,6 +357,7 @@ int archwriter_split_if_necessary(carchwriter *ai, struct s_writebuf *wb)
 {
     assert(ai);
 
+    // proceed with split check
     if (archwriter_split_check(ai, wb)==true)
     {
         if (archwriter_write_volfooter(ai, false)!=0)
@@ -427,4 +437,8 @@ int archwriter_dowrite_header(carchwriter *ai, struct s_headinfo *headinfo)
     
     writebuf_destroy(wb);
     return 0;
+}
+
+void archwriter_detect_fifo(carchwriter *ai) {
+
 }

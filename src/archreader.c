@@ -26,6 +26,7 @@
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <zconf.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
@@ -41,6 +42,7 @@ int archreader_init(carchreader *ai)
 {
     assert(ai);
     memset(ai, 0, sizeof(struct s_archreader));
+    ai->isfifo=0;
     ai->cryptalgo=ENCRYPT_NULL;
     ai->compalgo=COMPRESS_NULL;
     ai->fsacomp=-1;
@@ -59,61 +61,59 @@ int archreader_destroy(carchreader *ai)
     return 0;
 }
 
-int archreader_open(carchreader *ai)
-{   
+int archreader_open(carchreader *ai, char *magic, cdico **d, bool allowseek, u16 *fsid)
+{
+    msgprintf(MSG_FORCE, "archreader_open: %s\n", ai->volpath);
+
     struct stat64 st;
-    char volhead[64];
     int magiclen;
+    int res;
     
     assert(ai);
+
+    if (!is_fifo(ai->volpath)) {
+        ai->archfd=open64(ai->volpath, O_RDONLY|O_LARGEFILE);
+    } else {
+        msgprintf(MSG_DEBUG2, "volpath: %s\n", ai->volpath);
+        ai->archfd=open64(ai->volpath, O_RDONLY);
+    }
     
     // on the archive volume
-    ai->archfd=open64(ai->volpath, O_RDONLY|O_LARGEFILE);
     if (ai->archfd<0)
     {   sysprintf ("cannot open archive %s\n", ai->volpath);
         return -1;
     }
     
-    // check the archive volume is a regular file
+    // check the archive volume is a regular file or fifo
     if (fstat64(ai->archfd, &st)!=0)
     {   sysprintf("fstat64(%s) failed\n", ai->volpath);
         return -1;
     }
-    if (!S_ISREG(st.st_mode))
-    {   errprintf("%s is not a regular file, cannot continue\n", ai->volpath);
+    if (!S_ISREG(st.st_mode) && !S_ISFIFO(st.st_mode))
+    {   errprintf("%s is not a regular file or fifo, cannot continue\n", ai->volpath);
         close(ai->archfd);
         return -1;
     }
-    
-    // read file format version and rewind to beginning of the volume
-    if (read(ai->archfd, volhead, sizeof(volhead))!=sizeof(volhead))
-    {   sysprintf("cannot read magic from %s\n", ai->volpath);
-        close(ai->archfd);
-        return -1;
+
+    if (S_ISFIFO(st.st_mode)) {
+        ai->isfifo = 1;
     }
-    if (lseek64(ai->archfd, 0, SEEK_SET)!=0)
-    {   sysprintf("cannot rewind volume %s\n", ai->volpath);
-        close(ai->archfd);
-        return -1;
-    }
-    
+
     // interpret magic an get file format version
-    magiclen=strlen(FSA_FILEFORMAT);
-    if ((memcmp(volhead+40, "FsArCh_001", magiclen)==0) || (memcmp(volhead+40, "FsArCh_00Y", magiclen)==0))
-    {
-        ai->filefmtver=1;
-    }
-    else if (memcmp(volhead+42, "FsArCh_002", magiclen)==0)
-    {
-        ai->filefmtver=2;
-    }
-    else
-    {
-        errprintf("%s is not a supported fsarchiver file format\n", ai->volpath);
+
+//    msgprintf(MSG_FORCE, "volhead (%d):\n", VOLHEAD_LEN);
+//    for (int ix=0; ix<VOLHEAD_LEN; ++ix) {
+//        msgprintf(MSG_FORCE, "%c", volhead[ix]);
+//    }
+//    msgprintf(MSG_FORCE, "%s\n", "");
+
+
+    if ((res=archreader_read_header(ai, magic, d, false, fsid))!=FSAERR_SUCCESS) {
+        errprintf("%s has incompatible archive volume header format\n", ai->volpath);
         close(ai->archfd);
         return -1;
     }
-    
+
     msgprintf(MSG_VERB2, "Detected fileformat=%d in archive %s\n", (int)ai->filefmtver, ai->volpath);
     
     return 0;
@@ -137,6 +137,7 @@ int archreader_volpath(carchreader *ai)
 {
     int res;
     res=get_path_to_volume(ai->volpath, PATH_MAX, ai->basepath, ai->curvol);
+    msgprintf(MSG_DEBUG1, "vol path for %s, %s\n", ai->basepath, ai->volpath);
     return res;
 }
 
@@ -289,34 +290,59 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
     }
     
     // search for next read header marker and magic (it may be further if corruption in archive)
-    if ((curpos=lseek64(ai->archfd, 0, SEEK_CUR))<0)
-    {   sysprintf("lseek64() failed to get the current position in archive\n");
-        return OLDERR_FATAL;
-    }
-    
-    if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=FSAERR_SUCCESS)
-    {   msgprintf(MSG_STACK, "cannot read header magic: res=%d\n", res);
-        return OLDERR_FATAL;
-    }
-    
-    // we don't want to search for the magic if it's a volume header
-    if (is_magic_valid(magic)!=true && allowseek!=true)
-    {   errprintf("cannot read header magic: this is not a valid fsarchiver file, or it has been created with a different version.\n");
-        return OLDERR_FATAL;
-    }
-    
-    while (is_magic_valid(magic)!=true)
-    {
-        if (lseek64(ai->archfd, curpos++, SEEK_SET)<0)
-        {   sysprintf("lseek64(pos=%lld, SEEK_SET) failed\n", (long long)curpos);
+    if (!(ai->isfifo)) {
+        if ((curpos=lseek64(ai->archfd, 0, SEEK_CUR))<0)
+        {   sysprintf("lseek64() failed to get the current position in archive\n");
             return OLDERR_FATAL;
         }
+        
         if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=FSAERR_SUCCESS)
         {   msgprintf(MSG_STACK, "cannot read header magic: res=%d\n", res);
             return OLDERR_FATAL;
         }
+        
+        // we don't want to search for the magic if it's a volume header
+        if (is_magic_valid(magic)!=true && allowseek!=true)
+        {   errprintf("cannot read header magic: this is not a valid fsarchiver file, or it has been created with a different version.\n");
+            return OLDERR_FATAL;
+        }
+        
+        while (is_magic_valid(magic)!=true)
+        {
+            if (lseek64(ai->archfd, curpos++, SEEK_SET)<0)
+            {   sysprintf("lseek64(pos=%lld, SEEK_SET) failed\n", (long long)curpos);
+                return OLDERR_FATAL;
+            }
+            if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=FSAERR_SUCCESS)
+            {   msgprintf(MSG_STACK, "cannot read header magic: res=%d\n", res);
+                return OLDERR_FATAL;
+            }
+        }
+    } else {
+        if ((res=archreader_read_data(ai, magic, FSA_SIZEOF_MAGIC))!=FSAERR_SUCCESS)
+        {   msgprintf(MSG_STACK, "cannot read header magic: res=%d\n", res);
+            return OLDERR_FATAL;
+        }
+
+        // we don't want to search for the magic if it's a volume header
+        if (is_magic_valid(magic)!=true && allowseek!=true)
+        {   errprintf("cannot read header magic: this is not a valid fsarchiver file, or it has been created with a different version.\n");
+            return OLDERR_FATAL;
+        } else if (is_magic_valid(magic)!=true) {
+            // TODO NYI handle corruption case
+            errprintf("header magic is not valid and cannot seek NYI\n");
+            return OLDERR_FATAL;
+        }
+
+        if (strncmp(magic, FSA_MAGIC_VOLH2, FSA_SIZEOF_MAGIC)==0) {
+            if (ai->filefmtver!=0) {
+                errprintf("encountered another file format header\n");
+                return OLDERR_FATAL;
+            }
+            ai->filefmtver = 2;
+        }
     }
-    
+
     // read the archive id
     if ((res=archreader_read_data(ai, &temp32, sizeof(temp32)))!=FSAERR_SUCCESS)
     {   msgprintf(MSG_STACK, "cannot read archive-id in header: res=%d\n", res);
@@ -347,32 +373,26 @@ int archreader_read_header(carchreader *ai, char *magic, cdico **d, bool allowse
     return FSAERR_SUCCESS;
 }
 
-int archreader_read_volheader(carchreader *ai)
+int archreader_read_volheader(carchreader *ai, char *magic, struct s_dico *d, u16 fsid)
 {
     char creatver[FSA_MAX_PROGVERLEN];
     char filefmt[FSA_MAX_FILEFMTLEN];
-    char magic[FSA_SIZEOF_MAGIC];
-    cdico *d;
     u32 volnum;
     u32 readid;
-    u16 fsid;
     int res;
     int ret=0;
     
     // init
     assert(ai);
-    memset(magic, 0, sizeof(magic));
 
-    // ---- a. read header from archive file
-    if ((res=archreader_read_header(ai, magic, &d, false, &fsid))!=FSAERR_SUCCESS)
-    {   errprintf("archreader_read_header() failed to read the archive header\n");
-        return -1;
-    }
-    
     // ---- b. check the magic is what we expected
-    if (strncmp(magic, FSA_MAGIC_VOLH, FSA_SIZEOF_MAGIC)!=0)
+    if (strncmp(magic, FSA_MAGIC_VOLH, FSA_SIZEOF_MAGIC)!=0 && strncmp(magic, FSA_MAGIC_VOLH2, FSA_SIZEOF_MAGIC)!=0)
     {   errprintf("magic is not what we expected: found=[%s] and expected=[%s]\n", magic, FSA_MAGIC_VOLH);
         ret=-1; goto archio_read_volheader_error;
+    } else if (strncmp(magic, FSA_MAGIC_VOLH, FSA_SIZEOF_MAGIC)==0) {
+        // TODO NYI make initial volume check compatible with v1 and v2 formats
+        errprintf("broke backwards compatibility- NYI\n");
+        assert(false);
     }
     
     if (dico_get_u32(d, 0, VOLUMEHEADKEY_ARCHID, &readid)!=0)
@@ -490,6 +510,10 @@ int archreader_read_block(carchreader *ai, cdico *in_blkdico, int in_skipblock, 
     
     if (in_skipblock==true) // the main thread does not need that block (block belongs to a filesys we want to skip)
     {
+        if (ai->isfifo) {
+            sysprintf("cannot skip block- not a regular file%s\n", "");
+            return -1;
+        }
         if (lseek64(ai->archfd, (long)finalsize, SEEK_CUR)<0)
         {   sysprintf("cannot skip block (finalsize=%ld) failed\n", (long)finalsize);
             return -1;
