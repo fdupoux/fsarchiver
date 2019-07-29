@@ -42,6 +42,7 @@ struct s_options
 	char     archlabel[FSA_MAX_LABELLEN];
     u8       encryptpass[FSA_MAX_PASSLEN+1];
     cstrlist exclude;
+    cstrlist include;
 };
 
 extern coptions g_options;

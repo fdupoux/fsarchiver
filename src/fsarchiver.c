@@ -79,6 +79,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " * restdir: restore data from an archive which is not based on a filesystem\n");
     msgprintf(MSG_FORCE, " * archinfo: show information about an existing archive file and its contents\n");
     msgprintf(MSG_FORCE, " * probe [detailed]: show list of filesystems detected on the disks\n");
+    msgprintf(MSG_FORCE, " * extract: Show the content of an archive or extract files from the archive\n");
     msgprintf(MSG_FORCE, "<options>\n");
     msgprintf(MSG_FORCE, " -o: overwrite the archive if it already exists instead of failing\n");
     msgprintf(MSG_FORCE, " -v: verbose mode (can be used several times to increase the level of details)\n");
@@ -87,6 +88,7 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -a: allow to save a filesystem when acls and xattrs are not supported\n");
     msgprintf(MSG_FORCE, " -x: enable support for experimental features (they are disabled by default)\n");
     msgprintf(MSG_FORCE, " -e <pattern>: exclude files and directories that match that pattern\n");
+    msgprintf(MSG_FORCE, " -i <pattern>: include files and directories that match that pattern\n");
     msgprintf(MSG_FORCE, " -L <label>: set the label of the archive (comment about the contents)\n");
     msgprintf(MSG_FORCE, " -z <level>: legacy compression level from 0 (very fast) to 9 (very good)\n");
 #ifdef OPTION_ZSTD_SUPPORT
@@ -138,6 +140,12 @@ void usage(char *progname, bool examples)
         msgprintf(MSG_FORCE, "   fsarchiver restdir /data/linux-sources.fsa /tmp/extract\n");
         msgprintf(MSG_FORCE, " * \e[1mshow information about an archive and its filesystems:\e[0m\n");
         msgprintf(MSG_FORCE, "   fsarchiver archinfo /data/myarchive2.fsa\n");
+        msgprintf(MSG_FORCE, " * \e[1mshow the content of an archives:\e[0m\n");
+        msgprintf(MSG_FORCE, "   fsarchiver extract /data/myarchive2.fsa id=0\n");
+        msgprintf(MSG_FORCE, " * \e[1mshow the content of a directory in an archive:\e[0m\n");
+        msgprintf(MSG_FORCE, "   fsarchiver extract /data/myarchive2.fsa id=0 -i '/dir1/dir2/*'\n");
+        msgprintf(MSG_FORCE, " * \e[1mextract a file from an archive:\e[0m\n");
+        msgprintf(MSG_FORCE, "   fsarchiver extract /data/myarchive2.fsa id=0,dest=targetdir -i '/dir/file'\n");
     }
 }
 
@@ -157,6 +165,7 @@ static struct option const long_options[] =
     {"cryptpass", required_argument, NULL, 'c'},
     {"label", required_argument, NULL, 'L'},
     {"exclude", required_argument, NULL, 'e'},
+    {"include", required_argument, NULL, 'i'},
     {"experimental", no_argument, NULL, 'x'},
     {NULL, 0, NULL, 0}
 };
@@ -206,7 +215,7 @@ int process_cmdline(int argc, char **argv)
     g_options.compresslevel=FSA_DEF_COMPRESS_LEVEL; // default level for gzip
 #endif // OPTION_ZSTD_SUPPORT
 
-    while ((c = getopt_long(argc, argv, "oaAvdj:hVs:c:L:e:xz:Z:", long_options, NULL)) != EOF)
+    while ((c = getopt_long(argc, argv, "oaAvdj:hVs:c:L:e:i:xz:Z:", long_options, NULL)) != EOF)
     {
         switch (c)
         {
@@ -242,6 +251,9 @@ int process_cmdline(int argc, char **argv)
                 break;
             case 'e': // exclude files/directories
                 strlist_add(&g_options.exclude, optarg);
+                break;
+            case 'i': // include files/directories
+                strlist_add(&g_options.include, optarg);
                 break;
             case 's': // split archive into several volumes
                 g_options.splitsize=((u64)atoll(optarg))*((u64)1024LL*1024LL);
@@ -360,10 +372,15 @@ int process_cmdline(int argc, char **argv)
         runasroot=false;
         argcok=(argc==1);
     }
+    else if (strcmp(command, "extract")==0)
+    {   cmd=OPER_EXTRACT;
+        runasroot=false;
+        argcok=(argc>=1);
+    }
     else if (strcmp(command, "probe")==0)
     {   cmd=OPER_PROBE;
         runasroot=true;
-        argcok=(argc<=1);
+        argcok=(argc==1 || argc==2);
     }
     else // command not found
     {   errprintf("[%s] is not a valid command.\n", command);
@@ -422,6 +439,7 @@ int process_cmdline(int argc, char **argv)
         case OPER_SAVEDIR:
         case OPER_RESTDIR:
         case OPER_ARCHINFO:
+        case OPER_EXTRACT:
             archive=*argv++, argc--;
             break;
         case OPER_PROBE:
@@ -460,6 +478,7 @@ int process_cmdline(int argc, char **argv)
         case OPER_RESTFS:
         case OPER_RESTDIR:
         case OPER_ARCHINFO:
+        case OPER_EXTRACT:
             ret=oper_restore(archive, fscount, partition, cmd);
             break;
         case OPER_PROBE:

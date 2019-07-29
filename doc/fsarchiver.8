@@ -108,6 +108,9 @@ file and its contents.
 .TP
 .B probe
 Show list of filesystems detected on the disks.
+.TP
+.B extract
+Show archive contents or extract files from the archive.
 
 .SH "OPTIONS"
 .PP
@@ -147,6 +150,13 @@ name or an absolute file/dir path. You must use quotes around the pattern
 each time you use wildcards, else it would be interpreted by the shell. The
 wildcards must be interpreted by fsarchiver. See examples below for more
 details about this option.
+.IP "\fB\-i pattern, \-\-include=pattern\fP"
+Include files and directories that match specified pattern. The pattern can
+contain shell wildcards such as * and ? or may be either a simple file/dir
+name or an absolute file/dir path. You must use quotes around the pattern
+each time you use wildcards, else it would be interpreted by the shell. The
+wildcards must be interpreted by fsarchiver. If no include pattern is
+specified all files are included.
 .IP "\fB\-L label, \-\-label=label\fP"
 Set the label of the archive: it is just a comment about its contents. It
 can be used to remember a particular thing about the archive or the state
@@ -220,6 +230,12 @@ fsarchiver savefs -c - /data/myarchive1.fsa /dev/sda1
 fsarchiver restdir /data/linux-sources.fsa /tmp/extract
 .SS show information about an archive and its filesystems:
 fsarchiver archinfo /data/myarchive2.fsa
+.SS show the content of an archives:
+fsarchiver extract /data/myarchive2.fsa id=0
+.SS show the content of a directory in an archive:
+fsarchiver extract /data/myarchive2.fsa id=0 -i '/dir1/dir2/*'
+.SS extract a file from an archive:
+fsarchiver extract /data/myarchive2.fsa id=0,dest=targetdir -i '/dir/file'
 
 .SH WARNING
 .B fsarchiver

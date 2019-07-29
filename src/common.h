@@ -49,6 +49,7 @@ int format_stacktrace(char *buffer, int bufsize);
 int stats_show(struct s_stats, int fsid);
 u64 stats_errcount(struct s_stats stats);
 int exclude_check(struct s_strlist *patlist, char *string);
+int include_check(struct s_strlist *patlist, char *string);
 int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol);
 s64 get_device_size(char *partition);
 

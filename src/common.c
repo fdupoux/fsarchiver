@@ -592,6 +592,22 @@ int exclude_check(cstrlist *patlist, char *string)
     return false;
 }
 
+int include_check(cstrlist *patlist, char *string)
+{
+    char pattern[1024];
+    int count;
+    int i;
+    
+    count=strlist_count(patlist);
+    for (i=0; i < count; i++)
+    {
+        strlist_getitem(patlist, i, pattern, sizeof(pattern));
+        if (fnmatch(pattern, string, 0)==0)
+            return true;
+    }
+    return false;
+}
+
 int get_path_to_volume(char *newvolbuf, int bufsize, char *basepath, long curvol)
 {
     char prefix[PATH_MAX];
