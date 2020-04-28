@@ -51,6 +51,14 @@ struct s_features
 };
 
 // These are the features to be passed on the command line (cf "man ext4")
+//
+// metadata_csum_seed feature allows UUID change on mounted filesystems and configures an incompat
+// flag (EXT4_FEATURE_INCOMPAT_CSUM_SEED) bumping minimum kernel version to linux-4.4. Since
+// FSArchiver always creates the filesystem from scratch and sets up the UUID via mke2fs -U in
+// case metadata_csum is going to be used (mke2fs 1.43+), metadata_csum_seed brings no value for
+// us and therefore is not preserved (i.e. present in FSA_FEATURE_INCOMPAT_SUPP but not listed
+// below). User can easily enable it with tune2fs if desired.
+//
 struct s_features mkfeatures[] = // cf e2fsprogs-1.44.0/lib/e2p/feature.c
 {
     {"has_journal",   FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL,      E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT3, PROGVER(1,39,0)},
