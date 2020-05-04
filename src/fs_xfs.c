@@ -34,6 +34,9 @@
 #include "strlist.h"
 #include "error.h"
 
+// POSIX Extended Regular Expression to match RHEL 7 kernel releases
+#define RHEL7_KERNEL_ERE "[[:digit:]]+\\.el7(uek)?\\."
+
 int xfs_check_compatibility(u64 compat, u64 ro_compat, u64 incompat, u64 log_incompat)
 {
     int errors=0;
@@ -230,10 +233,10 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
     // - this feature relies on the V5 on-disk format but it is optional
     // - this feature is enabled by default when using xfsprogs-4.16.0 or later
     // - this feature will be enabled if the original filesystem was XFS V5 and had it
-    // - this feature is supported since mkfs.xfs 4.2.0, but unfortunately mkfs.xfs 4.5.0
-    //   in RHEL 7.3 carries a custom patch removing the option, hence require mkfs.xfs
-    //   4.7.0, next version after 4.5.0
-    if (xfstoolsver >= PROGVER(4,7,0)) // only use "sparse" option when it is supported by mkfs
+    // - this feature is supported since mkfs.xfs 4.2.0
+    // - mkfs.xfs 4.5.0 in RHEL 7.3 carries a custom patch removing the option
+    if (xfstoolsver >= PROGVER(4,2,0) &&
+        !match_uname_r(RHEL7_KERNEL_ERE)) // only use "sparse" option when it is supported by mkfs
     {
         optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_incompat & XFS_SB_FEAT_INCOMPAT_SPINODES));
         strlcatf(mkfsopts, sizeof(mkfsopts), " -i sparse=%d ", (int)optval);

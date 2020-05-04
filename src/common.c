@@ -27,12 +27,14 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <wordexp.h>
 #include <fnmatch.h>
 #include <time.h>
 #include <limits.h>
+#include <regex.h>
 
 #ifdef HAVE_EXECINFO_H
 #include <execinfo.h>
@@ -629,4 +631,24 @@ s64 get_device_size(char *partition)
     close(fd);
 
     return devsize;
+}
+
+bool match_uname_r(char *ere)
+{
+    int r;
+    struct utsname ut;
+    regex_t reg;
+
+    if (uname(&ut) != 0)
+        return false;
+
+    // do not bother with invalid regex, since it is not user configurable
+    if (regcomp(&reg, ere, REG_EXTENDED|REG_NOSUB) != 0)
+        return false;
+
+    r = !regexec(&reg, ut.release, 0, NULL, 0);
+
+    msgprintf(MSG_VERB2, "match_uname_r(%s)=[%s], kernel=[%s]\n", ere, r ? "true" : "false", ut.release);
+
+    return r;
 }
