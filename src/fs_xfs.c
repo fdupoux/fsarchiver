@@ -106,8 +106,6 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
     memset(xadmopts, 0, sizeof(xadmopts));
     memset(uuid, 0, sizeof(uuid));
 
-    strlcatf(mkfsopts, sizeof(mkfsopts), " %s ", fsoptions);
-
     if (strlen(mkfslabel) > 0)
         strlcatf(mkfsopts, sizeof(mkfsopts), " -L '%.12s' ", mkfslabel);
     else if (dico_get_string(d, 0, FSYSHEADKEY_FSLABEL, buffer, sizeof(buffer))==0 && strlen(buffer)>0)
@@ -241,6 +239,9 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
         optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_incompat & XFS_SB_FEAT_INCOMPAT_SPINODES));
         strlcatf(mkfsopts, sizeof(mkfsopts), " -i sparse=%d ", (int)optval);
     }
+
+    // ---- mkfsopt from command line
+    strlcatf(mkfsopts, sizeof(mkfsopts), " %s ", fsoptions);
 
     // ---- create the new filesystem using mkfs.xfs
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, mkfsopts)!=0 || exitst!=0)

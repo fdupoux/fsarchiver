@@ -68,6 +68,9 @@ int vfat_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char 
     if (dico_get_u32(d, 0, FSYSHEADKEY_FSVFATSERIAL, &temp32)==0)
         strlcatf(mkfsopts, sizeof(mkfsopts), " -i '%08X' ", temp32);
 
+    // ---- mkfsopt from command line
+    strlcatf(mkfsopts, sizeof(mkfsopts), " %s ", fsoptions);
+
     // ---- create the new filesystem using mkfs.vfat
     if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.vfat %s %s", mkfsopts, partition)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
