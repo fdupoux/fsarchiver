@@ -210,8 +210,6 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     // "mke2fs -F" removes confirmation prompt when device is a whole disk such as /dev/sda
     strlcatf(options, sizeof(options), " -F ");
 
-    strlcatf(options, sizeof(options), " %s ", fsoptions);
-
     strlcatf(options, sizeof(options), " -b %ld ", (long)devblksize);
 
     // ---- set the advanced filesystem settings from the dico
@@ -374,6 +372,9 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         strlcatf(options, sizeof(options), " -E stride=%ld ", (long)temp64);
     if ((dico_get_u64(d, 0, FSYSHEADKEY_FSEXTEOPTRAIDSTRIPEWIDTH, &temp64)==0) && e2fstoolsver>=PROGVER(1,40,7))
         strlcatf(options, sizeof(options), " -E stripe-width=%ld ", (long)temp64);
+
+    // ---- mkfsopt from command line
+    strlcatf(options, sizeof(options), " %s ", fsoptions);
 
     // ---- execute mke2fs
     msgprintf(MSG_VERB2, "exec: %s\n", command);
