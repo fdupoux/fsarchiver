@@ -99,7 +99,7 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
 #endif // OPTION_ZSTD_SUPPORT
             default:
                 free(bufcomp);
-                msgprintf(2, "invalid compression level: %d\n", (int)compalgo);
+                errprintf("unsupported compression algorithm: %d\n", compalgo);
                 return -1;
         }
 
@@ -274,7 +274,7 @@ int decompress_block_generic(struct s_blockinfo *blkinfo)
                 break;
 #endif // OPTION_ZSTD_SUPPORT
             default:
-                errprintf("unsupported compression algorithm: %ld\n", (long)blkinfo->blkcompalgo);
+                errprintf("unsupported compression algorithm: %d\n", blkinfo->blkcompalgo);
                 return -1;
         }
         free(blkinfo->blkdata); // free old buffer (with compressed data)
