@@ -196,14 +196,12 @@ int process_cmdline(int argc, char **argv)
     g_options.encryptpass[0]=0;
 
     // set default compression mode
-#ifdef OPTION_ZSTD_SUPPORT
-    g_options.fsacomplevel=FSA_DEF_ZSTD_LEVEL;
-    g_options.compressalgo=COMPRESS_ZSTD;
-    g_options.compresslevel=FSA_DEF_ZSTD_LEVEL;
-#else
-    g_options.fsacomplevel=3; // fsa level 3 = "gzip -6"
     g_options.compressalgo=FSA_DEF_COMPRESS_ALGO;
-    g_options.compresslevel=FSA_DEF_COMPRESS_LEVEL; // default level for gzip
+    g_options.compresslevel=FSA_DEF_COMPRESS_LEVEL;
+#ifdef OPTION_ZSTD_SUPPORT
+    g_options.fsacomplevel=FSA_DEF_COMPRESS_LEVEL;
+#else
+    g_options.fsacomplevel=FSA_DEF_FSACOMP_LEVEL;
 #endif // OPTION_ZSTD_SUPPORT
 
     while ((c = getopt_long(argc, argv, "oaAvdj:hVs:c:L:e:xz:Z:", long_options, NULL)) != EOF)
