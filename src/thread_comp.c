@@ -49,6 +49,11 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
     u64 compsize;
     u64 bufsize;
     int res;
+#ifdef OPTION_ZSTD_SUPPORT
+    bool zstd=true;
+#else
+    bool zstd=false;
+#endif
 
     bufsize = (blkinfo->blkrealsize) + (blkinfo->blkrealsize / 16) + 64 + 3; // alloc bigger buffer else lzo will crash
     if ((bufcomp=malloc(bufsize))==NULL)
@@ -104,9 +109,12 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
         }
 
         // retry if high compression was used and compression failed because of FSAERR_ENOMEM
-        if ((res == FSAERR_ENOMEM) && (compalgo > FSA_DEF_COMPRESS_ALGO))
+        // at this point, if zstd is not supported, compalgo == COMPRESS_ZSTD cannot be true
+        if (res == FSAERR_ENOMEM && ((compalgo == COMPRESS_ZSTD && complevel > FSA_DEF_COMPRESS_LEVEL) ||
+                                      compalgo != FSA_DEF_COMPRESS_ALGO))
         {
-            errprintf("attempt to compress the current block using an alternative algorithm (\"-z%d\")\n", FSA_DEF_COMPRESS_ALGO);
+            errprintf("attempt to compress the current block using an alternative algorithm (\"%s%d\")\n",
+                      zstd ? "-Z" : "-z", zstd ? FSA_DEF_COMPRESS_LEVEL : FSA_DEF_FSACOMP_LEVEL);
             compalgo = FSA_DEF_COMPRESS_ALGO;
             complevel = FSA_DEF_COMPRESS_LEVEL;
         }
@@ -119,7 +127,7 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
         blkinfo->blkdata=bufcomp; // new buffer (with compressed data)
         blkinfo->blkcompsize=compsize; // size after compression and before encryption
         blkinfo->blkarsize=compsize; // in case there is no encryption to set this
-        //errprintf ("COMP_DBG: block successfully compressed using %s\n", compress_algo_int_to_string(compalgo));
+        //errprintf("COMP_DBG: block successfully compressed using algorithm %d level %d\n", compalgo, complevel);
     }
     else // compressed version is bigger or compression failed: keep the original block
     {   memcpy(bufcomp, blkinfo->blkdata, blkinfo->blkrealsize);
@@ -128,7 +136,7 @@ int compress_block_generic(struct s_blockinfo *blkinfo)
         blkinfo->blkcompsize=blkinfo->blkrealsize; // size after compression and before encryption
         blkinfo->blkarsize=blkinfo->blkrealsize;  // in case there is no encryption to set this
         blkinfo->blkcompalgo=COMPRESS_NONE;
-        //errprintf ("COMP_DBG: block copied uncompressed, attempted using %s\n", compress_algo_int_to_string(compalgo));
+        //errprintf("COMP_DBG: block copied uncompressed, attempted using algorithm %d level %d\n", compalgo, complevel);
     }
 
     u64 cryptsize;
