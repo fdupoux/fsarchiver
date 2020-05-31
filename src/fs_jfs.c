@@ -74,7 +74,7 @@ int jfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
 
     if (options[0])
     {
-        if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "jfs_tune %s %s", partition, options)!=0 || exitst!=0)
+        if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "jfs_tune %s %s", options, partition)!=0 || exitst!=0)
         {   errprintf("command [%s] failed\n", command);
             return -1;
         }

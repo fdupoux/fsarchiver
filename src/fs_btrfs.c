@@ -103,7 +103,7 @@ int btrfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char
     // ---- mkfsopt from command line
     strlcatf(options, sizeof(options), " %s ", fsoptions);
 
-    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.btrfs -f %s %s", partition, options)!=0 || exitst!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.btrfs -f %s %s", options, partition)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }
