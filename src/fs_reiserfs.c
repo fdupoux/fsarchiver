@@ -68,7 +68,7 @@ int reiserfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, c
     // ---- mkfsopt from command line
     strlcatf(options, sizeof(options), " %s ", fsoptions);
 
-    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkreiserfs -f %s %s", partition, options)!=0 || exitst!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkreiserfs -f %s %s", options, partition)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }

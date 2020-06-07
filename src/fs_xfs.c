@@ -244,7 +244,7 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
     strlcatf(mkfsopts, sizeof(mkfsopts), " %s ", fsoptions);
 
     // ---- create the new filesystem using mkfs.xfs
-    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", partition, mkfsopts)!=0 || exitst!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "mkfs.xfs -f %s %s", mkfsopts, partition)!=0 || exitst!=0)
     {   errprintf("command [%s] failed\n", command);
         return -1;
     }

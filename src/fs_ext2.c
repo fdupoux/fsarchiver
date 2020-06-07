@@ -378,7 +378,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
 
     // ---- execute mke2fs
     msgprintf(MSG_VERB2, "exec: %s\n", command);
-    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "%s %s %s", progname, partition, options)!=0 || exitst!=0)
+    if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "%s %s %s", progname, options, partition)!=0 || exitst!=0)
     {   errprintf("command [%s] failed with return status=%d\n", command, exitst);
         ret=-1;
         goto extfs_mkfs_cleanup;
@@ -401,7 +401,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
 
     if (options[0])
     {
-        if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "tune2fs %s %s", partition, options)!=0 || exitst!=0)
+        if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "tune2fs %s %s", options, partition)!=0 || exitst!=0)
         {   errprintf("command [%s] failed with return status=%d\n", command, exitst);
             ret=-1;
             goto extfs_mkfs_cleanup;
