@@ -6,7 +6,7 @@ draft = false
 +++
 
 ## Installation
-You can either download a livecd with FSArchiver on it (eg: any recent SystemRescueCd),
+You can either download a livecd with FSArchiver on it (eg: any recent SystemRescue),
 or you can install it on your existing Linux system. If you want to install it, you
 have three solutions:
 
@@ -43,8 +43,8 @@ and does not require the libraries to be installed on your system.
 To compile the sources, you have to run follow these instructions:
 
 #### Download the latest sources
-First, you have to download [fsarchiver-0.8.5.tar.gz]
-(https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5.tar.gz).
+First, you have to download
+[fsarchiver-0.8.5.tar.gz](https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5.tar.gz).
 Just save it to a temporary directory.
 
 #### Extract the sources in a temporary directory
@@ -91,7 +91,7 @@ which is missing because it is not installed) when you save the file-system
 (such as e2fsprogs, reiserfsprogs, xfsprogs, ...) when you want to restore a
 file-system. And it should not really be a problem since you often want to
 restore a file-system by booting from a livecd such as
-[SystemRescueCd](http://www.system-rescue-cd.org), since you cannot restore your
+[SystemRescue](https://www.system-rescue.org), since you cannot restore your
 root file-system when you are using it, so booting from a livecd / usb-stick is
 mandatory in that case.
 
@@ -111,7 +111,7 @@ dnf install fsarchiver
 ```
 
 ### Installation on Ubuntu (using apt-get)
-Package [information](https://packages.ubuntu.com/bionic/fsarchiver).
+Package [information](https://packages.ubuntu.com/groovy/fsarchiver).
 ```
 sudo apt-get update
 sudo apt-get install fsarchiver
@@ -136,7 +136,7 @@ Package [information](https://www.archlinux.org/packages/extra/x86_64/fsarchiver
 pacman -S fsarchiver
 ```
 
-### Installation on RHEL / CentOS / Scientific Linux
+### Installation on RHEL / CentOS / Scientific Linux versions 7.x
 
 You should use these RPM packages that have been built for RHEL7 based
 distributions, that is the recommended way for most users:
@@ -161,22 +161,16 @@ cd fsarchiver-0.8.5
 
 ### Installation on Gentoo
 Gentoo implements support for packages using ebuild files. There is an
-[official ebuild for fsarchiver]
-(http://packages.gentoo.org/packages/app-backup/fsarchiver), so you can directly
-install it using the **emerge** command as long as your portage tree is recent.
-You may also have to change the keywords to make the installation possible:
-
-Add app-backup/fsarchiver to your /etc/portage/package.keywords if required:
-```
-echo "app-backup/fsarchiver ~*" >> /etc/portage/package.keywords
-```
-
-Change USE flags if you want non-default compilation options:
-```
-echo "app-backup/fsarchiver lzma lzo" >> /etc/portage/package.use
-```
+[official ebuild for fsarchiver](http://packages.gentoo.org/packages/app-backup/fsarchiver),
+so you can directly install it using the **emerge** command as long as your
+portage tree is recent. You may also have to change the keywords to make the
+installation possible:
 
 Run the installation command:
 ```
 emerge app-backup/fsarchiver
 ```
+
+### Installation on Guix
+
+There is an [official fsarchiver package for Guix](https://guix.gnu.org/en/packages/fsarchiver-0.8.5/).

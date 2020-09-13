@@ -78,7 +78,7 @@ that there is no restriction that may impact fsarchiver. So you can save a
 filesystem on a system having SELinux enabled as long as it does not block
 fsarchiver. But it's recommended to restore filesystems using fsarchiver from
 an environment where SELinux is disabled or not supported. You can use
-http://www.sysresccd.org[SystemRescueCd] which does not have SELinux enabled.
+http://www.sysresccd.org[SystemRescue] which does not have SELinux enabled.
 The problem with SELinux during a restoration is that it can create labels on
 each file that is being restored, even if the original filesystem had no such
 labels.

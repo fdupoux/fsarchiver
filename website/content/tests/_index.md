@@ -17,7 +17,7 @@ with no error.
 Here is the **detailed test procedure** that we follow:
 
 * install a Linux system with selinux enabled (when available) on /dev/sda1 (/boot) and /dev/sda2 (root filesystem)
-* reboot the machine on a livecd with fsarchiver (the latest SystemRescueCd with FSArchiver on it)
+* reboot the machine on a livecd with fsarchiver (the latest SystemRescue with FSArchiver on it)
 * mount /dev/sda3 on /mnt/backup to store the FSArchiver archive.
 * run **fsarchiver -o savefs /mnt/backup/backup-xxxx.fsa /dev/sda2**
 * erase the root filesystem: **dd if=/dev/zero of=/dev/sda2 bs=1024k**

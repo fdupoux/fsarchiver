@@ -12,7 +12,7 @@ running, you can make a backup of that disk using fsarchiver. It's called a
 **live backup** or *hot backup*. All you need is an fsarchiver binary, an another
 filesystem where to save the archive. It can be on another partition on the
 hard-disk, or a network file-system such as Samba of NFS.
- 
+
 ## Backup with a snapshot
 If the partitions you want to save are LVM (Logical volume Manager)
 Logical-Volumes, and it you have free extents in the Volume-Group, then you can
@@ -54,9 +54,9 @@ during the backup of the filesystem. This is the reason why it shows the
 following error message, and stops:
 ```
 # fsarchiver savefs /mnt/archives/gentoo-backup-20090328-01.fsa /dev/sda2 -v
-create.c#0642,filesystem_mount_partition(): partition [/dev/sda2] is mounted read/write. 
-     please mount it read-only and then try again. you can do "mount -o remount,ro /dev/sda2". 
-     you can also run fsarchiver with option '-A' if you know what you are doing. 
+create.c#0642,filesystem_mount_partition(): partition [/dev/sda2] is mounted read/write.
+     please mount it read-only and then try again. you can do "mount -o remount,ro /dev/sda2".
+     you can also run fsarchiver with option '-A' if you know what you are doing.
 removing /mnt/archives/gentoo-backup-20090328-01.fsa
 ```
 When a filesystem is writeable during the backup, it means changes can be done
@@ -66,7 +66,7 @@ Mysql, the Mysql database refers to files that can be uploaded in the Apache
 directory from the website. In that case the backup could contains a reference
 in the database but not the referred file because these files have been backed
 up already. So you have to know whether or not your system may have such
-inconsistencies. 
+inconsistencies.
 
 If there is no risk of inconsistency, then you can use fsarchiver with option
 **-A** to continue the backup of a filesystem which is mounted in read-write mode.
@@ -75,11 +75,10 @@ If there is no risk of inconsistency, then you can use fsarchiver with option
 If you have a problem on your filesystems, you may want to restore the
 live-backup you made. You cannot restore a filesystem which is mounted, so
 it's necessary to restore from a Linux-Rescue system. We recommend that you
-use [SystemRescueCd](http://www.system-rescue-cd.org) for multiple reasons:
+use [SystemRescue](https://www.system-rescue.org) for multiple reasons:
 
 * it comes with a recent version of fsarchiver
-* you can boot it from the cdrom, an [usb stick]
-(http://www.system-rescue-cd.org/Installing-SystemRescueCd-on-a-USB-stick/),
-or [from the network](http://www.system-rescue-cd.org/manual/PXE_network_booting/).
-* it contains [all the filesystem tools](http://www.system-rescue-cd.org/System-tools)
+* you can boot it from the cdrom, an [usb stick](https://www.system-rescue.org/Installing-SystemRescue-on-a-USB-memory-stick/),
+or [from the network](https://www.system-rescue.org/manual/PXE_network_booting/).
+* it contains [all the filesystem tools](https://www.system-rescue.org/System-tools/)
 that fsarchiver may need

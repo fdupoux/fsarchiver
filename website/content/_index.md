@@ -37,13 +37,13 @@ with a read-write support. It will **preserve all the standard file attributes**
 extended-attributes, ...), as long as the kernel has support for it enabled.
 It allows to preserve all the windows file attributes (ACL, standard
 attributes, ...). It can be used with LVM snapshots in order to
-[make consistent backups of all filesystems](http://www.system-rescue-cd.org/lvm-guide-en/Making-consistent-backups-with-LVM/)
+[make consistent backups of all filesystems](https://www.system-rescue.org/lvm-guide-en/Making-consistent-backups-with-LVM/)
 including the root filesystem.
 
 FSArchiver has been **packaged by most popular Linux distributions** (Fedora,
 Debian, Ubuntu, OpenSUSE, ArchLinux, Gentoo) hence it can be installed very
 easily from the standard package repositories using the standard yum / apt-get
-/ emerge / pacman commands. It can also be used from SystemRescueCd, as it
+/ emerge / pacman commands. It can also be used from SystemRescue, as it
 comes with all run-time dependencies, so that you can restore your system and
 data after a problem.
 
@@ -98,13 +98,10 @@ the whole tar is compressed with gzip. In that case, the data which are written
 after the corruption are lost.
 
 ## Download
-* You can download either [the sources](https://github.com/fdupoux/fsarchiver/releases/download/0.8.2/fsarchiver-0.8.2.tar.gz)
+* You can download either [the sources](https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5.tar.gz)
 or a static binary from the [github releases page](https://github.com/fdupoux/fsarchiver/releases).
-* You can also download [SystemRescueCd](http://www.system-rescue-cd.org/) which is
+* You can also download [SystemRescue](https://www.system-rescue.org/) which is
 a livecd that provides a recent FSArchiver and all the file-system tools and
 libraries required. So if you want to use FSArchiver to save or restore your
 root file-system, the best thing to do is to run FSArchiver from this livecd.
 * You can track the changes using the [detailed ChangeLog](/changelog/) page.
-
-## Contact
-You can ask technical questions, and general questions in the [forums](https://forums.fsarchiver.org/).

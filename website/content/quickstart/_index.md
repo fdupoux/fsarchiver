@@ -162,7 +162,7 @@ don't require xfsprogs to be installed if you only work on an ext3 file-system.
 
 For these reasons, it's a good idea to run FSArchiver from an environment with
 all the system tools installed. The best environment is
-[SystemRescueCd](http://www.system-rescue-cd.org), since it comes
+[SystemRescue](https://www.system-rescue.org), since it comes
 with all the linux file-system tools and a very recent FSArchiver version.
 
 It's also important to make sure that SELinux is not enabled in the kernel running
@@ -176,7 +176,7 @@ you boot with SELinux enabled again. In the other cases, the kernel could return
 FSArchiver would not preserve these attributes and the system would not work when you
 restore your root filesystem, or you would have to ask the SELinux to relabel it.
 The SELinux support is disabled by default if you use FSArchiver from
-SystemRescueCd-1.1.3 or newer, so your SELinux labels will be preserved if you use
+SystemRescue, so your SELinux labels will be preserved if you use
 FSArchiver from that environment.
 
 ## Detection of the filesystems

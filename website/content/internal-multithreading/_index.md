@@ -6,15 +6,13 @@ draft = false
 +++
 
 ## About multi-threading
-Today all the new processors are dual-core or quad-core. But all the 
+Today all the new processors are dual-core or quad-core. But all the
 standard compression tools are single threaded. It means that when
 you use "tar cfz" for "tar cfj", to compress a tarball using gzip
 or bzip2, you just use one cpu, so just 50% of 25% of the power you
 have. FSArchiver is multi-threaded if you use option "-j" to create
 several compression jobs, so that it can use all the power of your
-processors to compress faster. For instance, compressing on an intel
-Q6600 quad-core with bzip2 is really fast, and with lzma it's not too
-slow.
+processors to compress faster.
 
 ## Implementation of the multi-threading
 FSArchiver is using three kinds of threads even if you don't use the
@@ -37,9 +35,9 @@ blocks at a time. The compression/decompression threads are always
 searching for the first block to be processed in the queue, they
 process it, and update the block in the queue. For instance if the
 queue is able to store 10 data blocks at a given time, it means that
-a quad-core processor will have enough blocks to feed each of its 
-cores, and then to use all the power of this processor. The size of 
-the queue is defined by FSA_MAX_QUEUESIZE. It says how many data 
+a quad-core processor will have enough blocks to feed each of its
+cores, and then to use all the power of this processor. The size of
+the queue is defined by FSA_MAX_QUEUESIZE. It says how many data
 blocks can be stored in the queue at a given time. When this limit
 is reached, the thread which fills the queue will have to wait.
 
@@ -58,7 +56,7 @@ Here are how the threads work:
 ## Queue and synchronization
 The queue is what links all the threads together. It's a critical
 section of the code so it's very important that it contains no bug.
-The consistency of this queue is guaranteed with a mutex (to make 
+The consistency of this queue is guaranteed with a mutex (to make
 sure that two threads can't change the same thing at the same time).
 It's very important that each function that locks this mutex unlocks
 it before it exits, else there will be a dead-lock. It's also useful

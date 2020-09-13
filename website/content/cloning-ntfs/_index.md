@@ -28,7 +28,7 @@ more recent versions of Windows. This is experimental, use at your own risk.
 To clone NTFS partitions, you need ntfs-3g-2009.11.14 or more recent, and a
 recent fsarchiver release. It's recommended to use the latest version of these
 two programs. The most convenient way to use it is to run a recent fsarchiver
-version from [SystemRescueCd](http://www.system-rescue-cd.org). It's a livecd that
+version from [SystemRescue](https://www.system-rescue.org). It's a livecd that
 comes with fsarchiver and all the filesystems tools.
 
 ## Current status
@@ -93,7 +93,7 @@ number 1 (*/dev/sda1*).
 [/dev/sda4       ] [lvm2pv     ] [<unknown>      ] [   898.56 GB] [  8] [  4]
 ```
 
-We can mount this partition from SystemRescueCd using ntfs-3g:
+We can mount this partition from SystemRescue using ntfs-3g:
 ```
 # ntfs-3g /dev/sda1 /mnt/windows
 ```

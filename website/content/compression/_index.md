@@ -132,9 +132,6 @@ of memory when the highest compression level is used (-z9). Usually memory will 
 be an issue with any recent desktop or server machine if you use compression levels
 inferior to -z9.
 
-You can read the following [
-topic about memory problems](http://forums.fsarchiver.org/viewtopic.php?p=2259).
-
 The biggest part of the memory requirement is the compression threads. The more
 compression threads you have, the more memory you need. Very high compression
 levels (especially -z9) requires a huge amount of memory. If you don't have
