@@ -47,6 +47,8 @@ u64 check_prog_version(char *prog);
 #define FSA_EXT2_FEATURE_COMPAT_DIR_INDEX          0x0020
 #define FSA_EXT2_FEATURE_COMPAT_LAZY_BG            0x0040
 #define FSA_EXT4_FEATURE_COMPAT_SPARSE_SUPER2      0x0200
+#define FSA_EXT4_FEATURE_COMPAT_FAST_COMMIT        0x0400
+#define FSA_EXT4_FEATURE_COMPAT_STABLE_INODES      0x0800
 
 /* for s_feature_ro_compat */
 #define FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER    0x0001
@@ -77,6 +79,7 @@ u64 check_prog_version(char *prog);
 #define FSA_EXT4_FEATURE_INCOMPAT_LARGEDIR         0x4000
 #define FSA_EXT4_FEATURE_INCOMPAT_INLINEDATA       0x8000
 #define FSA_EXT4_FEATURE_INCOMPAT_ENCRYPT          0x10000
+#define FSA_EXT4_FEATURE_INCOMPAT_CASEFOLD         0x20000
 
 #define FSA_EXT2_FEATURE_COMPAT_SUPP               FSA_EXT2_FEATURE_COMPAT_EXT_ATTR
 #define FSA_EXT2_FEATURE_INCOMPAT_SUPP             (FSA_EXT2_FEATURE_INCOMPAT_FILETYPE| \
@@ -98,14 +101,15 @@ u64 check_prog_version(char *prog);
 #define FSA_EXT3_FEATURE_RO_COMPAT_UNSUPPORTED     ~FSA_EXT3_FEATURE_RO_COMPAT_SUPP
 
 // -------------- features supported by the current fsarchiver version --------------------
-#define FSA_FEATURE_COMPAT_SUPP                    (u64)(FSA_EXT2_FEATURE_COMPAT_DIR_PREALLOC| \
-                                                         FSA_EXT2_FEATURE_COMPAT_IMAGIC_INODES| \
-                                                         FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL| \
-                                                         FSA_EXT2_FEATURE_COMPAT_EXT_ATTR| \
-                                                         FSA_EXT2_FEATURE_COMPAT_RESIZE_INODE| \
-                                                         FSA_EXT2_FEATURE_COMPAT_DIR_INDEX| \
-                                                         FSA_EXT2_FEATURE_COMPAT_LAZY_BG| \
-                                                         FSA_EXT4_FEATURE_COMPAT_SPARSE_SUPER2)
+#define FSA_FEATURE_COMPAT_SUPP                    (u64)(FSA_EXT2_FEATURE_COMPAT_DIR_PREALLOC|\
+                                                         FSA_EXT2_FEATURE_COMPAT_IMAGIC_INODES|\
+                                                         FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL|\
+                                                         FSA_EXT2_FEATURE_COMPAT_EXT_ATTR|\
+                                                         FSA_EXT2_FEATURE_COMPAT_RESIZE_INODE|\
+                                                         FSA_EXT2_FEATURE_COMPAT_DIR_INDEX|\
+                                                         FSA_EXT2_FEATURE_COMPAT_LAZY_BG|\
+                                                         FSA_EXT4_FEATURE_COMPAT_SPARSE_SUPER2|\
+                                                         FSA_EXT4_FEATURE_COMPAT_FAST_COMMIT)
 #define FSA_FEATURE_RO_COMPAT_SUPP                 (u64)(FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER|\
                                                          FSA_EXT2_FEATURE_RO_COMPAT_LARGE_FILE|\
                                                          FSA_EXT2_FEATURE_RO_COMPAT_BTREE_DIR|\
@@ -132,8 +136,13 @@ u64 check_prog_version(char *prog);
                                                          FSA_EXT4_FEATURE_INCOMPAT_LARGEDIR|\
                                                          FSA_EXT4_FEATURE_INCOMPAT_INLINEDATA)
 
-// FSA_FEATURE_INCOMPAT_SUPP does not include FSA_EXT4_FEATURE_INCOMPAT_ENCRYPT
-// as it would require special handling to mount an encrypted filesystem
+// FSA_FEATURE_INCOMPAT_SUPP does not include:
+// - FSA_EXT4_FEATURE_INCOMPAT_ENCRYPT as it would require special handling to mount an encrypted filesystem
+// - FSA_EXT4_FEATURE_INCOMPAT_CASEFOLD as it would require special handling to recreate the filesystem with
+//   proper "encoding" and "encoding_flags" mke2fs options
+//
+// FSA_FEATURE_COMPAT_SUPP does not include:
+// - FSA_EXT4_FEATURE_COMPAT_STABLE_INODES because it is used mainly with encryption
 
 // old e2fsprogs compatibility glue
 #ifndef EXT2_FLAG_SOFTSUPP_FEATURES

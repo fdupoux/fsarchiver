@@ -57,15 +57,16 @@ struct s_features
 // FSArchiver always creates the filesystem from scratch and sets up the UUID via mke2fs -U in
 // case metadata_csum is going to be used (mke2fs 1.43+), metadata_csum_seed brings no value for
 // us and therefore is not preserved (i.e. present in FSA_FEATURE_INCOMPAT_SUPP but not listed
-// below). User can easily enable it with tune2fs if desired.
+// below). Users can easily enable it with tune2fs if desired.
 //
-struct s_features mkfeatures[] = // cf e2fsprogs-1.44.0/lib/e2p/feature.c
+struct s_features mkfeatures[] = // cf e2fsprogs-1.46.0/lib/e2p/feature.c
 {
     {"has_journal",   FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL,      E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT3, PROGVER(1,39,0)},
     {"ext_attr",      FSA_EXT2_FEATURE_COMPAT_EXT_ATTR,         E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT2, PROGVER(1,40,5)},
     {"resize_inode",  FSA_EXT2_FEATURE_COMPAT_RESIZE_INODE,     E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT2, PROGVER(1,39,0)},
     {"dir_index",     FSA_EXT2_FEATURE_COMPAT_DIR_INDEX,        E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT2, PROGVER(1,33,0)},
     {"sparse_super2", FSA_EXT4_FEATURE_COMPAT_SPARSE_SUPER2,    E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT4, PROGVER(1,42,10)},
+    {"fast_commit",   FSA_EXT4_FEATURE_COMPAT_FAST_COMMIT,      E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT4, PROGVER(1,46,0)},
     {"filetype",      FSA_EXT2_FEATURE_INCOMPAT_FILETYPE,       E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT2, PROGVER(1,16,0)},
     {"extent",        FSA_EXT4_FEATURE_INCOMPAT_EXTENTS,        E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT4, PROGVER(1,41,0)},
     {"journal_dev",   FSA_EXT3_FEATURE_INCOMPAT_JOURNAL_DEV,    E2P_FEATURE_INCOMPAT,    EXTFSTYPE_EXT3, PROGVER(1,39,0)},
