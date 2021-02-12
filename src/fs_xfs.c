@@ -191,6 +191,28 @@ int xfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char *
         strlcatf(mkfsopts, sizeof(mkfsopts), " -m reflink=%d ", (int)optval);
     }
 
+    // Determine if the "inobtcount" mkfs option should be enabled (inobt block counts)
+    // - starting with linux-5.10 XFS has added block usage counters for inode btrees
+    //   to reduce mount times
+    // - this optional feature relies on the V5 on-disk format and on the "finobt"
+    //   (free inode btree) mkfs option being enabled
+    // - this feature will be enabled if the original filesystem was XFS V5 and had it
+    if (xfstoolsver >= PROGVER(5,10,0)) // only use "inobtcount" option when it is supported by mkfs
+    {
+        optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_ro_compat & XFS_SB_FEAT_RO_COMPAT_INOBTCNT));
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -m inobtcount=%d ", (int)optval);
+    }
+
+    // Determine if the "bigtime" mkfs option should be enabled (large timestamps)
+    // - starting with linux-5.10 XFS has added support for larger inode timestamps, beyond january 2038
+    // - this feature relies on the V5 on-disk format but it is optional
+    // - this feature will be enabled if the original filesystem was XFS V5 and had it
+    if (xfstoolsver >= PROGVER(5,10,0)) // only use "bigtime" option when it is supported by mkfs
+    {
+        optval = ((xfsver==XFS_SB_VERSION_5) && (sb_features_incompat & XFS_SB_FEAT_INCOMPAT_BIGTIME));
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -m bigtime=%d ", (int)optval);
+    }
+
     // Attempt to preserve filesystem UUID
     // - mkfs.xfs' "-m uuid=" option was added in version 4.3.0 and is the best way to set UUID
     // - XFS V4 UUID can be successfully set using either xfs_admin or mkfs.xfs >= 4.3.0
