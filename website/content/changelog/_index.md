@@ -5,6 +5,11 @@ nameInMenu = "ChangeLog"
 draft = false
 +++
 
+* **0.8.6 (2021-02-27):**
+  - Add support for EXT4 fast_commit feature (Marcos Mello)
+  - Add support for XFS features inobtcount and bigtime (Marcos Mello)
+  - Fix handling of compression options on the command line (Marcos Mello)
+  - Specify device as the last argument in mkfs calls (Marcos Mello)
 * **0.8.5 (2018-07-10):**
   * Improved support for extfs filesystems (Contribution from Marcos Mello)
   * Fixed build issue with e2fsprogs < 1.41 (Contribution from Marcos Mello)

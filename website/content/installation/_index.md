@@ -44,7 +44,7 @@ To compile the sources, you have to run follow these instructions:
 
 #### Download the latest sources
 First, you have to download
-[fsarchiver-0.8.5.tar.gz](https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5.tar.gz).
+[fsarchiver-0.8.6.tar.gz](https://github.com/fdupoux/fsarchiver/releases/download/0.8.6/fsarchiver-0.8.6.tar.gz).
 Just save it to a temporary directory.
 
 #### Extract the sources in a temporary directory
@@ -136,26 +136,26 @@ Package [information](https://www.archlinux.org/packages/extra/x86_64/fsarchiver
 pacman -S fsarchiver
 ```
 
-### Installation on RHEL / CentOS / Scientific Linux versions 7.x
+### Installation on RHEL / CentOS 7.x
 
 You should use these RPM packages that have been built for RHEL7 based
 distributions, that is the recommended way for most users:
 
-* [fsarchiver-0.8.5-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5-1.el7.x86_64.rpm)
+* [fsarchiver-0.8.6-1.el7.x86_64.rpm](https://github.com/fdupoux/fsarchiver/releases/download/0.8.6/fsarchiver-0.8.6-1.el7.x86_64.rpm)
 
 NOTE: Installing fsarchiver's rpm requires [EPEL](https://fedoraproject.org/wiki/EPEL) enabled.
 
 Use the following commands to install:
 ```
 yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-yum install https://github.com/fdupoux/fsarchiver/releases/download/0.8.5/fsarchiver-0.8.5-1.el7.x86_64.rpm
+yum install https://github.com/fdupoux/fsarchiver/releases/download/0.8.6/fsarchiver-0.8.6-1.el7.x86_64.rpm
 ```
 
 If you want to compile fsarchiver yourself, use the following instructions:
 ```
-yum install zlib-devel bzip2-devel lzo-devel lz4-devel xz-devel e2fsprogs-devel libgcrypt-devel libattr-devel libblkid-devel
-tar xfz fsarchiver-0.8.5.tar.gz
-cd fsarchiver-0.8.5
+yum install zlib-devel bzip2-devel lzo-devel lz4-devel xz-devel libzstd-devel e2fsprogs-devel libgcrypt-devel libattr-devel libblkid-devel
+tar xfz fsarchiver-0.8.6.tar.gz
+cd fsarchiver-0.8.6
 ./configure --prefix=/usr && make && make install
 ```
 
@@ -173,4 +173,4 @@ emerge app-backup/fsarchiver
 
 ### Installation on Guix
 
-There is an [official fsarchiver package for Guix](https://guix.gnu.org/en/packages/fsarchiver-0.8.5/).
+There is an [official fsarchiver package for Guix](https://guix.gnu.org/en/packages/F/).

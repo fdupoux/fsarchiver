@@ -1,6 +1,6 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
-* 0.8.6:
+* 0.8.6 (2021-02-27):
   - Add support for EXT4 fast_commit feature (Marcos Mello)
   - Add support for XFS features inobtcount and bigtime (Marcos Mello)
   - Fix handling of compression options on the command line (Marcos Mello)
