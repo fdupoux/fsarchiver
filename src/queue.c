@@ -123,7 +123,7 @@ bool queue_get_end_of_queue(cqueue *q)
     bool res;
     if (!q)
     {   errprintf("q is NULL\n");
-        return FSAERR_EINVAL;
+        return false;
     }
 
     assert(pthread_mutex_lock(&q->mutex)==0);
@@ -137,7 +137,7 @@ bool queuelocked_get_end_of_queue(cqueue *q)
     bool res;
     if (!q)
     {   errprintf("q is NULL\n");
-        return FSAERR_EINVAL;
+        return false;
     }
 
     res=((q->itemcount<1) && (q->endofqueue==true));
