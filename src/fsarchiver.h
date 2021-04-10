@@ -30,7 +30,7 @@
 #endif
 
 // -------------------------------- fsarchiver commands ---------------------------------------------
-enum {OPER_NULL=0, OPER_SAVEFS, OPER_RESTFS, OPER_SAVEDIR, OPER_RESTDIR, OPER_ARCHINFO, OPER_PROBE};
+enum {OPER_NULL=0, OPER_SAVEFS, OPER_RESTFS, OPER_SAVEDIR, OPER_RESTDIR, OPER_ARCHINFO, OPER_PROBE, OPER_EXTRACT};
 
 // ----------------------------------- dico sections ------------------------------------------------
 enum {DICO_OBJ_SECTION_STDATTR=0, DICO_OBJ_SECTION_XATTR=1, DICO_OBJ_SECTION_WINATTR=2};

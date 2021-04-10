@@ -207,6 +207,7 @@ Distributed under the GPL v2 license (GNU General Public License v2).
  * restdir: restore data from an archive which is not based on a filesystem
  * archinfo: show information about an existing archive file and its contents
  * probe [detailed]: show list of filesystems detected on the disks
+ * extract: Show the content of an archive or extract files from the archive
 <options>
  -o: overwrite the archive if it already exists instead of failing
  -v: verbose mode (can be used several times to increase the level of details)
@@ -215,6 +216,7 @@ Distributed under the GPL v2 license (GNU General Public License v2).
  -a: allow to save a filesystem when acls and xattrs are not supported
  -x: enable support for experimental features (they are disabled by default)
  -e <pattern>: exclude files and directories that match that pattern
+ -i <pattern>: include files and directories that match that pattern
  -L <label>: set the label of the archive (comment about the contents)
  -z <level>: legacy compression level from 0 (very fast) to 9 (very good)
  -Z <level>: zstd compression level from 1 (very fast) to 22 (very good)
@@ -261,4 +263,10 @@ Distributed under the GPL v2 license (GNU General Public License v2).
    fsarchiver restdir /data/linux-sources.fsa /tmp/extract
  * show information about an archive and its filesystems:
    fsarchiver archinfo /data/myarchive2.fsa
+ * show the content of an archives:
+   fsarchiver extract /data/myarchive2.fsa id=0
+ * show the content of a directory in an archive:
+   fsarchiver extract /data/myarchive2.fsa id=0 -i '/dir1/dir2/*'
+ * extract a file from an archive:
+   fsarchiver extract /data/myarchive2.fsa id=0,dest=targetdir -i '/dir/file'
 ```
