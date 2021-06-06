@@ -65,7 +65,9 @@ int vfat_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char 
         strlcatf(mkfsopts, sizeof(mkfsopts), " -n '%.11s' ", buffer);
 
     // ---- filesystem serial
-    if (dico_get_u32(d, 0, FSYSHEADKEY_FSVFATSERIAL, &temp32)==0)
+    if (strlen(mkfsuuid) > 0)
+        strlcatf(mkfsopts, sizeof(mkfsopts), " -i '%.8s' ", mkfsuuid);
+    else if (dico_get_u32(d, 0, FSYSHEADKEY_FSVFATSERIAL, &temp32)==0)
         strlcatf(mkfsopts, sizeof(mkfsopts), " -i '%08X' ", temp32);
 
     // ---- mkfsopt from command line
