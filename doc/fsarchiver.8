@@ -131,7 +131,8 @@ read-write mode which allows modifications to be done on the filesystem
 during the backup. Modifications can drive to inconsistencies in the
 backup. Using LVM snapshots is the recommended way to make backups since it
 will provide consistency, but it is only available for filesystems which
-are on LVM logical volumes.
+are on LVM logical volumes. Deleted files during the backup process are
+ignored when this option is used.
 .IP "\fB\-a, \-\-allow-no-acl-xattr\fP"
 Allow to save a filesystem when ACLs and extended attributes are not
 supported (or are disabled) by the kernel. By default fsarchiver fails with
