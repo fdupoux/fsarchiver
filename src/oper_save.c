@@ -779,7 +779,7 @@ int createar_save_directory(csavear *save, char *root, char *path, u64 *costeval
         // ---- get details about current file
         if (lstat64(fullpath, &statbuf)!=0)
         {
-            if(g_options.allowsaverw==0)
+            if (g_options.allowsaverw==0)
             {   sysprintf("cannot lstat64(%s)\n", fullpath);
                 ret=-1;
                 goto backup_dir_err;
