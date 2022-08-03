@@ -190,6 +190,8 @@ struct xfs_sb
 #define XFS_SB_FEAT_INCOMPAT_SPINODES     (1 << 1)  /* sparse inode chunks */
 #define XFS_SB_FEAT_INCOMPAT_META_UUID    (1 << 2)  /* metadata UUID */
 #define XFS_SB_FEAT_INCOMPAT_BIGTIME      (1 << 3)  /* large timestamps */
+#define XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR  (1 << 4)  /* needs xfs_repair */
+#define XFS_SB_FEAT_INCOMPAT_NREXT64      (1 << 5)  /* large extent counters */
 
 // features supported by the current fsarchiver version
 #define FSA_XFS_FEATURE_COMPAT_SUPP       (u64)(0)
@@ -200,7 +202,9 @@ struct xfs_sb
 #define FSA_XFS_FEATURE_INCOMPAT_SUPP     (u64)(XFS_SB_FEAT_INCOMPAT_FTYPE|\
                                                 XFS_SB_FEAT_INCOMPAT_SPINODES|\
                                                 XFS_SB_FEAT_INCOMPAT_META_UUID|\
-                                                XFS_SB_FEAT_INCOMPAT_BIGTIME)
+                                                XFS_SB_FEAT_INCOMPAT_BIGTIME|\
+                                                XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR|\
+                                                XFS_SB_FEAT_INCOMPAT_NREXT64)
 #define FSA_XFS_FEATURE_LOG_INCOMPAT_SUPP (u64)(0)
 
 #endif // __FS_XFS_H__
