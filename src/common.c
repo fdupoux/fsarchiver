@@ -261,7 +261,6 @@ int getpathtoprog(char *buffer, int bufsize, char *prog)
 {
     char pathtest[PATH_MAX];
     char delims[]=":\t\n";
-    struct stat bufstat;
     char pathenv[4096];
     char *saveptr=0;
     char *result;
@@ -276,7 +275,7 @@ int getpathtoprog(char *buffer, int bufsize, char *prog)
     for(i=0; result != NULL; i++)
     {
         snprintf(pathtest, sizeof(pathtest), "%s/%s", result, prog);
-        if (stat(pathtest, &bufstat)==0 && access(pathtest, X_OK)==0)
+        if (access(pathtest, X_OK)==0)
         {
             snprintf(buffer, bufsize, "%s", pathtest);
             return 0;
