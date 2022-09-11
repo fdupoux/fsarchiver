@@ -403,9 +403,10 @@ int exec_command(char *command, int cmdbufsize, int *exitst, char *stdoutbuf, in
         if ((stderrbuf!=NULL) && (errpos+1 < stderrsize))
             read(mystderr, stderrbuf+errpos, stderrsize-errpos-1);
         
-        msgprintf(MSG_VERB1, "command [%s] returned %d\n", command, WEXITSTATUS(status));
+        status = WIFSIGNALED(status) ? 128 + WTERMSIG(status) : WEXITSTATUS(status);
+        msgprintf(MSG_VERB1, "command [%s] returned %d\n", command, status);
         if (exitst)
-            *exitst=WEXITSTATUS(status);
+            *exitst=status;
         
         if ((stdoutbuf!=NULL) && (outpos>0))
             msgprintf(MSG_DEBUG1, "\n----stdout----\n%s\n----stdout----\n\n", stdoutbuf);
