@@ -176,7 +176,6 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     u64 temp64;
     int exitst;
     int ret=0;
-    int res;
     int i;
 
     // init
@@ -413,7 +412,7 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
         // http://marc.info/?l=linux-ext4&m=123246035924487&w=2
         if (extfstype==EXTFSTYPE_EXT4 && !mke2fsuuid)
         {
-            if ( ((res=exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "e2fsck -fy %s", partition))!=0) || ((exitst!=0) && (exitst!=1)) )
+            if (exec_command(command, sizeof(command), &exitst, NULL, 0, NULL, 0, "e2fsck -fy %s", partition)!=0 || (exitst!=0 && exitst!=1))
             {   errprintf("command [%s] failed with return status=%d\n", command, exitst);
                 ret=-1;
                 goto extfs_mkfs_cleanup;
