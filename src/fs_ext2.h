@@ -49,6 +49,7 @@ u64 check_prog_version(char *prog);
 #define FSA_EXT4_FEATURE_COMPAT_SPARSE_SUPER2      0x0200
 #define FSA_EXT4_FEATURE_COMPAT_FAST_COMMIT        0x0400
 #define FSA_EXT4_FEATURE_COMPAT_STABLE_INODES      0x0800
+#define FSA_EXT4_FEATURE_COMPAT_ORPHAN_FILE        0x1000
 
 /* for s_feature_ro_compat */
 #define FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER    0x0001
@@ -63,6 +64,7 @@ u64 check_prog_version(char *prog);
 #define FSA_EXT4_FEATURE_RO_COMPAT_METADATA_CSUM   0x0400
 #define FSA_EXT4_FEATURE_RO_COMPAT_READONLY        0x1000
 #define FSA_EXT4_FEATURE_RO_COMPAT_PROJECT         0x2000
+#define FSA_EXT4_FEATURE_RO_COMPAT_ORPHAN_PRESENT  0x10000
 
 /* for s_feature_incompat */
 #define FSA_EXT2_FEATURE_INCOMPAT_FILETYPE         0x0002
@@ -109,7 +111,8 @@ u64 check_prog_version(char *prog);
                                                          FSA_EXT2_FEATURE_COMPAT_DIR_INDEX|\
                                                          FSA_EXT2_FEATURE_COMPAT_LAZY_BG|\
                                                          FSA_EXT4_FEATURE_COMPAT_SPARSE_SUPER2|\
-                                                         FSA_EXT4_FEATURE_COMPAT_FAST_COMMIT)
+                                                         FSA_EXT4_FEATURE_COMPAT_FAST_COMMIT|\
+                                                         FSA_EXT4_FEATURE_COMPAT_ORPHAN_FILE)
 #define FSA_FEATURE_RO_COMPAT_SUPP                 (u64)(FSA_EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER|\
                                                          FSA_EXT2_FEATURE_RO_COMPAT_LARGE_FILE|\
                                                          FSA_EXT2_FEATURE_RO_COMPAT_BTREE_DIR|\
@@ -121,7 +124,8 @@ u64 check_prog_version(char *prog);
                                                          FSA_EXT4_FEATURE_RO_COMPAT_BIGALLOC|\
                                                          FSA_EXT4_FEATURE_RO_COMPAT_METADATA_CSUM|\
                                                          FSA_EXT4_FEATURE_RO_COMPAT_READONLY|\
-                                                         FSA_EXT4_FEATURE_RO_COMPAT_PROJECT)
+                                                         FSA_EXT4_FEATURE_RO_COMPAT_PROJECT|\
+                                                         FSA_EXT4_FEATURE_RO_COMPAT_ORPHAN_PRESENT)
 #define FSA_FEATURE_INCOMPAT_SUPP                  (u64)(FSA_EXT2_FEATURE_INCOMPAT_FILETYPE|\
                                                          FSA_EXT3_FEATURE_INCOMPAT_RECOVER|\
                                                          FSA_EXT3_FEATURE_INCOMPAT_JOURNAL_DEV|\
