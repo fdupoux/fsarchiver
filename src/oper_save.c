@@ -615,9 +615,14 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
     }
     
     // ---- backup other file attributes (xattr + winattr)
-    if (createar_item_xattr(save, root, relpath, statbuf, dicoattr)!=0)
-    {   msgprintf(MSG_STACK, "backup_item_xattr() failed: cannot prepare xattr-dico for item %s\n", relpath);
-        attrerrors++;
+    // selinux can present fake xattrs
+    // do not try to save them if not supported by the filesystem, otherwise restoration will fail
+    if (filesys[save->fstype].support_for_xattr==true)
+    {
+        if (createar_item_xattr(save, root, relpath, statbuf, dicoattr)!=0)
+        {   msgprintf(MSG_STACK, "backup_item_xattr() failed: cannot prepare xattr-dico for item %s\n", relpath);
+            attrerrors++;
+        }
     }
     
     if (filesys[save->fstype].winattr==true)
