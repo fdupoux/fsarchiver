@@ -1,5 +1,13 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.8.7 (2023-03-19):
+  - Implement support for option "uuid=" for vfat (Marcos Mello)
+  - Update list of btrfs supported features (Marcos Mello)
+  - Add support for the "nrext64" feature on XFS (Marcos Mello)
+  - Do not error out on deleted files when option -A is used (Marcos Mello)
+  - Handle termination by signal in exec_command() (Marcos Mello)
+  - Add support for the "orphan_file" feature in EXT4 (Marcos Mello)
+  - Do not try to save xattrs if not supported by the filesystem (Marcos Mello)
 * 0.8.6 (2021-02-27):
   - Add support for EXT4 fast_commit feature (Marcos Mello)
   - Add support for XFS features inobtcount and bigtime (Marcos Mello)
