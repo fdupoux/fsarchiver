@@ -59,6 +59,10 @@ struct s_features
 // us and therefore is not preserved (i.e. present in FSA_FEATURE_INCOMPAT_SUPP but not listed
 // below). Users can easily enable it with tune2fs if desired.
 //
+// /etc/mke2fs.conf feature list from [fs_types] section applies to mkfs.extX, mke2fs -t extX
+// and mke2fs -j/-J. FSArchiver calls mke2fs without specifying -t/-j/-J, therefore only the
+// [defaults] section, containing ext2 baseline features, is used.
+//
 struct s_features mkfeatures[] = // cf e2fsprogs-1.47.0/lib/e2p/feature.c
 {
     {"has_journal",   FSA_EXT3_FEATURE_COMPAT_HAS_JOURNAL,      E2P_FEATURE_COMPAT,      EXTFSTYPE_EXT3, PROGVER(1,39,0)},
