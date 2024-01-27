@@ -231,11 +231,16 @@ int process_cmdline(int argc, char **argv)
                 break;
             case 'j': // compression jobs
                 g_options.compressjobs=atoi(optarg);
-                if (g_options.compressjobs<1 || g_options.compressjobs>FSA_MAX_COMPJOBS)
+                if (g_options.compressjobs<1)
                 {
-                    errprintf("[%s] is not a valid number of jobs. Must be between 1 and %d\n", optarg, FSA_MAX_COMPJOBS);
+                    errprintf("[%s] is not a valid number of jobs. Must be at least 1\n", optarg);
                     usage(progname, false);
                     return 1;
+                }
+                if (g_options.compressjobs>FSA_MAX_COMPJOBS)
+                {
+                    g_options.compressjobs = FSA_MAX_COMPJOBS;
+                    msgprintf(MSG_FORCE, "[%s] is greater than the maximum number of jobs. Limiting to %d.\n", optarg, FSA_MAX_COMPJOBS);
                 }
                 break;
             case 'e': // exclude files/directories
