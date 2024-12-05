@@ -353,7 +353,10 @@ int extfs_mkfs(cdico *d, char *partition, int extfstype, char *fsoptions, char *
     strlcatf(options, sizeof(options), " -I %ld ", (long)devisize);
 
     // filesystem revision: good-old-rev or dynamic
-    strlcatf(options, sizeof(options), " -r %d ", (int)fsextrevision);
+    if (e2fstoolsver<PROGVER(1,47,2))
+        strlcatf(options, sizeof(options), " -r %d ", (int)fsextrevision);
+    else
+        strlcatf(options, sizeof(options), " -E revision=%d ", (int)fsextrevision);
 
     // if extfs revision is dynamic and there are features in the list
     if (fsextrevision!=EXT2_GOOD_OLD_REV && strlist_count(&strfeatures)>0)
