@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.8.9 (unreleased):
+  - TODO
 * 0.8.8 (2024-12-14):
   - Provide compatibility with e2fsprogs >= 1.47.2 (#154)
   - Accept -j arguments greater than FSA_MAX_COMPJOBS (#146)
