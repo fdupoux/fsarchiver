@@ -1,4 +1,4 @@
-FROM archlinux:latest
+FROM archlinux/archlinux:latest
 RUN mkdir -p /workspace
 RUN pacman -Syyu --noconfirm autoconf automake gcc git make patch pkgconf && rm -rf /var/cache/pacman/pkg/*
 RUN pacman -Syyu --noconfirm bzip2 e2fsprogs lzo xz libgcrypt zlib lz4 zstd && rm -rf /var/cache/pacman/pkg/*

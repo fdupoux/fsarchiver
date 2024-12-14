@@ -1,5 +1,8 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.8.8 (2024-12-14):
+  - Provide compatibility with e2fsprogs >= 1.47.2 (#154)
+  - Accept -j arguments greater than FSA_MAX_COMPJOBS (#146)
 * 0.8.7 (2023-03-19):
   - Implement support for option "uuid=" for vfat (Marcos Mello)
   - Update list of btrfs supported features (Marcos Mello)
