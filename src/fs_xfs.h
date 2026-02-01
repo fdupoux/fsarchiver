@@ -65,7 +65,7 @@ typedef uint64_t      xfs_ufsize_t;   /* unsigned bytes in a file */
 
 typedef int32_t       xfs_suminfo_t;  /* type of bitmap summary info */
 typedef int32_t       xfs_rtword_t;   /* word type for bitmap manipulations */
- 
+
 typedef int64_t       xfs_lsn_t;      /* log sequence number */
 typedef int32_t       xfs_tid_t;      /* transaction identifier */
 
@@ -192,6 +192,11 @@ struct xfs_sb
 #define XFS_SB_FEAT_INCOMPAT_BIGTIME      (1 << 3)  /* large timestamps */
 #define XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR  (1 << 4)  /* needs xfs_repair */
 #define XFS_SB_FEAT_INCOMPAT_NREXT64      (1 << 5)  /* large extent counters */
+#define XFS_SB_FEAT_INCOMPAT_EXCHRANGE    (1 << 6)  /* exchangerange supported */
+#define XFS_SB_FEAT_INCOMPAT_PARENT       (1 << 7)  /* parent pointers */
+#define XFS_SB_FEAT_INCOMPAT_METADIR      (1 << 8)  /* metadata dir tree */
+#define XFS_SB_FEAT_INCOMPAT_ZONED        (1 << 9)  /* zoned RT allocator */
+#define XFS_SB_FEAT_INCOMPAT_ZONE_GAPS    (1 << 10) /* RTGs have LBA gaps */
 
 // features supported by the current fsarchiver version
 #define FSA_XFS_FEATURE_COMPAT_SUPP       (u64)(0)
@@ -204,7 +209,12 @@ struct xfs_sb
                                                 XFS_SB_FEAT_INCOMPAT_META_UUID|\
                                                 XFS_SB_FEAT_INCOMPAT_BIGTIME|\
                                                 XFS_SB_FEAT_INCOMPAT_NEEDSREPAIR|\
-                                                XFS_SB_FEAT_INCOMPAT_NREXT64)
+                                                XFS_SB_FEAT_INCOMPAT_NREXT64|\
+                                                XFS_SB_FEAT_INCOMPAT_EXCHRANGE|\
+                                                XFS_SB_FEAT_INCOMPAT_PARENT|\
+                                                XFS_SB_FEAT_INCOMPAT_METADIR|\
+                                                XFS_SB_FEAT_INCOMPAT_ZONED|\
+                                                XFS_SB_FEAT_INCOMPAT_ZONE_GAPS)
 #define FSA_XFS_FEATURE_LOG_INCOMPAT_SUPP (u64)(0)
 
 #endif // __FS_XFS_H__
