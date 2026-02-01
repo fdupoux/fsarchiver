@@ -19,12 +19,12 @@ repodir="$(realpath ${curdir}/..)"
 echo "curdir=${curdir}"
 echo "repodir=${repodir}"
 
-# Build fsarchiver in docker
-docker run --rm --user 1000:1000 -it --volume=${repodir}:/workspace \
-    ${dockerimg} setarch x86_64 -- bash -c "make distclean ; ./autogen.sh && ./configure && make && make dist"
+# Execute fsarchiver in docker
+docker run --rm -it --privileged --volume=${repodir}:/workspace \
+    ${dockerimg} setarch x86_64 -- bash -c "/workspace/src/fsarchiver $*"
 res=$?
 if [ ${res} -ne 0 ]
 then
-    echo "ERROR: Failed to build fsarchiver"
+    echo "ERROR: Failed to execute fsarchiver"
     exit 1
 fi
