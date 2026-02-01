@@ -48,6 +48,9 @@ int btrfs_test(char *devname);
 #define BTRFS_FEATURE_INCOMPAT_METADATA_UUID    (1ULL << 10)
 #define BTRFS_FEATURE_INCOMPAT_RAID1C34         (1ULL << 11)
 #define BTRFS_FEATURE_INCOMPAT_ZONED            (1ULL << 12)
+#define BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2   (1ULL << 13)
+#define BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE (1ULL << 14)
+#define BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA     (1ULL << 16)
 
 // compat flags: btrfs features that this fsarchiver version supports
 #define FSA_BTRFS_FEATURE_COMPAT_SUPP           0ULL
@@ -70,7 +73,10 @@ int btrfs_test(char *devname);
          BTRFS_FEATURE_INCOMPAT_NO_HOLES |              \
          BTRFS_FEATURE_INCOMPAT_METADATA_UUID |         \
          BTRFS_FEATURE_INCOMPAT_RAID1C34 |              \
-         BTRFS_FEATURE_INCOMPAT_ZONED)
+         BTRFS_FEATURE_INCOMPAT_ZONED |                 \
+         BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2 |        \
+         BTRFS_FEATURE_INCOMPAT_RAID_STRIPE_TREE |      \
+         BTRFS_FEATURE_INCOMPAT_SIMPLE_QUOTA)
 
 // disk layout definitions
 #define BTRFS_SUPER_MAGIC 0x9123683E
@@ -99,7 +105,7 @@ static inline u64 btrfs_sb_offset(int mirror)
     return BTRFS_SUPER_INFO_OFFSET;
 }
 
-struct btrfs_dev_item 
+struct btrfs_dev_item
 {
     /* the internal btrfs device id */
     __le64 devid;
@@ -151,7 +157,7 @@ struct btrfs_dev_item
  * the super block basically lists the main trees of the FS
  * it currently lacks any block count etc etc
  */
-struct btrfs_super_block 
+struct btrfs_super_block
 {
     u8 csum[BTRFS_CSUM_SIZE];
     /* the first 4 fields must match struct btrfs_header */
