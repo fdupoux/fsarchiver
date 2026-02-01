@@ -1,5 +1,7 @@
 fsarchiver: Filesystem Archiver for Linux [http://www.fsarchiver.org]
 =====================================================================
+* 0.8.10 (unreleased):
+  - Todo
 * 0.8.9 (2026-02-01):
   - Add support for xfs and btrfs features up to linux-6.18
 * 0.8.8 (2024-12-14):
