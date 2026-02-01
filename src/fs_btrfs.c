@@ -63,7 +63,6 @@ int btrfs_mkfs(cdico *d, char *partition, char *fsoptions, char *mkfslabel, char
     u64 incompat_flags;
     u64 compat_ro_flags;
     int x, y, z;
-    int optval;
     int exitst;
     u64 temp64;
 
