@@ -21,7 +21,7 @@ echo "repodir=${repodir}"
 
 # Build fsarchiver in docker
 docker run --rm --user 1000:1000 -it --volume=${repodir}:/workspace \
-    ${dockerimg} setarch x86_64 -- bash -c "make distclean ; ./autogen.sh && ./configure && make && make dist"
+    ${dockerimg} setarch x86_64 -- bash -c "make distclean ; autoupdate ; ./autogen.sh && ./configure && make && make dist"
 res=$?
 if [ ${res} -ne 0 ]
 then

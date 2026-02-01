@@ -1,10 +1,10 @@
 # Copyright (C) 2008-2010 Francois Dupoux
 # Distributed under the GPL-2 license (GNU General Public License version 2)
 
-AC_PREREQ(2.59)
+AC_PREREQ([2.72])
 
-AC_INIT([fsarchiver], 0.8.9-git)
-AC_DEFINE([PACKAGE_RELDATE], "YYYY-MM-DD", [Define the date of the release])
+AC_INIT([fsarchiver],[0.8.9])
+AC_DEFINE([PACKAGE_RELDATE], "2026-02-01", [Define the date of the release])
 AC_DEFINE([PACKAGE_FILEFMT], "FsArCh_002", [Define the version of the file format])
 AC_DEFINE([PACKAGE_VERSION_A], 0, [Major version number])
 AC_DEFINE([PACKAGE_VERSION_B], 8, [Medium version number])
@@ -15,11 +15,19 @@ AC_CANONICAL_HOST([])
 AC_CANONICAL_TARGET([])
 AM_INIT_AUTOMAKE
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
-AC_ISC_POSIX
+AC_SEARCH_LIBS([strerror],[cposix])
 AC_PROG_CC
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro 'STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  C89 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_PROG_INSTALL
 AM_PROG_CC_C_O
 AC_SYS_LARGEFILE
@@ -39,12 +47,12 @@ case "$target_os" in
 esac
 
 dnl =======================================================================================
-AC_CHECKING([for libz (library and header files)])
+AS_MESSAGE([checking for libz (library and header files)...])
 AC_CHECK_LIB([z], [compress], [LIBS="$LIBS -lz"],
     AC_MSG_ERROR([*** gzip library (libz) not found (you may also have to install zlib-devel)]))
 AC_CHECK_HEADERS(zlib.h)
 
-AC_CHECKING([for libbz2 (library and header files) ... ])
+AS_MESSAGE([checking for libbz2 (library and header files) ... ...])
 AC_CHECK_LIB([bz2], [BZ2_bzBuffToBuffCompress], [LIBS="$LIBS -lbz2"],
     AC_MSG_ERROR([*** bzip2 library (libbz2) not found or too old (you may also have to install bzip2-devel)]))
 AC_CHECK_HEADERS(bzlib.h)
@@ -68,7 +76,7 @@ AC_ARG_ENABLE([lzo],
 if test "x$enable_lzo" = "xyes"
 then
     AC_DEFINE([OPTION_LZO_SUPPORT], 1, [Define to 1 to enable the support for lzo compression])
-    AC_CHECKING([for liblzo2 (library and header files)])
+    AS_MESSAGE([checking for liblzo2 (library and header files)...])
     AC_CHECK_LIB([lzo2], [lzo1x_1_compress], [LIBS="$LIBS -llzo2"],
         AC_MSG_ERROR([*** lzo library (liblzo2) not found: please install liblzo (you may also have to install lzo-devel) or disable lzo support using --disable-lzo]))
     AC_CHECK_HEADERS(lzo/lzo1x.h)
@@ -82,7 +90,7 @@ AC_ARG_ENABLE([lz4],
 if test "x$enable_lz4" = "xyes"
 then
     AC_DEFINE([OPTION_LZ4_SUPPORT], 1, [Define to 1 to enable the support for lz4 compression])
-    AC_CHECKING([for lz4 (library and header files)])
+    AS_MESSAGE([checking for lz4 (library and header files)...])
     AC_CHECK_LIB([lz4], [LZ4_compress], [LIBS="$LIBS -llz4"], AC_MSG_ERROR([*** lz4 not found or disable lz4 support using --disable-lz4 ***] ))
     AC_CHECK_HEADERS(lz4.h)
 fi
@@ -95,13 +103,13 @@ AC_ARG_ENABLE([zstd],
 if test "x$enable_zstd" = "xyes"
 then
     AC_DEFINE([OPTION_ZSTD_SUPPORT], 1, [Define to 1 to enable the support for zstd compression])
-    AC_CHECKING([for zstd (library and header files)])
+    AS_MESSAGE([checking for zstd (library and header files)...])
     AC_CHECK_LIB([zstd], [ZSTD_compress], [LIBS="$LIBS -lzstd"], AC_MSG_ERROR([*** zstd not found or disable zstd support using --disable-zstd ***] ))
     AC_CHECK_HEADERS(zstd.h)
 fi
 
 dnl check libgcrypt (required for crypto and md5)
-AC_CHECKING([for libgcrypt (library and header files)])
+AS_MESSAGE([checking for libgcrypt (library and header files)...])
 AC_CHECK_LIB([gcrypt], [gcry_cipher_encrypt], [LIBS="$LIBS -lgcrypt -lgpg-error"], AC_MSG_ERROR([*** libgcrypt not found]))
 AC_CHECK_HEADERS(gcrypt.h)
 
@@ -125,7 +133,15 @@ dnl Check for library functions.
 AC_CHECK_FUNCS(strerror open64 lstat64 stat64 fstatfs64 fstatvfs64 mempcpy lutimes)
 
 # checks for header files.
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro 'STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  C89 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 
 dnl =======================================================================================
 dnl with-log-dir option.
