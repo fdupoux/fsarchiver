@@ -35,6 +35,7 @@
 #include <assert.h>
 #include <gcrypt.h>
 #include <uuid.h>
+#include <time.h>
 
 #include "fsarchiver.h"
 #include "dico.h"
@@ -82,6 +83,8 @@ typedef struct s_devinfo
     bool        mountedbyfsa;
     int         fstype;
 } cdevinfo;
+
+static time_t g_backup_start_time = 0;
 
 int createar_obj_regfile_multi(csavear *save, cdico *header, char *relpath, char *fullpath, u64 filesize)
 {
@@ -578,7 +581,6 @@ int createar_item_stdattr(csavear *save, char *root, char *relpath, struct stat6
 int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *statbuf, u64 *costeval)
 {
     char fullpath[PATH_MAX];
-    char strprogress[256];
     cdico *dicoattr;
     int attrerrors=0;
     u64 filecost;
@@ -636,14 +638,30 @@ int createar_save_file(csavear *save, char *root, char *relpath, struct stat64 *
     // ---- file details and progress bar
     if (get_interrupted()==false) 
     {
-        memset(strprogress, 0, sizeof(strprogress));
         if (save->cost_global>0)
         {   save->cost_current+=filecost;
             progress=((save->cost_current)*100)/(save->cost_global);
             if (progress>=0 && progress<=100)
-                snprintf(strprogress, sizeof(strprogress), "[%3d%%]", (int)progress);
+            {
+                time_t now = time(NULL);
+                int elapsed = (int)(now - g_backup_start_time);
+                int elapsed_min = elapsed / 60;
+                int elapsed_sec = elapsed % 60;
+                int remaining = 0;
+                int remain_min = 0;
+                int remain_sec = 0;
+                if (progress > 0) {
+                    remaining = (elapsed * 100) / progress - elapsed;
+                    remain_min = remaining / 60;
+                    remain_sec = remaining % 60;
+                }
+                fprintf(stderr, "\rFilesystem %d: %3d%% | Elapsed: %02d:%02d | Remaining: %02d:%02d",
+                        save->fsid, (int)progress,
+                        elapsed_min, elapsed_sec,
+                        remain_min, remain_sec);
+                fflush(stderr);
+            }
         }
-        msgprintf(MSG_VERB1, "-[%.2d]%s[%s] %s\n", save->fsid, strprogress, get_objtype_name(objtype), relpath);
     }
     
     // ---- backup file contents for regfiles
@@ -1329,6 +1347,7 @@ int oper_save(char *archive, int argc, char **argv, int archtype)
     
     // init counters to zero before real savefs/savedir
     save.cost_current=0;
+    g_backup_start_time = time(NULL);
     save.objectid=0;
     
     // copy contents to archive
@@ -1345,7 +1364,10 @@ int oper_save(char *archive, int argc, char **argv, int archtype)
                     goto do_create_error;
                 }
                 if (get_interrupted()==false)
+                {
+                    fprintf(stderr, "\n\n");
                     stats_show(save.stats, i);
+                }
                 totalerr+=stats_errcount(save.stats);
             }
             break;
