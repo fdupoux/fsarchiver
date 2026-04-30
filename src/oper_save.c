@@ -861,7 +861,15 @@ int createar_save_directory_wrapper(csavear *save, char *root, char *path, u64 *
     }
     
     ret=createar_save_directory(save, root, path, costeval);
-    
+    // show 100% complete when cost evaluation is not happening
+    if (costeval==NULL && save->cost_global>0)
+    {
+        time_t now = time(NULL);
+        int elapsed = (int)(now - g_backup_start_time);
+        fprintf(stderr, "\rFilesystem %d: 100%% | Elapsed: %02d:%02d | Remaining: 00:00",
+            save->fsid, elapsed/60, elapsed%60);
+        fflush(stderr);
+    }
     // put all small files that are in the last block to the queue
     if (regmulti_save_enqueue(&save->regmulti, &g_queue, save->fsid)!=0)
     {   errprintf("Cannot queue last block of small-files\n");
