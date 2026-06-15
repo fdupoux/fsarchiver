@@ -32,12 +32,16 @@ int options_init()
     memset(&g_options, 0, sizeof(coptions));
     if (strlist_init(&g_options.exclude)!=0)
         return -1;
+    if (strlist_init(&g_options.include)!=0)
+        return -1;
     return 0;
 }
 
 int options_destroy()
 {
     if (strlist_destroy(&g_options.exclude)!=0)
+        return -1;
+    if (strlist_destroy(&g_options.include)!=0)
         return -1;
     memset(&g_options, 0, sizeof(coptions));
     return 0;

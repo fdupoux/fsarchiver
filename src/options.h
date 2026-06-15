@@ -42,6 +42,9 @@ struct s_options
 	char     archlabel[FSA_MAX_LABELLEN];
     u8       encryptpass[FSA_MAX_PASSLEN+1];
     cstrlist exclude;
+    cstrlist include;    // patterns of files to extract ("extractfiles")
+    bool     json;       // JSONL output for "list"
+    bool     flat;       // flatten paths to basename for "extractfiles"
 };
 
 extern coptions g_options;
