@@ -1,6 +1,6 @@
 sbin_PROGRAMS		= fsarchiver
 
-fsarchiver_SOURCES	= fsarchiver.c oper_save.c oper_restore.c oper_probe.c \
+fsarchiver_SOURCES	= fsarchiver.c oper_save.c oper_restore.c oper_extract.c oper_probe.c \
 	thread_archio.c archreader.c archwriter.c writebuf.c archinfo.c \
 	thread_comp.c comp_gzip.c comp_bzip2.c comp_lzma.c comp_lzo.c comp_lz4.c \
 	comp_zstd.c crypto.c fs_ntfs.c fs_ext2.c fs_reiserfs.c fs_reiser4.c \
@@ -8,7 +8,7 @@ fsarchiver_SOURCES	= fsarchiver.c oper_save.c oper_restore.c oper_probe.c \
 	queue.c error.c syncthread.c datafile.c strlist.c regmulti.c options.c \
 	logfile.c filesys.c devinfo.c
 
-noinst_HEADERS		= fsarchiver.h oper_save.h oper_restore.h oper_probe.h \
+noinst_HEADERS		= fsarchiver.h oper_save.h oper_restore.h oper_extract.h oper_probe.h \
 	thread_archio.h archreader.h archwriter.h writebuf.h archinfo.h \
 	thread_comp.h comp_gzip.h comp_bzip2.h comp_lzma.h comp_lzo.h comp_lz4.h \
 	comp_zstd.h crypto.h fs_ntfs.h fs_ext2.h fs_reiserfs.h fs_reiser4.h \

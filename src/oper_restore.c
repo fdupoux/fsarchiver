@@ -37,6 +37,7 @@
 #include "common.h"
 #include "options.h"
 #include "oper_restore.h"
+#include "oper_extract.h" // erg_list_print_object()
 #include "archreader.h"
 #include "archinfo.h"
 #include "filesys.h"
@@ -56,13 +57,26 @@
 #include "datafile.h"
 #include "queue.h"
 
-typedef struct s_extractar
-{   carchreader ai;
-    int         fsid;
-    cstats      stats;
-    u64         cost_global;
-    u64         cost_current;
-} cextractar;
+// cextractar typedef moved to oper_restore.h (shared with oper_extract.c)
+
+// list/extractfiles control flags (read-only operations)
+//  g_erg_listmode != 0  -> "list": treat every object as excluded so nothing is
+//                          written to disk; the caller prints the listing itself.
+//  g_options.include non-empty -> "extractfiles": only objects matching an include
+//                          pattern are extracted; all others are treated as excluded
+//                          (their data blocks are still drained from the queue).
+int g_erg_listmode=0;
+
+// returns true if this object matches at least one include pattern (basename or full path)
+int erg_include_match(char *relpath)
+{
+    char basename[PATH_MAX];
+    extract_basename(relpath, basename, sizeof(basename));
+    if ((exclude_check(&g_options.include, basename)==true)
+        || (exclude_check(&g_options.include, relpath)==true))
+        return true;
+    return false;
+}
 
 // returns true if this file of a parent directory has been excluded
 int is_filedir_excluded(char *relpath)
@@ -70,7 +84,15 @@ int is_filedir_excluded(char *relpath)
     char dirpath[PATH_MAX];
     char basename[PATH_MAX];
     int pos;
-    
+
+    // in "list" mode nothing is ever written to disk
+    if (g_erg_listmode)
+        return true;
+
+    // in "extractfiles" mode (include list set), drop anything not matching
+    if (strlist_count(&g_options.include)>0 && erg_include_match(relpath)!=true)
+        return true;
+
     // check if that particular file has been excluded
     extract_basename(relpath, basename, sizeof(basename));
     
@@ -670,11 +692,26 @@ int extractar_restore_obj_regfile_multi(cextractar *exar, char *destdir, cdico *
         }
         concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
         extract_basename(fullpath, basename, sizeof(basename));
-        
+
+        // --flat for extractfiles: place matched small files
+        // directly under destdir using their basename.
+        if (g_options.flat && g_erg_listmode==0 && is_filedir_excluded(relpath)!=true)
+        {
+            char flatbase[PATH_MAX];
+            extract_basename(relpath, flatbase, sizeof(flatbase));
+            snprintf(relpath, sizeof(relpath), "%s", flatbase);
+            concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
+            extract_basename(fullpath, basename, sizeof(basename));
+        }
+
         // update cost statistics and progress bar
-        exar->cost_current+=FSA_COST_PER_FILE; 
+        exar->cost_current+=FSA_COST_PER_FILE;
         exar->cost_current+=datsize; // filesize
-        
+
+        // in "list" mode print each small file of this group
+        if (g_erg_listmode)
+            erg_list_print_object(filehead, tmpobjtype);
+
         // check the list of excluded files/dirs
         if (is_filedir_excluded(relpath)!=true)
         {
@@ -915,7 +952,26 @@ int extractar_restore_object(cextractar *exar, int *errors, char *destdir, cdico
     if (dico_get_u64(dicoattr, DICO_OBJ_SECTION_STDATTR, DISKITEMKEY_SIZE, &filesize)!=0)
         return -3;
     concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
-    
+
+    // in "list" mode print every object header (except REGFILEMULTI,
+    // whose member files are printed individually inside the regfile_multi loop).
+    if (g_erg_listmode && objtype!=OBJTYPE_REGFILEMULTI)
+        erg_list_print_object(dicoattr, objtype);
+
+    // --flat for extractfiles: if this object is going to be
+    // extracted (not excluded) and flattening is requested, place it directly
+    // under destdir using its basename. The obj-restore helpers below use the
+    // fullpath/relpath we pass, so we only rewrite the locals (not the dico).
+    // REGFILEMULTI is left as-is (its members re-read PATH from their headers).
+    if (g_options.flat && g_erg_listmode==0 && objtype!=OBJTYPE_REGFILEMULTI
+        && is_filedir_excluded(relpath)!=true)
+    {
+        char flatbase[PATH_MAX];
+        extract_basename(relpath, flatbase, sizeof(flatbase));
+        snprintf(relpath, sizeof(relpath), "%s", flatbase);
+        concatenate_paths(fullpath, sizeof(fullpath), destdir, relpath);
+    }
+
     // ---- recreate specific object on the filesystem
     switch (objtype)
     {

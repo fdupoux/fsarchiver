@@ -29,6 +29,7 @@
 #include "dico.h"
 #include "common.h"
 #include "oper_restore.h"
+#include "oper_extract.h" // list / extractfiles
 #include "oper_save.h"
 #include "oper_probe.h"
 #include "archinfo.h"
@@ -79,6 +80,8 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " * restdir: restore data from an archive which is not based on a filesystem\n");
     msgprintf(MSG_FORCE, " * archinfo: show information about an existing archive file and its contents\n");
     msgprintf(MSG_FORCE, " * probe [detailed]: show list of filesystems detected on the disks\n");
+    msgprintf(MSG_FORCE, " * list: list the contents of an archive (read-only), use --json for JSONL\n");
+    msgprintf(MSG_FORCE, " * extractfiles: extract individual files matching patterns into a directory\n");
     msgprintf(MSG_FORCE, "<options>\n");
     msgprintf(MSG_FORCE, " -o: overwrite the archive if it already exists instead of failing\n");
     msgprintf(MSG_FORCE, " -v: verbose mode (can be used several times to increase the level of details)\n");
@@ -95,6 +98,9 @@ void usage(char *progname, bool examples)
     msgprintf(MSG_FORCE, " -s <mbsize>: split the archive into several files of <mbsize> megabytes each\n");
     msgprintf(MSG_FORCE, " -j <count>: create more than one (de)compression thread. useful on multi-core cpu\n");
     msgprintf(MSG_FORCE, " -c <password>: encrypt/decrypt data in archive, \"-c -\" for interactive password\n");
+    msgprintf(MSG_FORCE, " --json: with \"list\", emit one JSON object per line (JSONL) instead of text\n");
+    msgprintf(MSG_FORCE, " -O <dir>, --outdir <dir>: with \"extractfiles\", directory to extract into\n");
+    msgprintf(MSG_FORCE, " --flat: with \"extractfiles\", drop directory structure (use basenames)\n");
     msgprintf(MSG_FORCE, " -h: show help and information about how to use fsarchiver with examples\n");
     msgprintf(MSG_FORCE, " -V: show program version and exit\n");
     msgprintf(MSG_FORCE, "<information>\n");
@@ -158,6 +164,9 @@ static struct option const long_options[] =
     {"label", required_argument, NULL, 'L'},
     {"exclude", required_argument, NULL, 'e'},
     {"experimental", no_argument, NULL, 'x'},
+    {"json", no_argument, NULL, 1001},       // JSONL output for "list"
+    {"outdir", required_argument, NULL, 'O'}, // destdir for "extractfiles"
+    {"flat", no_argument, NULL, 1002},        // flatten paths on extract
     {NULL, 0, NULL, 0}
 };
 
@@ -170,6 +179,7 @@ int process_cmdline(int argc, char **argv)
     bool probedetailed=0;
     char *command=NULL;
     char *archive=NULL;
+    char *outdir=NULL; // destdir for "extractfiles"
     char tempbuf[1024];
     char *progname;
     int fscount;
@@ -204,7 +214,7 @@ int process_cmdline(int argc, char **argv)
     g_options.fsacomplevel=FSA_DEF_FSACOMP_LEVEL;
 #endif // OPTION_ZSTD_SUPPORT
 
-    while ((c = getopt_long(argc, argv, "oaAvdj:hVs:c:L:e:xz:Z:", long_options, NULL)) != EOF)
+    while ((c = getopt_long(argc, argv, "oaAvdj:hVs:c:L:e:xz:Z:O:", long_options, NULL)) != EOF)
     {
         switch (c)
         {
@@ -313,6 +323,15 @@ int process_cmdline(int argc, char **argv)
             case 'h': // help
                 usage(progname, true);
                 return 0;
+            case 'O': // output directory for extractfiles
+                outdir=optarg;
+                break;
+            case 1001: // --json (list)
+                g_options.json=true;
+                break;
+            case 1002: // --flat (extractfiles)
+                g_options.flat=true;
+                break;
             default:
                 usage(progname, false);
                 return -1;
@@ -367,6 +386,17 @@ int process_cmdline(int argc, char **argv)
     {   cmd=OPER_PROBE;
         runasroot=true;
         argcok=(argc<=1);
+    }
+    else if (strcmp(command, "list")==0) // list archive contents (read-only)
+    {   cmd=OPER_LIST;
+        runasroot=false;
+        argcok=(argc==1); // just the archive
+    }
+    else if (strcmp(command, "extractfiles")==0) // extract files matching patterns
+    {   cmd=OPER_EXTRACTFILES;
+        runasroot=false;
+        // archive + >=1 pattern; destdir is given with -O/--outdir
+        argcok=(argc>=2);
     }
     else // command not found
     {   errprintf("[%s] is not a valid command.\n", command);
@@ -425,6 +455,8 @@ int process_cmdline(int argc, char **argv)
         case OPER_SAVEDIR:
         case OPER_RESTDIR:
         case OPER_ARCHINFO:
+        case OPER_LIST:
+        case OPER_EXTRACTFILES:
             archive=*argv++, argc--;
             break;
         case OPER_PROBE:
@@ -467,6 +499,13 @@ int process_cmdline(int argc, char **argv)
             break;
         case OPER_PROBE:
             ret=oper_probe(probedetailed);
+            break;
+        case OPER_LIST: // list archive contents
+            ret=oper_list(archive);
+            break;
+        case OPER_EXTRACTFILES: // extract files matching patterns
+            // remaining positionals (partition[0..fscount-1]) are the file patterns
+            ret=oper_extractfiles(archive, outdir, fscount, partition);
             break;
         default:
             errprintf("[%s] is not a valid command.\n", command);
